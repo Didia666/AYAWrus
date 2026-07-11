@@ -1,0 +1,262 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "name": "CyberLearn Knowledge Base",
+    "description": "Comprehensive cybersecurity and malware detection knowledge base",
+    "total_topics": 42
+  },
+  "categories": {
+    "malware": {
+      "name": "Malware Types & Characteristics",
+      "icon": "🦠",
+      "description": "Learn about different types of malicious software",
+      "topics": [
+        {
+          "id": "trojan_virus_diff",
+          "question": "What is a Trojan and how does it differ from a virus?",
+          "answer": "A Trojan is malware disguised as legitimate software that tricks users into installing it. Unlike viruses, Trojans don't replicate themselves or attach to other files. Viruses spread by infecting existing programs and require user action to propagate. Trojans typically open backdoors for remote access, steal data, or install additional malware. Key difference: viruses are replicating code that spreads automatically, while Trojans are standalone applications that appear benign. Both are dangerous, but Trojans are often more targeted and sophisticated.",
+          "keywords": ["trojan", "virus", "malware", "difference", "replication"],
+          "related": ["ransomware", "worm", "backdoor"]
+        },
+        {
+          "id": "ransomware",
+          "question": "What is ransomware and how does it work?",
+          "answer": "Ransomware is malware that encrypts your files and demands payment for decryption. It typically spreads through phishing emails, malicious downloads, or exploited vulnerabilities. Once executed, ransomware encrypts valuable files using strong encryption algorithms (like AES-256 or RSA). The attacker then displays a message demanding payment in cryptocurrency. Attack chain: infection → encryption → ransom demand → payment. Prevention includes regular backups, strong passwords, updated software, email security, and user awareness. Never pay ransom as it encourages more attacks and doesn't guarantee file recovery.",
+          "keywords": ["ransomware", "encryption", "payment", "attack", "extortion"],
+          "related": ["trojan_virus_diff", "quarantine_importance", "backup"]
+        },
+        {
+          "id": "worm",
+          "question": "What is a computer worm?",
+          "answer": "A worm is self-replicating malware that spreads across networks without user interaction. Unlike viruses, worms don't need to attach to existing files—they spread independently by exploiting network vulnerabilities or security weaknesses. Worms can consume system resources, disrupt network services, and create backdoors for attackers. Famous examples include ILOVEYOU, Conficker, and WannaCry. They spread via email, file sharing networks, network drives, and vulnerable services. Prevention: firewalls, security patches, network segmentation, and antivirus software.",
+          "keywords": ["worm", "replication", "network", "spread", "vulnerability"],
+          "related": ["trojan_virus_diff", "malware_indicators"]
+        },
+        {
+          "id": "spyware",
+          "question": "What is spyware?",
+          "answer": "Spyware is software that secretly monitors user activity and collects personal information. It tracks keystrokes, browsing habits, passwords, banking data, and system information. Spyware is often bundled with free software, browser extensions, or games. It runs silently in the background, sending data to remote servers. Types include keyloggers, password stealers, and screen capture tools. Impact: privacy violations, identity theft, financial fraud, and system slowdown. Protection: install from trusted sources, use security software, keep systems updated, and be cautious with downloads.",
+          "keywords": ["spyware", "privacy", "monitoring", "data theft", "keylogger"],
+          "related": ["malware_indicators", "system_slowdown"]
+        },
+        {
+          "id": "backdoor",
+          "question": "What is a backdoor in malware?",
+          "answer": "A backdoor is a hidden entry point that allows unauthorized remote access to a system. Backdoors bypass normal authentication and give attackers direct control. They're often installed by Trojans or worms, allowing attackers to steal data, install additional malware, or use the system for attacks on other computers. Backdoors persist even after system reboots using rootkits or registry modifications. Detection is difficult because they operate silently. Prevention includes firewalls, intrusion detection systems, security patches, and monitoring for unusual network connections.",
+          "keywords": ["backdoor", "remote access", "unauthorized", "control", "exploit"],
+          "related": ["trojan_virus_diff", "rootkit"]
+        },
+        {
+          "id": "rootkit",
+          "question": "What is a rootkit?",
+          "answer": "A rootkit is advanced malware that gains administrator-level access and hides its presence from detection. Rootkits hide running processes, files, and registry entries from the operating system and security software. They operate at the kernel level (core OS level), making detection extremely difficult. Rootkits enable backdoor access, data theft, spyware installation, and system manipulation. Types include kernel rootkits (modify OS kernel), bootkit (infect boot process), and user-mode rootkits. They're often used by sophisticated attackers and cybercriminals. Removal requires specialized tools and may require clean OS reinstallation.",
+          "keywords": ["rootkit", "kernel", "hidden", "administrator", "detection"],
+          "related": ["backdoor", "malware_indicators"]
+        },
+        {
+          "id": "adware",
+          "question": "What is adware?",
+          "answer": "Adware is software that displays unwanted advertisements on your system. While less dangerous than other malware, adware degrades user experience by showing pop-ups, banners, and in-text ads. Adware often comes bundled with free software and collects browsing data for targeted advertising. It can slow down your system, drain bandwidth, and track your online activity. Some adware programs are aggressive and difficult to remove. Adware is sometimes used as a vehicle for more serious malware. Prevention: use reputable software sources, read installation prompts carefully, and maintain security software.",
+          "keywords": ["adware", "advertisements", "pop-ups", "bundled", "tracking"],
+          "related": ["spyware", "malware_indicators"]
+        },
+        {
+          "id": "malware_indicators",
+          "question": "What are signs that a system is infected with malware?",
+          "answer": "Common signs of malware infection include: slow system performance, frequent crashes or freezes, unexpected error messages, changed homepage or search engine, new toolbars or extensions you didn't install, unusual network activity, strange sounds or disk access, pop-up windows, missing files or data, high CPU/memory usage, unwanted programs, disabled security software, and unable to install security updates. Network-level indicators: unusual traffic patterns, connections to suspicious IP addresses, and bandwidth consumption spikes. If you notice these signs, run a full system scan, check running processes, review installed programs, and consider professional help for serious infections.",
+          "keywords": ["indicators", "signs", "infection", "symptoms", "detection"],
+          "related": ["spyware", "system_slowdown", "quarantine_importance"]
+        },
+        {
+          "id": "polymorphic_malware",
+          "question": "What is polymorphic malware?",
+          "answer": "Polymorphic malware changes its code and signature each time it replicates, making detection by signature-based antivirus difficult. It uses encryption and mutation engines to alter its appearance while maintaining functionality. Each infected file contains a different version of the malware, requiring behavioral analysis rather than simple pattern matching. Polymorphic malware is more advanced than simple malware and requires heuristic or machine learning-based detection. Famous examples include Nimda and Salamat. Detection requires analyzing behavior rather than just code signatures. Modern antivirus uses behavioral analysis, sandboxing, and machine learning to detect polymorphic threats.",
+          "keywords": ["polymorphic", "mutation", "signature", "evasion", "detection"],
+          "related": ["machine_learning_detection", "signature_detection"]
+        }
+      ]
+    },
+    "machine_learning": {
+      "name": "Machine Learning & Detection",
+      "icon": "🤖",
+      "description": "Understand AI and machine learning detection methods",
+      "topics": [
+        {
+          "id": "random_forest",
+          "question": "How does Random Forest detect malware?",
+          "answer": "Random Forest is an ensemble machine learning algorithm that builds multiple decision trees during training. Each tree makes predictions independently, and the final decision is determined by majority voting. For malware detection, it analyzes file features like size, entropy, API calls, file headers, imports, and behavioral patterns. During training, the model learns to distinguish malicious from benign files. During detection, features are extracted from a suspicious file and evaluated across all trees. If most trees vote 'malicious,' the file is flagged. Random Forest reduces overfitting and improves accuracy by combining multiple diverse decision paths. It's effective because malware often exhibits consistent patterns across multiple features.",
+          "keywords": ["random forest", "ensemble", "decision tree", "voting", "classification"],
+          "related": ["ml_features", "confidence_score"]
+        },
+        {
+          "id": "ml_features",
+          "question": "What features does machine learning use to detect malware?",
+          "answer": "Machine learning models analyze numerous file features to detect malware: File metadata: size, creation time, modification time, file type. Static features: entropy, number of imports, number of exports, header information, section sizes. Dynamic features: API calls made, registry modifications, file system access, network connections. Behavioral features: process creation, injection attempts, persistence mechanisms. Packing detection: compressed or encrypted sections. Resource analysis: embedded resources, certificate information. These features are extracted during analysis and provided to the ML model which learns patterns that distinguish malware from legitimate software. The more diverse and relevant the features, the better the detection accuracy.",
+          "keywords": ["features", "extraction", "entropy", "api calls", "static", "dynamic"],
+          "related": ["pe_entropy", "random_forest", "confidence_score"]
+        },
+        {
+          "id": "confidence_score",
+          "question": "What does a 94% AI confidence score mean?",
+          "answer": "A 94% confidence score represents the probability that our ML model believes a file is malicious based on analyzed features. It's a statistical prediction derived from the model's training on thousands of known malware and benign files. The score ranges from 0-100%, where 94% means the model is 94% certain the file is malicious and 6% uncertain. However, this isn't absolute certainty—false positives (flagging safe files) and false negatives (missing malware) can occur. The confidence score reflects the model's statistical probability based on learned patterns. Higher scores indicate stronger evidence of malicious behavior. Security teams use thresholds (e.g., >85% = flag, >95% = immediate quarantine) to balance detection accuracy with false positive rates.",
+          "keywords": ["confidence", "probability", "score", "prediction", "certainty"],
+          "related": ["random_forest", "false_positive", "detection_accuracy"]
+        },
+        {
+          "id": "false_positive",
+          "question": "What is a false positive in malware detection?",
+          "answer": "A false positive occurs when legitimate software is incorrectly flagged as malware. This causes several problems: users lose access to legitimate files, system crashes if critical files are quarantined, reduced trust in security software, and productivity loss. False positives result from imperfect ML models, overfitting, or insufficient training data on edge cases. Examples: legitimate packing tools, game launchers, or custom software might have characteristics similar to malware. Balancing detection (catching real malware) with false positives is crucial—too many false positives make security tools unusable. Mitigation includes machine learning improvements, user whitelisting, file reputation databases, and manual review of flagged files. Our quarantine feature addresses this by isolating rather than deleting suspected files.",
+          "keywords": ["false positive", "legitimate", "misclassification", "error", "accuracy"],
+          "related": ["quarantine_importance", "confidence_score"]
+        },
+        {
+          "id": "detection_accuracy",
+          "question": "How do we measure malware detection accuracy?",
+          "answer": "Detection accuracy is measured using several metrics: Precision: percentage of flagged files that are actually malicious. Recall: percentage of actual malware that gets detected. Accuracy: overall percentage of correct classifications (both TP and TN divided by all cases). F1-score: harmonic mean of precision and recall, balancing both metrics. These are calculated using a test dataset with known labels. True Positives (TP): correctly identified malware. True Negatives (TN): correctly identified benign files. False Positives (FP): benign files flagged as malware. False Negatives (FN): malware missed. High precision means fewer false positives. High recall means fewer missed threats. The goal is balancing these metrics based on use case—security-critical systems prefer high recall (catching all malware) over precision.",
+          "keywords": ["accuracy", "precision", "recall", "f1-score", "metrics"],
+          "related": ["confidence_score", "false_positive"]
+        },
+        {
+          "id": "deep_learning",
+          "question": "What is deep learning in malware detection?",
+          "answer": "Deep learning uses neural networks with multiple layers to identify complex patterns in malware. Unlike traditional ML, deep learning automatically extracts relevant features without manual feature engineering. For malware detection, deep learning can analyze: raw binary sequences, API call sequences, system behavior logs, and file headers. Advantages: discovers non-obvious patterns, handles high-dimensional data, adapts to new malware variants. Disadvantages: requires large training datasets, computationally expensive, harder to interpret why a file is flagged (black box). Common architectures: Convolutional Neural Networks (CNNs) for image-like representations, Recurrent Neural Networks (RNNs) for sequences, Autoencoders for anomaly detection. Deep learning is powerful but requires more resources than traditional ML. It's increasingly used in advanced antivirus and EDR solutions.",
+          "keywords": ["deep learning", "neural network", "cnn", "rnn", "autoencoder"],
+          "related": ["random_forest", "ml_features"]
+        },
+        {
+          "id": "signature_detection",
+          "question": "What is signature-based malware detection?",
+          "answer": "Signature-based detection compares file hashes or patterns against a database of known malware signatures. Each known malware has a unique signature (hash or pattern). When a file is scanned, its signature is calculated and compared to the database. If a match is found, the file is flagged as malware. Advantages: fast, accurate for known malware, low false positive rate. Disadvantages: only detects known threats, completely ineffective against new malware (zero-day threats), requires constant database updates. Signature databases contain millions of known malware signatures. Polymorphic malware defeats signature detection by changing its signature each time. Modern antivirus combines signature detection with behavioral analysis for better coverage of known and unknown threats.",
+          "keywords": ["signature", "hash", "pattern", "known malware", "database"],
+          "related": ["heuristic_detection", "polymorphic_malware"]
+        },
+        {
+          "id": "heuristic_detection",
+          "question": "What is heuristic malware detection?",
+          "answer": "Heuristic detection analyzes file behavior and characteristics to identify suspicious patterns, even if the exact signature isn't known. Rather than matching against a database, heuristics look for malicious indicators: unusual system calls, suspicious file modifications, registry changes, network connections, packing or encryption, resource consumption patterns. Heuristic rules are based on known malware behavior characteristics. Advantages: detects unknown malware variants and zero-day threats, adapts to new malware. Disadvantages: higher false positive rate, requires careful tuning to avoid over-flagging legitimate software. Heuristics are often rule-based (IF suspicious_behavior THEN flag) or machine learning-based (behavior classification). Modern antivirus combines multiple detection methods: signatures, heuristics, behavioral analysis, and machine learning for comprehensive protection.",
+          "keywords": ["heuristic", "behavior", "suspicious", "patterns", "rules"],
+          "related": ["signature_detection", "random_forest"]
+        }
+      ]
+    },
+    "scan_results": {
+      "name": "Scan Results & Analysis",
+      "icon": "📊",
+      "description": "Understanding scan results and threat analysis",
+      "topics": [
+        {
+          "id": "pe_entropy",
+          "question": "What is PE entropy and why does it matter?",
+          "answer": "PE (Portable Executable) entropy measures the randomness of data within a file section, ranging from 0 (no randomness) to 8 (maximum randomness). Most legitimate programs have moderate entropy (4-6) because they contain readable code and structured data. Malware often uses encryption, compression, or packing to hide code, resulting in high entropy (7-8). By analyzing entropy of PE sections (.text, .data, .rsrc), security tools identify suspicious files. High entropy can indicate: encryption hiding payload, code packing, compression, or obfuscation. Entropy analysis helps quickly identify potentially malicious files without execution. However, legitimate software can have high entropy (encrypted data, compression), so entropy alone isn't definitive. It's one of many features used in malware detection. Tools calculate Shannon entropy: measuring disorder in binary data.",
+          "keywords": ["entropy", "pe", "randomness", "encryption", "packing"],
+          "related": ["ml_features", "file_analysis"]
+        },
+        {
+          "id": "file_analysis",
+          "question": "How are files analyzed during a malware scan?",
+          "answer": "File analysis during scanning follows these steps: 1) Hash calculation: file hash (MD5/SHA256) is computed and compared to known malware database. 2) Static analysis: file headers, sections, imports, and metadata are examined without execution. Features like entropy, file size, certificate info are extracted. 3) Machine learning analysis: extracted features are provided to ML models (Random Forest, neural networks) which classify the file. 4) Heuristic analysis: suspicious patterns like unusual system calls or packing are detected. 5) Behavioral analysis: file is executed in controlled sandbox environment to observe actual behavior. 6) Reputation checking: online databases are queried for threat intelligence. 7) Results: file is classified as benign, suspicious, or malicious. Speed depends on file size and analysis depth. Fast scans use quick methods, deep scans use all methods.",
+          "keywords": ["analysis", "static", "dynamic", "hash", "features"],
+          "related": ["pe_entropy", "confidence_score", "signature_detection"]
+        },
+        {
+          "id": "threat_severity",
+          "question": "How is threat severity determined?",
+          "answer": "Threat severity is determined by analyzing multiple factors: Infection vector: how the malware infects (file, network, email). Impact: damage potential (data theft, system destruction, propagation). Exploitability: how easily it can be exploited. Prevalence: how widely spread is the threat. Behavior: what the malware does (steal data, encrypt files, consume resources). Confidence score: probability of actual threat. Common severity levels: CRITICAL - immediate threat requiring urgent action, HIGH - serious threat, MEDIUM - moderate threat, LOW - minimal threat. Factors are combined to assign risk scores. Our system considers multiple features to determine severity. Critical threats automatically trigger quarantine. High severity threats alert the user. Lower severity might only be logged. Severity assessment helps prioritize incident response.",
+          "keywords": ["severity", "risk", "impact", "critical", "threat level"],
+          "related": ["confidence_score", "quarantine_importance"]
+        },
+        {
+          "id": "quarantine_importance",
+          "question": "Why is quarantine recommended rather than deletion?",
+          "answer": "Quarantine is safer than immediate deletion for several reasons: 1) Reversibility: if falsely flagged (false positive), you can restore the file. 2) Investigation: security team can analyze the file in isolation to confirm it's truly malicious. 3) Recovery: if critical software was quarantined, you can recover it. 4) Legal/compliance: organizations need evidence of threats for audit trails and legal proceedings. 5) Zero-risk: quarantine completely isolates the threat with no execution risk. 6) Prevents accidents: deletion is permanent and irreversible. Quarantine moves suspicious files to a separate, restricted area where they cannot execute or spread. The file remains accessible for analysis but cannot harm the system. Deletion should only occur after confirmation the file is genuinely malicious and no longer needed. Quarantine strikes the perfect balance between security and safety.",
+          "keywords": ["quarantine", "deletion", "isolation", "recovery", "reversible"],
+          "related": ["file_analysis", "threat_severity"]
+        },
+        {
+          "id": "scan_types",
+          "question": "What are different types of malware scans?",
+          "answer": "Different scan types serve different purposes: Quick scan: scans system files, startup locations, and high-risk areas in minutes. Good for regular checks. Full scan: scans entire hard drive systematically, taking longer but most thorough. Recommended weekly. Custom scan: user selects specific folders or files to scan. Useful for testing or scanning external drives. Memory scan: scans RAM for running malware, detects active threats. Real-time monitoring: continuously monitors file access and system changes, detecting threats immediately. Quarantine scan: checks quarantine folder for confirmed malware. Boot-time scan: runs before OS loads, catches rootkits and boot-sector malware. Email scan: checks email attachments. Network scan: monitors network traffic. Each scan type has different speed/thoroughness tradeoffs. Regular quick scans combined with occasional full scans provide good protection.",
+          "keywords": ["scan", "quick", "full", "custom", "types"],
+          "related": ["file_analysis", "real_time_protection"]
+        },
+        {
+          "id": "real_time_protection",
+          "question": "What is real-time protection?",
+          "answer": "Real-time protection continuously monitors file access and system changes, immediately scanning files as they're accessed or created. When a file is opened, downloaded, or executed, it's instantly scanned before reaching the system. Real-time monitoring also watches for suspicious behavior: process creation, registry changes, system modifications. If a threat is detected, access is blocked and the file is isolated. Advantages: immediate detection of new threats, prevents zero-day exploits from executing, minimal delay to user. Disadvantages: consumes system resources, slight performance impact. Real-time protection is essential for comprehensive security. Most modern antivirus provides real-time monitoring alongside on-demand scans. It catches threats that might be missed by periodic scans. Disabling real-time protection significantly increases infection risk.",
+          "keywords": ["real-time", "monitoring", "continuous", "protection", "behavior"],
+          "related": ["heuristic_detection", "scan_types"]
+        }
+      ]
+    },
+    "cybersecurity_prevention": {
+      "name": "Cybersecurity & Prevention",
+      "icon": "🔒",
+      "description": "Best practices and prevention strategies",
+      "topics": [
+        {
+          "id": "backup_strategy",
+          "question": "What is an effective backup strategy against ransomware?",
+          "answer": "Effective backup protects against ransomware by maintaining offline copies of data. Strategy: 1) Backup frequency: daily or continuous backups depending on data criticality. 2) Locations: maintain backups in multiple locations (local, external drive, cloud). 3) Offline backup: keep at least one backup completely disconnected from network to prevent encryption during attack. 4) Testing: regularly test backup restoration to ensure data integrity. 5) Versioning: maintain multiple backup versions (daily, weekly) to recover from older clean states. 6) Encryption: encrypt backups to protect confidential data. 7) Redundancy: 3-2-1 rule: 3 copies of data, 2 different storage media, 1 offsite location. Benefits: in ransomware attack, restore from clean backup without paying ransom. Backup alone doesn't prevent infection, but prevents data loss. Combined with other security measures, backups are crucial for ransomware resilience.",
+          "keywords": ["backup", "ransomware", "recovery", "offline", "redundancy"],
+          "related": ["ransomware", "incident_response"]
+        },
+        {
+          "id": "patch_management",
+          "question": "Why is patch management critical for security?",
+          "answer": "Patch management involves regularly updating software and operating systems to fix security vulnerabilities. Why critical: 1) Vulnerability fixes: patches close security holes that attackers exploit. 2) Zero-day protection: patches prevent exploitation of known but unpatched vulnerabilities. 3) Compliance: many regulations require timely patching. 4) Attack prevention: most breaches exploit known vulnerabilities with available patches. Statistics show most successful attacks target unpatched systems. Patch process: vendors release patches → test compatibility → deploy to systems → verify installation. Challenges: compatibility issues, testing overhead, user disruption from restarts. Best practices: enable automatic updates, prioritize critical patches, patch frequently used software first (browsers, office apps, OS). Delaying patches significantly increases breach risk. Modern systems can schedule updates during low-usage times to minimize disruption.",
+          "keywords": ["patch", "update", "vulnerability", "security", "fix"],
+          "related": ["vulnerability", "system_hardening"]
+        },
+        {
+          "id": "strong_passwords",
+          "question": "What makes a strong password?",
+          "answer": "Strong passwords are critical for account security. Characteristics of strong passwords: 1) Length: minimum 12 characters, ideally 16+. 2) Complexity: mix of uppercase, lowercase, numbers, symbols. 3) Randomness: avoid dictionary words, names, dates. 4) Uniqueness: different passwords for different accounts. 5) Unpredictable: not based on personal information (birthdate, name). Example weak passwords: '123456', 'password', 'abc123', 'qwerty'. These are cracked in seconds. Strong example: 'K9#mPx$2LqRw!nB'. Password management: use password managers (LastPass, 1Password, Bitwarden) to generate and store complex passwords securely. Multi-factor authentication (MFA): adds second verification layer. MFA combined with strong passwords provides robust account protection. Never reuse passwords. Change passwords if accounts are compromised.",
+          "keywords": ["password", "strong", "complexity", "authentication", "mfa"],
+          "related": ["mfa", "account_security"]
+        },
+        {
+          "id": "mfa",
+          "question": "What is multi-factor authentication and why is it important?",
+          "answer": "Multi-factor authentication (MFA) requires multiple verification methods to confirm identity, significantly improving account security. MFA types: 1) Something you know: password, PIN. 2) Something you have: phone, security key. 3) Something you are: fingerprint, face recognition. Common MFA methods: authenticator apps (Google Authenticator, Authy), SMS codes, hardware security keys (YubiKey), biometrics. Benefits: even if password is stolen, account remains protected. Statistics show MFA prevents 99.9% of account compromise attacks. Implementation: enable MFA on critical accounts first (email, banking, social media). MFA adds slight friction but massively improves security. Backup codes: save recovery codes if you lose MFA device. MFA is security best practice for sensitive accounts.",
+          "keywords": ["mfa", "two-factor", "authentication", "verification", "security"],
+          "related": ["strong_passwords", "account_security"]
+        },
+        {
+          "id": "phishing_awareness",
+          "question": "How do I identify and avoid phishing attacks?",
+          "answer": "Phishing is social engineering to trick users into revealing information or installing malware. Phishing signs: 1) Urgent language: 'act now!', 'verify account immediately'. 2) Suspicious sender: domain doesn't match company, strange email address. 3) Unusual requests: legitimate companies don't request passwords via email. 4) Suspicious links: hover over links to check actual destination before clicking. 5) Attachments: unexpected attachments, especially from unknown senders. 6) Poor grammar: professional companies proofread emails. 7) Generic greetings: 'Dear Customer' instead of your name. 8) Threats or rewards: 'account will be closed' or 'claim your prize'. Best practices: 1) Never click links in unsolicited emails. 2) Go directly to official websites. 3) Verify requests via phone. 4) Use email security. 5) Report phishing emails. 6) Enable MFA. Most data breaches start with phishing. User awareness is critical defense.",
+          "keywords": ["phishing", "social engineering", "scam", "email", "awareness"],
+          "related": ["malware_delivery", "user_training"]
+        },
+        {
+          "id": "firewall",
+          "question": "What does a firewall do?",
+          "answer": "A firewall is network security software/hardware that monitors and controls incoming and outgoing network traffic based on rules. Firewall functions: 1) Block unauthorized access: prevents unsolicited connections from internet. 2) Allow authorized traffic: permits legitimate business applications. 3) Log traffic: records network activity for analysis. 4) Detect intrusions: identifies suspicious patterns. Firewall types: Personal firewall (software on individual computer), Network firewall (hardware protecting entire network). Modern firewalls: Next-generation firewalls (NGFWs) understand application layer, detect advanced threats, perform deep packet inspection. Without firewalls: systems are exposed to internet attacks. With firewalls: attack surface is significantly reduced. Best practices: enable both OS firewall and router firewall, configure appropriate rules, regularly review rules. Firewalls are essential infrastructure for network security.",
+          "keywords": ["firewall", "network", "security", "traffic", "rules"],
+          "related": ["network_security", "intrusion_detection"]
+        },
+        {
+          "id": "user_training",
+          "question": "Why is security awareness training important?",
+          "answer": "Security awareness training educates users about security threats and best practices, significantly improving organizational security. Topics: phishing identification, password security, safe browsing, physical security, social engineering awareness. Benefits: reduces successful attacks (most breaches involve human error), improves incident response, meets compliance requirements, creates security culture. Training effectiveness: regular training (quarterly or annual), interactive simulations, real examples, consequences explanation. Phishing simulations: organizations test employees with fake phishing emails to identify weak points and provide targeted training. Surveys show trained employees are significantly more likely to report phishing and suspicious activity. User behavior is the strongest or weakest link in security. Training empowers users to be first line of defense.",
+          "keywords": ["training", "awareness", "education", "user", "security"],
+          "related": ["phishing_awareness", "incident_response"]
+        },
+        {
+          "id": "system_hardening",
+          "question": "What is system hardening?",
+          "answer": "System hardening reduces attack surface by minimizing vulnerabilities and restricting system functionality to essential services. Hardening techniques: 1) Disable unnecessary services: turn off unused features, services, ports. 2) Update regularly: apply security patches promptly. 3) Restrict permissions: principle of least privilege - users only have access they need. 4) Strong authentication: enable MFA, use strong passwords. 5) Firewall rules: restrict network access. 6) Antivirus: deploy and maintain security software. 7) System configuration: secure defaults, remove bloatware. 8) Monitoring: enable logging and alerting. Benefits: reduces exploitable vulnerabilities, improves performance, simplifies security management. Hardening is ongoing process as new vulnerabilities are discovered. Different systems require different hardening approaches (servers, workstations, IoT devices). Hardened systems are significantly more resistant to attacks.",
+          "keywords": ["hardening", "security", "configuration", "vulnerability", "minimization"],
+          "related": ["patch_management", "access_control"]
+        },
+        {
+          "id": "incident_response",
+          "question": "What should I do if malware is detected?",
+          "answer": "Incident response plan if malware is detected: 1) Don't panic: assess situation rationally. 2) Isolate: disconnect infected device from network to prevent spread. 3) Note details: screenshot errors, write down symptoms, timing. 4) Scan: run antivirus/malware scan, quarantine detected files. 5) Backup: save critical data if not infected. 6) Remove: follow removal instructions, may require safe mode boot. 7) Restore: use system restore if malware installed itself deeply. 8) Reinstall OS: worst-case if malware persists. 9) Report: inform IT department, management, or authorities if serious. 10) Learn: understand how infection happened to prevent future infections. Prevention of reinfection: enable backups, patch systems, train users, deploy security tools. For ransomware: isolate, don't pay, restore from backup, report to authorities. For credit card theft: contact bank, monitor accounts, change passwords.",
+          "keywords": ["incident", "response", "malware", "detection", "action"],
+          "related": ["ransomware", "backup_strategy"]
+        }
+      ]
+    }
+  }
+}
