@@ -1,0 +1,3186 @@
+[
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\api.js.quarantine",
+        "original_path": "D:\\SUMMER\\api.js.",
+        "timestamp": "2026-06-08 10:58:44",
+        "size": 2677,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\api.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\api.js_1.",
+        "timestamp": "2026-06-08 10:58:44",
+        "size": 2663,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\api.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\api.js_2.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 28054,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-index.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-index.js.",
+        "timestamp": "2026-06-08 10:58:44",
+        "size": 14766,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-index.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\app-index.js_1.",
+        "timestamp": "2026-06-08 10:58:44",
+        "size": 13505,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-experimental.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-experimental.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:45",
+        "size": 1561115,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-experimental.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-experimental.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:46",
+        "size": 616346,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-turbo-experimental.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-turbo-experimental.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:48",
+        "size": 1559991,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-turbo-experimental.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-turbo-experimental.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:49",
+        "size": 615979,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-turbo.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-turbo.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:50",
+        "size": 1539072,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page-turbo.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page-turbo.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:51",
+        "size": 607548,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:51",
+        "size": 1540170,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-page.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-page.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:53",
+        "size": 607915,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-experimental.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-experimental.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:55",
+        "size": 314394,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-experimental.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-experimental.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:55",
+        "size": 170720,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-turbo-experimental.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-turbo-experimental.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:56",
+        "size": 314475,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-turbo-experimental.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-turbo-experimental.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:56",
+        "size": 170762,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-turbo.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-turbo.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:56",
+        "size": 312445,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route-turbo.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route-turbo.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:56",
+        "size": 170061,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route.runtime.dev.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route.runtime.dev.js.",
+        "timestamp": "2026-06-08 10:58:57",
+        "size": 312364,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\app-route.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\app-route.runtime.prod.js.",
+        "timestamp": "2026-06-08 10:58:58",
+        "size": 170019,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ar.js.quarantine",
+        "original_path": "D:\\SUMMER\\ar.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5188,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\assembled_transaction.js.quarantine",
+        "original_path": "D:\\SUMMER\\assembled_transaction.js.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 41834,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\assembled_transaction.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\assembled_transaction.js_1.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 41834,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\assembled_transaction.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\assembled_transaction.js_2.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 41834,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\assembled_transaction.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\assembled_transaction.js_3.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 41834,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\atob-btoa.js.quarantine",
+        "original_path": "D:\\SUMMER\\atob-btoa.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 2029,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\axios.js.quarantine",
+        "original_path": "D:\\SUMMER\\axios.js.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 173306,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\axios.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\axios.js_1.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 131637,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\axios.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\axios.min.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 59583,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\axios.min.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\axios.min.js_1.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 43449,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\az.js.quarantine",
+        "original_path": "D:\\SUMMER\\az.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4511,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\base64-vlq.js.quarantine",
+        "original_path": "D:\\SUMMER\\base64-vlq.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 4714,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\base64.js.quarantine",
+        "original_path": "D:\\SUMMER\\base64.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 1540,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\base64js.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\base64js.min.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 2192,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\basic_node_signer.js.quarantine",
+        "original_path": "D:\\SUMMER\\basic_node_signer.js.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 5545,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\basic_node_signer.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\basic_node_signer.js_1.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 5545,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\basic_node_signer.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\basic_node_signer.js_2.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 5545,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\basic_node_signer.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\basic_node_signer.js_3.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 5545,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\be.js.quarantine",
+        "original_path": "D:\\SUMMER\\be.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6619,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\bg.js.quarantine",
+        "original_path": "D:\\SUMMER\\bg.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5785,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\binary.js.quarantine",
+        "original_path": "D:\\SUMMER\\binary.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 2912,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\blur.js.quarantine",
+        "original_path": "D:\\SUMMER\\blur.js.",
+        "timestamp": "2026-06-08 10:58:58",
+        "size": 2828,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\blur.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\blur.js_1.",
+        "timestamp": "2026-06-08 10:58:58",
+        "size": 2424,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\builder.js.quarantine",
+        "original_path": "D:\\SUMMER\\builder.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 24166,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\bundle.js.quarantine",
+        "original_path": "D:\\SUMMER\\bundle.js.",
+        "timestamp": "2026-06-08 10:59:03",
+        "size": 1364729,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\bundle.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\bundle.min.js.",
+        "timestamp": "2026-06-08 10:59:04",
+        "size": 516935,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\bundle5.js.quarantine",
+        "original_path": "D:\\SUMMER\\bundle5.js.",
+        "timestamp": "2026-06-08 10:59:06",
+        "size": 2582716,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ca.js.quarantine",
+        "original_path": "D:\\SUMMER\\ca.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4710,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\cache-store.js.quarantine",
+        "original_path": "D:\\SUMMER\\cache-store.js.",
+        "timestamp": "2026-06-08 10:59:06",
+        "size": 3593,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\cache-store.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\cache-store.js_1.",
+        "timestamp": "2026-06-08 10:59:06",
+        "size": 3742,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\captureDependency.js.quarantine",
+        "original_path": "D:\\SUMMER\\captureDependency.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 8186,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\challenge_transaction.js.quarantine",
+        "original_path": "D:\\SUMMER\\challenge_transaction.js.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 14917,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\challenge_transaction.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\challenge_transaction.js_1.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 14917,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\challenge_transaction.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\challenge_transaction.js_2.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 14917,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\challenge_transaction.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\challenge_transaction.js_3.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 14917,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\childContext.js.quarantine",
+        "original_path": "D:\\SUMMER\\childContext.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 7448,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\cli.js.quarantine",
+        "original_path": "D:\\SUMMER\\cli.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 15272,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js.quarantine",
+        "original_path": "D:\\SUMMER\\client.js.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 7042,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_1.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 15760,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_2.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 7042,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_3.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 15760,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_4.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_4.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 7042,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_5.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_5.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 15760,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_6.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_6.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 7042,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\client.js_7.quarantine",
+        "original_path": "D:\\SUMMER\\client.js_7.",
+        "timestamp": "2026-06-08 10:53:13",
+        "size": 15760,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\consistent-type-specifier-style.js.quarantine",
+        "original_path": "D:\\SUMMER\\consistent-type-specifier-style.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 30547,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\copilot-tool-output-1783589396417-2a337e0c.txt.quarantine",
+        "original_path": "D:\\SUMMER\\copilot-tool-output-1783589396417-2a337e0c.txt.",
+        "timestamp": "2026-07-09 17:29:57",
+        "size": 19948528,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\cs.js.quarantine",
+        "original_path": "D:\\SUMMER\\cs.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4772,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\da.js.quarantine",
+        "original_path": "D:\\SUMMER\\da.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4804,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\de.js.quarantine",
+        "original_path": "D:\\SUMMER\\de.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4588,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\debug-channel.js.quarantine",
+        "original_path": "D:\\SUMMER\\debug-channel.js.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 6505,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\debug-channel.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\debug-channel.js_1.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 5558,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\default.js.quarantine",
+        "original_path": "D:\\SUMMER\\default.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 4989,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\doc.js.quarantine",
+        "original_path": "D:\\SUMMER\\doc.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 8722,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\docsUrl.js.quarantine",
+        "original_path": "D:\\SUMMER\\docsUrl.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 1462,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\dom.js.quarantine",
+        "original_path": "D:\\SUMMER\\dom.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 98489,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\dynamic-import-chunkname.js.quarantine",
+        "original_path": "D:\\SUMMER\\dynamic-import-chunkname.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 21707,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\el.js.quarantine",
+        "original_path": "D:\\SUMMER\\el.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5544,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\en.js.quarantine",
+        "original_path": "D:\\SUMMER\\en.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4805,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\encryption-utils-server.js.quarantine",
+        "original_path": "D:\\SUMMER\\encryption-utils-server.js.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 4277,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\encryption-utils-server.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\encryption-utils-server.js_1.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 4823,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\enforce-node-protocol-usage.js.quarantine",
+        "original_path": "D:\\SUMMER\\enforce-node-protocol-usage.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 16956,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\entries.js.quarantine",
+        "original_path": "D:\\SUMMER\\entries.js.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 25398,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\entries.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\entries.js_1.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 23684,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\eo.js.quarantine",
+        "original_path": "D:\\SUMMER\\eo.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4603,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\es.js.quarantine",
+        "original_path": "D:\\SUMMER\\es.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5439,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\estimateDataURLDecodedBytes.js.quarantine",
+        "original_path": "D:\\SUMMER\\estimateDataURLDecodedBytes.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 2892,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\eval-source-map-dev-tool-plugin.js.quarantine",
+        "original_path": "D:\\SUMMER\\eval-source-map-dev-tool-plugin.js.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 10144,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\eval-source-map-dev-tool-plugin.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\eval-source-map-dev-tool-plugin.js_1.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 9951,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\eventsource-polyfill.js.quarantine",
+        "original_path": "D:\\SUMMER\\eventsource-polyfill.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 279669,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\export.js.quarantine",
+        "original_path": "D:\\SUMMER\\export.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 31409,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\exports-last.js.quarantine",
+        "original_path": "D:\\SUMMER\\exports-last.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 4321,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\extensions.js.quarantine",
+        "original_path": "D:\\SUMMER\\extensions.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 25824,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fa.js.quarantine",
+        "original_path": "D:\\SUMMER\\fa.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5131,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fee_bump_transaction.js.quarantine",
+        "original_path": "D:\\SUMMER\\fee_bump_transaction.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 7358,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fetch-api.js.quarantine",
+        "original_path": "D:\\SUMMER\\fetch-api.js.",
+        "timestamp": "2026-06-08 10:59:08",
+        "size": 1295,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fetch.js.quarantine",
+        "original_path": "D:\\SUMMER\\fetch.js.",
+        "timestamp": "2026-06-08 10:59:11",
+        "size": 796597,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fetch.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\fetch.js_1.",
+        "timestamp": "2026-06-08 10:59:11",
+        "size": 4199,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fi.js.quarantine",
+        "original_path": "D:\\SUMMER\\fi.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4818,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fileMock.js.quarantine",
+        "original_path": "D:\\SUMMER\\fileMock.js.",
+        "timestamp": "2026-06-08 10:59:11",
+        "size": 500,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\first.js.quarantine",
+        "original_path": "D:\\SUMMER\\first.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 20221,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fr-CA.js.quarantine",
+        "original_path": "D:\\SUMMER\\fr-CA.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4554,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fr.js.quarantine",
+        "original_path": "D:\\SUMMER\\fr.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5137,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\from-json-schema.js.quarantine",
+        "original_path": "D:\\SUMMER\\from-json-schema.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 24161,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\fromDataURI.js.quarantine",
+        "original_path": "D:\\SUMMER\\fromDataURI.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1834,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\getCssModuleLocalIdent.js.quarantine",
+        "original_path": "D:\\SUMMER\\getCssModuleLocalIdent.js.",
+        "timestamp": "2026-06-08 10:59:11",
+        "size": 1971,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\getCssModuleLocalIdent.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\getCssModuleLocalIdent.js_1.",
+        "timestamp": "2026-06-08 10:59:11",
+        "size": 1509,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\group-exports.js.quarantine",
+        "original_path": "D:\\SUMMER\\group-exports.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 16146,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\he.js.quarantine",
+        "original_path": "D:\\SUMMER\\he.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 12005,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\HermesParserWASM.js.quarantine",
+        "original_path": "D:\\SUMMER\\HermesParserWASM.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 678244,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hot-reloader-turbopack.js.quarantine",
+        "original_path": "D:\\SUMMER\\hot-reloader-turbopack.js.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 68365,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hot-reloader-turbopack.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\hot-reloader-turbopack.js_1.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 71651,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hot-reloader-webpack.js.quarantine",
+        "original_path": "D:\\SUMMER\\hot-reloader-webpack.js.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 70428,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hot-reloader-webpack.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\hot-reloader-webpack.js_1.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 74294,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hr.js.quarantine",
+        "original_path": "D:\\SUMMER\\hr.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5052,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\html.js.quarantine",
+        "original_path": "D:\\SUMMER\\html.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 12525,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\http.js.quarantine",
+        "original_path": "D:\\SUMMER\\http.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 44954,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\http.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\http.js_1.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 44954,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hu.js.quarantine",
+        "original_path": "D:\\SUMMER\\hu.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4696,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\hy.js.quarantine",
+        "original_path": "D:\\SUMMER\\hy.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6390,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\id.js.quarantine",
+        "original_path": "D:\\SUMMER\\id.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4577,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\image-optimizer.js.quarantine",
+        "original_path": "D:\\SUMMER\\image-optimizer.js.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 39094,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\image-optimizer.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\image-optimizer.js_1.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 42806,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\image.js.quarantine",
+        "original_path": "D:\\SUMMER\\image.js.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 39359,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\image.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\image.js_1.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 37994,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\import-meta-resolve.js.quarantine",
+        "original_path": "D:\\SUMMER\\import-meta-resolve.js.",
+        "timestamp": "2026-06-08 10:50:33",
+        "size": 41549,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\importDeclaration.js.quarantine",
+        "original_path": "D:\\SUMMER\\importDeclaration.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 1172,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\imports-first.js.quarantine",
+        "original_path": "D:\\SUMMER\\imports-first.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 1721,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\importType.js.quarantine",
+        "original_path": "D:\\SUMMER\\importType.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 16998,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.edge.js.quarantine",
+        "original_path": "D:\\SUMMER\\index.edge.js.",
+        "timestamp": "2026-06-08 10:59:12",
+        "size": 734446,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js.quarantine",
+        "original_path": "D:\\SUMMER\\index.js.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 9949,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_1.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 54817,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_10.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_10.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 11440,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_11.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_11.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 45132,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_12.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_12.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 3383,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_13.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_13.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 5643,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_14.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_14.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 5336,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_15.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_15.",
+        "timestamp": "2026-06-08 10:59:23",
+        "size": 815117,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_16.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_16.",
+        "timestamp": "2026-06-08 10:59:24",
+        "size": 265370,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_17.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_17.",
+        "timestamp": "2026-06-08 10:59:25",
+        "size": 27656,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_18.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_18.",
+        "timestamp": "2026-06-08 10:59:25",
+        "size": 25365,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_19.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_19.",
+        "timestamp": "2026-06-08 10:59:25",
+        "size": 6566,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_2.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 3932,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_20.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_20.",
+        "timestamp": "2026-06-08 10:59:27",
+        "size": 7858,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_21.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_21.",
+        "timestamp": "2026-06-08 10:59:28",
+        "size": 363603,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_22.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_22.",
+        "timestamp": "2026-06-08 10:59:31",
+        "size": 268299,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_23.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_23.",
+        "timestamp": "2026-06-08 10:59:31",
+        "size": 1064,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_24.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_24.",
+        "timestamp": "2026-06-08 10:59:34",
+        "size": 525805,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_25.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_25.",
+        "timestamp": "2026-06-08 10:59:34",
+        "size": 7418,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_26.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_26.",
+        "timestamp": "2026-06-08 10:59:34",
+        "size": 8314,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_27.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_27.",
+        "timestamp": "2026-06-08 10:59:36",
+        "size": 121053,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_28.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_28.",
+        "timestamp": "2026-06-08 10:59:36",
+        "size": 56279,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_29.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_29.",
+        "timestamp": "2026-06-08 10:59:36",
+        "size": 19909,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_3.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 58353,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_30.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_30.",
+        "timestamp": "2026-06-08 10:59:40",
+        "size": 745829,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_31.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_31.",
+        "timestamp": "2026-06-08 10:59:43",
+        "size": 291129,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_32.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_32.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 67383,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_33.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_33.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 49633,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_34.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_34.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 59643,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_35.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_35.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 24057,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_36.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_36.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 45840,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_37.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_37.",
+        "timestamp": "2026-06-08 10:59:48",
+        "size": 160652,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_38.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_38.",
+        "timestamp": "2026-06-08 10:59:49",
+        "size": 10923,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_39.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_39.",
+        "timestamp": "2026-06-08 10:59:49",
+        "size": 42844,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_4.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_4.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 6551,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_40.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_40.",
+        "timestamp": "2026-06-08 10:59:49",
+        "size": 3080,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_41.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_41.",
+        "timestamp": "2026-06-08 10:59:49",
+        "size": 5329,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_42.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_42.",
+        "timestamp": "2026-06-08 10:59:49",
+        "size": 4793,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_43.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_43.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 787977,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_44.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_44.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 186850,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_45.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_45.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 186850,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_5.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_5.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 14238,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_6.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_6.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 22268,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_7.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_7.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 1504,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_8.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_8.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 1254,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.js_9.quarantine",
+        "original_path": "D:\\SUMMER\\index.js_9.",
+        "timestamp": "2026-06-08 10:59:13",
+        "size": 168228,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\index.node.js.quarantine",
+        "original_path": "D:\\SUMMER\\index.node.js.",
+        "timestamp": "2026-06-08 10:59:59",
+        "size": 871434,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\injectStylesIntoStyleTag.js.quarantine",
+        "original_path": "D:\\SUMMER\\injectStylesIntoStyleTag.js.",
+        "timestamp": "2026-06-08 10:59:59",
+        "size": 7817,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\injectStylesIntoStyleTag.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\injectStylesIntoStyleTag.js_1.",
+        "timestamp": "2026-06-08 10:59:59",
+        "size": 7803,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\is.js.quarantine",
+        "original_path": "D:\\SUMMER\\is.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4635,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\it.js.quarantine",
+        "original_path": "D:\\SUMMER\\it.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4582,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ja.js.quarantine",
+        "original_path": "D:\\SUMMER\\ja.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4851,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\js-yaml.js.quarantine",
+        "original_path": "D:\\SUMMER\\js-yaml.js.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 114586,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ka.js.quarantine",
+        "original_path": "D:\\SUMMER\\ka.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6202,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\km.js.quarantine",
+        "original_path": "D:\\SUMMER\\km.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6242,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ko.js.quarantine",
+        "original_path": "D:\\SUMMER\\ko.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4929,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\launch-editor.js.quarantine",
+        "original_path": "D:\\SUMMER\\launch-editor.js.",
+        "timestamp": "2026-06-08 10:59:59",
+        "size": 24100,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\launch-editor.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\launch-editor.js_1.",
+        "timestamp": "2026-06-08 10:59:59",
+        "size": 25463,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\load.js.quarantine",
+        "original_path": "D:\\SUMMER\\load.js.",
+        "timestamp": "2026-06-08 11:00:00",
+        "size": 800754,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\lockfile.js.quarantine",
+        "original_path": "D:\\SUMMER\\lockfile.js.",
+        "timestamp": "2026-06-08 11:00:00",
+        "size": 9909,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\lockfile.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\lockfile.js_1.",
+        "timestamp": "2026-06-08 11:00:00",
+        "size": 9057,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\lt.js.quarantine",
+        "original_path": "D:\\SUMMER\\lt.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 8082,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\magic-string.cjs.js.quarantine",
+        "original_path": "D:\\SUMMER\\magic-string.cjs.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 38935,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\magic-string.umd.js.quarantine",
+        "original_path": "D:\\SUMMER\\magic-string.umd.js.",
+        "timestamp": "2026-06-08 10:50:28",
+        "size": 42936,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\map-generator.js.quarantine",
+        "original_path": "D:\\SUMMER\\map-generator.js.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 9575,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\map-generator.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\map-generator.js_1.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 10031,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\max-dependencies.js.quarantine",
+        "original_path": "D:\\SUMMER\\max-dependencies.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 6377,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\mcp.js.quarantine",
+        "original_path": "D:\\SUMMER\\mcp.js.",
+        "timestamp": "2026-06-08 11:00:01",
+        "size": 220427,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\mk.js.quarantine",
+        "original_path": "D:\\SUMMER\\mk.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5157,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ms.js.quarantine",
+        "original_path": "D:\\SUMMER\\ms.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4491,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\named.js.quarantine",
+        "original_path": "D:\\SUMMER\\named.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 17288,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\namespace.js.quarantine",
+        "original_path": "D:\\SUMMER\\namespace.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 5562,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\namespace.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\namespace.js_1.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 26990,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\newline-after-import.js.quarantine",
+        "original_path": "D:\\SUMMER\\newline-after-import.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 30544,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-edge-function-loader.js.quarantine",
+        "original_path": "D:\\SUMMER\\next-edge-function-loader.js.",
+        "timestamp": "2026-06-08 11:00:01",
+        "size": 2235,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-edge-function-loader.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\next-edge-function-loader.js_1.",
+        "timestamp": "2026-06-08 11:00:01",
+        "size": 1954,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-metadata-route-loader.js.quarantine",
+        "original_path": "D:\\SUMMER\\next-metadata-route-loader.js.",
+        "timestamp": "2026-06-08 11:00:02",
+        "size": 12218,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-metadata-route-loader.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\next-metadata-route-loader.js_1.",
+        "timestamp": "2026-06-08 11:00:02",
+        "size": 11473,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-middleware-loader.js.quarantine",
+        "original_path": "D:\\SUMMER\\next-middleware-loader.js.",
+        "timestamp": "2026-06-08 11:00:02",
+        "size": 2212,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\next-middleware-loader.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\next-middleware-loader.js_1.",
+        "timestamp": "2026-06-08 11:00:02",
+        "size": 1762,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\nl.js.quarantine",
+        "original_path": "D:\\SUMMER\\nl.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4762,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-absolute-path.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-absolute-path.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 5496,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-amd.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-amd.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 4878,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-anonymous-default-export.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-anonymous-default-export.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 12643,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-commonjs.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-commonjs.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 15350,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-cycle.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-cycle.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 27251,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-cycle.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\no-cycle.js_1.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 27251,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-default-export.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-default-export.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 6497,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-deprecated.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-deprecated.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 16909,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-duplicates.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-duplicates.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 58464,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-dynamic-require.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-dynamic-require.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 7310,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-empty-named-blocks.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-empty-named-blocks.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 15963,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-extraneous-dependencies.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-extraneous-dependencies.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 37850,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-import-module-exports.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-import-module-exports.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 12235,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-internal-modules.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-internal-modules.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 16508,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-mutable-exports.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-mutable-exports.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 7582,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-named-as-default-member.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-named-as-default-member.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 13051,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-named-as-default.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-named-as-default.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 11902,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-named-default.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-named-default.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 3559,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-named-export.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-named-export.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 4467,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-namespace.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-namespace.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 21782,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-nodejs-modules.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-nodejs-modules.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 4748,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-relative-packages.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-relative-packages.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 9729,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-relative-parent-imports.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-relative-parent-imports.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 6264,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-restricted-paths.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-restricted-paths.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 30709,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-self-import.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-self-import.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 4810,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-unassigned-import.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-unassigned-import.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 8988,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-unresolved.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-unresolved.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 7618,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-unused-modules.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-unused-modules.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 126125,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-useless-path-segments.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-useless-path-segments.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 20875,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no-webpack-loader-syntax.js.quarantine",
+        "original_path": "D:\\SUMMER\\no-webpack-loader-syntax.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 3235,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\no.js.quarantine",
+        "original_path": "D:\\SUMMER\\no.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4506,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_1krbvn5._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_1krbvn5._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 488052,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_1krbvn5._.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_1krbvn5._.js_1.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 488052,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_1krbvn5._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_1krbvn5._.js",
+        "timestamp": "2026-07-10 00:54:43",
+        "size": 488052,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_20v-8wl._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_20v-8wl._.js.",
+        "timestamp": "2026-06-08 11:07:04",
+        "size": 260982,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_20v-8wl._.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_20v-8wl._.js_1.",
+        "timestamp": "2026-06-08 11:07:04",
+        "size": 260982,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_20v-8wl._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\build\\chunks\\node_modules_20v-8wl._.js",
+        "timestamp": "2026-07-10 00:54:38",
+        "size": 260982,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-base_lib_1u7ngf7._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_@stellar_stellar-base_lib_1u7ngf7._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 916688,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-base_lib_1u7ngf7._.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_@stellar_stellar-base_lib_1u7ngf7._.js_1.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 916688,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-sdk_07d-67s._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_@stellar_stellar-sdk_07d-67s._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 651361,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-sdk_07d-67s._.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_@stellar_stellar-sdk_07d-67s._.js_1.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 651361,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-sdk_07d-67s._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_@stellar_stellar-sdk_07d-67s._.js",
+        "timestamp": "2026-07-10 00:54:57",
+        "size": 651361,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_@stellar_stellar-sdk_dist_stellar-sdk_min_1zl3me7.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_@stellar_stellar-sdk_dist_stellar-sdk_min_1zl3me7.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 2577642,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_axios_dist_node_axios_cjs_141zw24._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_axios_dist_node_axios_cjs_141zw24._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 207169,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_axios_dist_node_axios_cjs_141zw24._.js_1.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_axios_dist_node_axios_cjs_141zw24._.js",
+        "timestamp": "2026-07-10 00:55:14",
+        "size": 207169,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_1mjyqi-._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_1mjyqi-._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 983443,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_1mjyqi-._.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_1mjyqi-._.js_1.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 983443,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_1ybzpk2._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_1ybzpk2._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 248032,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_client_0r5nbpw._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_client_0r5nbpw._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 748194,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_compiled_next-devtools_index_090k2jm.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_compiled_next-devtools_index_090k2jm.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 746624,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_esm_1_kobm0._.js.quarantine",
+        "original_path": "D:\\SUMMER\\node_modules_next_dist_esm_1_kobm0._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 1004863,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\node_modules_next_dist_esm_1_kobm0._.js_1.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_next_dist_esm_1_kobm0._.js",
+        "timestamp": "2026-07-10 00:57:17",
+        "size": 1004863,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\normalize-file.js.quarantine",
+        "original_path": "D:\\SUMMER\\normalize-file.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 3400,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\order.js.quarantine",
+        "original_path": "D:\\SUMMER\\order.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 159561,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ota.js.quarantine",
+        "original_path": "D:\\SUMMER\\ota.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4525,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\packagePath.js.quarantine",
+        "original_path": "D:\\SUMMER\\packagePath.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 3408,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\packages-bundle.js.quarantine",
+        "original_path": "D:\\SUMMER\\packages-bundle.js.",
+        "timestamp": "2026-06-08 11:00:03",
+        "size": 1540183,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\parse.js.quarantine",
+        "original_path": "D:\\SUMMER\\parse.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 3065,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\parsers.js.quarantine",
+        "original_path": "D:\\SUMMER\\parsers.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 10097,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\parsers.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\parsers.js_1.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 10097,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\parsers.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\parsers.js_2.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 10097,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\parsers.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\parsers.js_3.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 10097,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\patch-fetch.js.quarantine",
+        "original_path": "D:\\SUMMER\\patch-fetch.js.",
+        "timestamp": "2026-06-08 11:00:04",
+        "size": 50404,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\patch-fetch.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\patch-fetch.js_1.",
+        "timestamp": "2026-06-08 11:00:04",
+        "size": 51533,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\patternCapture.js.quarantine",
+        "original_path": "D:\\SUMMER\\patternCapture.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 4131,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\pl.js.quarantine",
+        "original_path": "D:\\SUMMER\\pl.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4966,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\prefer-default-export.js.quarantine",
+        "original_path": "D:\\SUMMER\\prefer-default-export.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 12696,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\previous-map.js.quarantine",
+        "original_path": "D:\\SUMMER\\previous-map.js.",
+        "timestamp": "2026-06-08 10:58:41",
+        "size": 3923,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\previous-map.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\previous-map.js_1.",
+        "timestamp": "2026-06-08 10:50:30",
+        "size": 4508,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ps.js.quarantine",
+        "original_path": "D:\\SUMMER\\ps.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4909,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\pt.js.quarantine",
+        "original_path": "D:\\SUMMER\\pt.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4568,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-client.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-client.development.js.",
+        "timestamp": "2026-06-08 11:00:05",
+        "size": 1259231,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-profiling.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-profiling.development.js.",
+        "timestamp": "2026-06-08 11:00:06",
+        "size": 1275778,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server-legacy.browser.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server-legacy.browser.development.js.",
+        "timestamp": "2026-06-08 11:00:07",
+        "size": 423848,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server-legacy.browser.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server-legacy.browser.production.js.",
+        "timestamp": "2026-06-08 11:00:08",
+        "size": 259626,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server-legacy.node.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server-legacy.node.development.js.",
+        "timestamp": "2026-06-08 11:00:08",
+        "size": 423845,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server-legacy.node.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server-legacy.node.production.js.",
+        "timestamp": "2026-06-08 11:00:08",
+        "size": 265124,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server.bun.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server.bun.production.js.",
+        "timestamp": "2026-06-08 11:00:08",
+        "size": 289490,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server.edge.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server.edge.development.js.",
+        "timestamp": "2026-06-08 11:00:09",
+        "size": 455417,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server.edge.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server.edge.production.js.",
+        "timestamp": "2026-06-08 11:00:09",
+        "size": 295182,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server.node.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server.node.development.js.",
+        "timestamp": "2026-06-08 11:00:09",
+        "size": 461173,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-server.node.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-server.node.production.js.",
+        "timestamp": "2026-06-08 11:00:09",
+        "size": 302905,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-dom-unstable_testing.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-dom-unstable_testing.development.js.",
+        "timestamp": "2026-06-08 11:00:10",
+        "size": 1275776,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-refresh-babel.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-refresh-babel.development.js.",
+        "timestamp": "2026-06-08 11:00:10",
+        "size": 26821,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-refresh-babel.production.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-refresh-babel.production.min.js.",
+        "timestamp": "2026-06-08 11:00:10",
+        "size": 8122,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-turbopack-server.node.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-turbopack-server.node.development.js.",
+        "timestamp": "2026-06-08 11:00:12",
+        "size": 250842,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-turbopack-server.node.development.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-turbopack-server.node.development.js_1.",
+        "timestamp": "2026-06-08 11:00:11",
+        "size": 252932,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-turbopack-server.node.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-turbopack-server.node.production.js.",
+        "timestamp": "2026-06-08 11:00:12",
+        "size": 127514,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-turbopack-server.node.production.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-turbopack-server.node.production.js_1.",
+        "timestamp": "2026-06-08 11:00:12",
+        "size": 129308,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-webpack-server.node.development.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-webpack-server.node.development.js.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 250828,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-webpack-server.node.development.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-webpack-server.node.development.js_1.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 252918,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-webpack-server.node.production.js.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-webpack-server.node.production.js.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 127500,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\react-server-dom-webpack-server.node.production.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\react-server-dom-webpack-server.node.production.js_1.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 129294,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\regexes.js.quarantine",
+        "original_path": "D:\\SUMMER\\regexes.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 9078,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\remotePath.js.quarantine",
+        "original_path": "D:\\SUMMER\\remotePath.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 2425,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\report.js.quarantine",
+        "original_path": "D:\\SUMMER\\report.js.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 3718,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\resume-data-cache.js.quarantine",
+        "original_path": "D:\\SUMMER\\resume-data-cache.js.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 5220,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\resume-data-cache.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\resume-data-cache.js_1.",
+        "timestamp": "2026-06-08 11:00:13",
+        "size": 5272,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ro.js.quarantine",
+        "original_path": "D:\\SUMMER\\ro.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4774,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ru.js.quarantine",
+        "original_path": "D:\\SUMMER\\ru.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6714,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\scc.js.quarantine",
+        "original_path": "D:\\SUMMER\\scc.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 13176,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\schemas.js.quarantine",
+        "original_path": "D:\\SUMMER\\schemas.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 51378,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\schemas.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\schemas.js_1.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 83322,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\schemas.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\schemas.js_2.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 30860,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\sc_int.js.quarantine",
+        "original_path": "D:\\SUMMER\\sc_int.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 7840,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\segment-value-encoding.js.quarantine",
+        "original_path": "D:\\SUMMER\\segment-value-encoding.js.",
+        "timestamp": "2026-06-08 11:00:14",
+        "size": 3693,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\segment-value-encoding.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\segment-value-encoding.js_1.",
+        "timestamp": "2026-06-08 11:00:14",
+        "size": 4630,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js.quarantine",
+        "original_path": "D:\\SUMMER\\server.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 28252,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_1.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 28252,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_2.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 51924,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_3.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 28252,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_4.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_4.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 51924,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_5.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_5.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 28252,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_6.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_6.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 51924,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.js_7.quarantine",
+        "original_path": "D:\\SUMMER\\server.js_7.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 51924,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\server.runtime.prod.js.quarantine",
+        "original_path": "D:\\SUMMER\\server.runtime.prod.js.",
+        "timestamp": "2026-06-08 11:00:14",
+        "size": 205812,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\Setup Log 2026-07-08 #001.txt.quarantine",
+        "original_path": "D:\\SUMMER\\Setup Log 2026-07-08 #001.txt.",
+        "timestamp": "2026-07-08 22:44:35",
+        "size": 2826674,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\Setup Log 2026-07-09 #001.txt.quarantine",
+        "original_path": "D:\\SUMMER\\Setup Log 2026-07-09 #001.txt.",
+        "timestamp": "2026-07-09 03:36:04",
+        "size": 3454012,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\setup-dev-bundler.js.quarantine",
+        "original_path": "D:\\SUMMER\\setup-dev-bundler.js.",
+        "timestamp": "2026-06-08 11:00:14",
+        "size": 49399,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\setup-dev-bundler.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\setup-dev-bundler.js_1.",
+        "timestamp": "2026-06-08 11:00:14",
+        "size": 52836,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\sl.js.quarantine",
+        "original_path": "D:\\SUMMER\\sl.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4567,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\sorobandata_builder.js.quarantine",
+        "original_path": "D:\\SUMMER\\sorobandata_builder.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 8683,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-map-consumer.js.quarantine",
+        "original_path": "D:\\SUMMER\\source-map-consumer.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 41580,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-map-generator.js.quarantine",
+        "original_path": "D:\\SUMMER\\source-map-generator.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 14933,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-map.js.quarantine",
+        "original_path": "D:\\SUMMER\\source-map.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 32302,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-map.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\source-map.js_1.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 94078,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-maps.js.quarantine",
+        "original_path": "D:\\SUMMER\\source-maps.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 7928,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\source-maps.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\source-maps.js_1.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 8766,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\sourceType.js.quarantine",
+        "original_path": "D:\\SUMMER\\sourceType.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 1631,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\spec.js.quarantine",
+        "original_path": "D:\\SUMMER\\spec.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 40629,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\spec.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\spec.js_1.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 40629,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\spec.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\spec.js_2.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 40629,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\spec.js_3.quarantine",
+        "original_path": "D:\\SUMMER\\spec.js_3.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 40629,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\specifier.js.quarantine",
+        "original_path": "D:\\SUMMER\\specifier.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 4945,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\staticRequire.js.quarantine",
+        "original_path": "D:\\SUMMER\\staticRequire.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 1623,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-base.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-base.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 1303631,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-base.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-base.min.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 449252,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-minimal.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-minimal.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1372923,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-minimal.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-minimal.min.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 842474,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-no-axios.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-no-axios.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1718884,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-no-axios.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-no-axios.min.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 975455,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-no-eventsource.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-no-eventsource.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1467342,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk-no-eventsource.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk-no-eventsource.min.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 869423,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1813301,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\stellar-sdk.min.js.quarantine",
+        "original_path": "D:\\SUMMER\\stellar-sdk.min.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 1002386,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\streamableHttp.js.quarantine",
+        "original_path": "D:\\SUMMER\\streamableHttp.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 30226,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\string_decoder.js.quarantine",
+        "original_path": "D:\\SUMMER\\string_decoder.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 5533,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\struct_test.js.quarantine",
+        "original_path": "D:\\SUMMER\\struct_test.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 7478,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\subresource-integrity-plugin.js.quarantine",
+        "original_path": "D:\\SUMMER\\subresource-integrity-plugin.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 2653,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\subresource-integrity-plugin.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\subresource-integrity-plugin.js_1.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 2238,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\sv.js.quarantine",
+        "original_path": "D:\\SUMMER\\sv.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4663,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ta.js.quarantine",
+        "original_path": "D:\\SUMMER\\ta.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6369,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\th.js.quarantine",
+        "original_path": "D:\\SUMMER\\th.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 6290,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\toURLEncodedForm.js.quarantine",
+        "original_path": "D:\\SUMMER\\toURLEncodedForm.js.",
+        "timestamp": "2026-06-08 10:53:14",
+        "size": 542,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\tr.js.quarantine",
+        "original_path": "D:\\SUMMER\\tr.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4454,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\transaction.js.quarantine",
+        "original_path": "D:\\SUMMER\\transaction.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 14790,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\transaction_base.js.quarantine",
+        "original_path": "D:\\SUMMER\\transaction_base.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 8898,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\transaction_builder.js.quarantine",
+        "original_path": "D:\\SUMMER\\transaction_builder.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 45253,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\turbopack-_01_ro95._.js.quarantine",
+        "original_path": "D:\\SUMMER\\turbopack-_01_ro95._.js.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 92351,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\types.js.quarantine",
+        "original_path": "D:\\SUMMER\\types.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 131268,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\typescript.js.quarantine",
+        "original_path": "D:\\SUMMER\\typescript.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 5592,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\typescript.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\typescript.js_1.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 9112572,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\uk.js.quarantine",
+        "original_path": "D:\\SUMMER\\uk.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5430,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\unambiguous.js.quarantine",
+        "original_path": "D:\\SUMMER\\unambiguous.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 3534,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\ur.js.quarantine",
+        "original_path": "D:\\SUMMER\\ur.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 5271,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\use-flight-response.js.quarantine",
+        "original_path": "D:\\SUMMER\\use-flight-response.js.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 9158,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\use-flight-response.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\use-flight-response.js_1.",
+        "timestamp": "2026-06-08 11:00:15",
+        "size": 9284,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\util.js.quarantine",
+        "original_path": "D:\\SUMMER\\util.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 22018,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\utils.js.quarantine",
+        "original_path": "D:\\SUMMER\\utils.js.",
+        "timestamp": "2026-06-08 11:00:16",
+        "size": 3771,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\utils.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\utils.js_1.",
+        "timestamp": "2026-06-08 11:00:16",
+        "size": 2963,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\uz.js.quarantine",
+        "original_path": "D:\\SUMMER\\uz.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4739,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\vectors.js.quarantine",
+        "original_path": "D:\\SUMMER\\vectors.js.",
+        "timestamp": "2026-06-08 10:50:29",
+        "size": 1562,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\vi.js.quarantine",
+        "original_path": "D:\\SUMMER\\vi.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4772,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\visitor.js.quarantine",
+        "original_path": "D:\\SUMMER\\visitor.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 28650,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\xdr-type.js.quarantine",
+        "original_path": "D:\\SUMMER\\xdr-type.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 7563,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\xdr.js.quarantine",
+        "original_path": "D:\\SUMMER\\xdr.js.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 46966,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\xdr.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\xdr.js_1.",
+        "timestamp": "2026-06-08 10:50:32",
+        "size": 82697,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\yo.js.quarantine",
+        "original_path": "D:\\SUMMER\\yo.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4665,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\yo.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\yo.js_1.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4665,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\zh-CN.js.quarantine",
+        "original_path": "D:\\SUMMER\\zh-CN.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4452,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\zh-TW.js.quarantine",
+        "original_path": "D:\\SUMMER\\zh-TW.js.",
+        "timestamp": "2026-06-08 10:50:34",
+        "size": 4498,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\[turbopack]_runtime.js.quarantine",
+        "original_path": "D:\\SUMMER\\[turbopack]_runtime.js.",
+        "timestamp": "2026-06-08 11:07:04",
+        "size": 69002,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\[turbopack]_runtime.js_1.quarantine",
+        "original_path": "D:\\SUMMER\\[turbopack]_runtime.js_1.",
+        "timestamp": "2026-06-08 11:07:22",
+        "size": 69575,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\[turbopack]_runtime.js_2.quarantine",
+        "original_path": "D:\\SUMMER\\[turbopack]_runtime.js_2.",
+        "timestamp": "2026-06-08 11:07:04",
+        "size": 69002,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\[turbopack]_runtime.js_3.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\build\\chunks\\[turbopack]_runtime.js",
+        "timestamp": "2026-07-10 00:54:38",
+        "size": 69002,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\AYAWrus_10_07_26\\Quarantine\\_tsc.js.quarantine",
+        "original_path": "D:\\SUMMER\\_tsc.js.",
+        "timestamp": "2026-06-08 10:50:31",
+        "size": 6213092,
+        "result": "SUSPICIOUS",
+        "probability": null
+    }
+]

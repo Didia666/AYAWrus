@@ -1,0 +1,58 @@
+[
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\node_modules_20v-8wl._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\build\\chunks\\node_modules_20v-8wl._.js",
+        "timestamp": "2026-07-10 00:54:38",
+        "size": 260982,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\[turbopack]_runtime.js_3.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\build\\chunks\\[turbopack]_runtime.js",
+        "timestamp": "2026-07-10 00:54:38",
+        "size": 69002,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\node_modules_1krbvn5._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_1krbvn5._.js",
+        "timestamp": "2026-07-10 00:54:43",
+        "size": 488052,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\node_modules_@stellar_stellar-sdk_07d-67s._.js_2.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_@stellar_stellar-sdk_07d-67s._.js",
+        "timestamp": "2026-07-10 00:54:57",
+        "size": 651361,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\node_modules_axios_dist_node_axios_cjs_141zw24._.js_1.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_axios_dist_node_axios_cjs_141zw24._.js",
+        "timestamp": "2026-07-10 00:55:14",
+        "size": 207169,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\n ode_modules_next_dist_1mjyqi-._.js_1.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_next_dist_1mjyqi-._.js",
+        "timestamp": "2026-07-10 00:56:45",
+        "size": 983443,
+        "result": "SUSPICIOUS",
+        "probability": null
+    },
+    {
+        "dest_path": "D:\\SUMMER\\09_07_2026\\AYAWrus_09_07_26\\Quarantine\\node_modules_next_dist_esm_1_kobm0._.js_1.quarantine",
+        "original_path": "C:\\Users\\PLPASIG\\Downloads\\STELLAR\\StellarX-Workshop-PUP-May-2026\\web\\.next\\dev\\server\\chunks\\ssr\\node_modules_next_dist_esm_1_kobm0._.js",
+        "timestamp": "2026-07-10 00:57:17",
+        "size": 1004863,
+        "result": "SUSPICIOUS",
+        "probability": null
+    }
+]
