@@ -1,4 +1,15 @@
 Quarantine/
+
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+
+# virtual env
+venv/
+venv_old/
+.venv/
+
+# ML stuff
+*.pkl
+*.dat
