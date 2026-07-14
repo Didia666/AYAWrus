@@ -37,6 +37,21 @@ SCAN_TYPES = [
      "label_offset": 148, "subtitle_offset": 118, "subtitle_gap": 1},
 ]
 
+# Define malware detection steps with descriptions and icons
+DETECTION_STEPS = [
+    {"title": "File\nSelected", "icon": "search", "description": "Step 1: Target file is loaded and its path verified by the engine."},
+    {"title": "File Type\nVerification", "icon": "monitor_cog", "description": "Step 2: Magic bytes and extension analyzed. Confirms PE32/PE64 format."},
+    {"title": "PE Analysis", "icon": "chart_area", "description": "Step 3: Portable Executable headers, sections, imports, and entropy calculated."},
+    {"title": "Feature\nExtraction", "icon": "chart_bar", "description": "Step 4: 168 features extracted: API calls, section names, byte histograms, metadata."},
+    {"title": "Random\nForest AI", "icon": "shield_cog", "description": "Step 5: Feature vector evaluated by 200-tree ensemble model trained on labeled malware."},
+    {"title": "Prediction", "icon": "shield_check", "description": "Step 6: Model outputs class (Benign/Malicious) and confidence percentage."},
+    {"title": "Quarantine", "icon": "octagon_alert", "description": "Step 7: If malicious, file is isolated from the filesystem in the secure vault."}
+]
+
+SELECTED_STEP = 0
+g_icons = None  # Global variable to store icons for step card rebuilding
+g_step_elements = []  # List to store (step_card_tag, image_tag, text_tag) for each step
+
 def _card_theme(is_active):
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvChildWindow):
@@ -75,10 +90,16 @@ def scan_card(key, icon_texture, label, subtitle, label_offset, subtitle_offset,
     dpg.bind_item_theme(f"scan_{key}_card", _card_theme(is_active))
 
 def _handle_click(sender, app_data):
+    # First check for scan type card clicks
     for scan in SCAN_TYPES:
         tag = f"scan_{scan['key']}_card"
         if dpg.is_item_hovered(tag):
-            _select_scan(sender, app_data, scan["key"])
+            _select_scan(sender, app_data, scan['key'])
+            return
+    # Now check for step card clicks
+    for i, (step_tag, _, _) in enumerate(g_step_elements):
+        if dpg.is_item_hovered(step_tag):
+            _on_step_click(sender, app_data, i)
             return
 
 def _rebuild_custom_path_controls():
@@ -439,7 +460,86 @@ def _folder_picked(sender, app_data):
 def _center_spacer(item_width, container_width=CONTENT_WIDTH):
     return max(0, int((container_width - item_width) / 2))
 
+def _on_step_click(sender, app_data, user_data):
+    print(f"_on_step_click called with user_data: {user_data}")
+    global SELECTED_STEP
+    SELECTED_STEP = user_data
+    _update_step_description()
+
+def _build_step_cards(icons):
+    global g_step_elements
+    g_step_elements = []  # Reset step elements list
+    # Build all step cards inside steps_group
+    for i, step in enumerate(DETECTION_STEPS):
+        # Step card (child window) - perfect size!
+        card_width = 130
+        card_height = 115
+        icon_size = 32
+        step_tag = f"step_{i}"
+        is_active = i == SELECTED_STEP
+        with dpg.child_window(width=card_width, height=card_height, tag=step_tag, no_scrollbar=True, parent="steps_group"):
+            dpg.add_spacer(height=18)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=(card_width - icon_size) // 2)
+                # Store image tag
+                img_tag = f"step_img_{i}"
+                dpg.add_image(icons[step["icon"]], width=icon_size, height=icon_size, 
+                             tint_color=COLORS["accent_blue"] if is_active else COLORS["text_secondary"],
+                             tag=img_tag)
+            dpg.add_spacer(height=8)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=5)
+                # Store text tag
+                txt_tag = f"step_txt_{i}"
+                dpg.add_text(step["title"], color=COLORS["text_primary"] if is_active else COLORS["text_secondary"], 
+                            wrap=card_width - 10, tag=txt_tag)
+        
+        # Apply theme to step card
+        with dpg.theme() as step_theme:
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, COLORS["bg_card"] if is_active else COLORS["bg_sidebar"])
+                dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["accent_blue"] if is_active else COLORS["border"])
+        dpg.bind_item_theme(step_tag, step_theme)
+        
+        # Store the tags for later use
+        g_step_elements.append((step_tag, img_tag, txt_tag))
+        
+        # Add spacer + arrow between steps (except last one)
+        if i < len(DETECTION_STEPS) - 1:
+            dpg.add_spacer(width=10, parent="steps_group")
+            with dpg.group(parent="steps_group"):
+                dpg.add_spacer(height=40)  # Adjust this value to vertically center
+                dpg.add_text("->", color=COLORS["text_secondary"])
+            dpg.add_spacer(width=1, parent="steps_group")
+
+def _update_step_description():
+    print(f"_update_step_description called, SELECTED_STEP: {SELECTED_STEP}")
+    if dpg.does_item_exist("step_description_text"):
+        step = DETECTION_STEPS[SELECTED_STEP]
+        print(f"Setting description to: {step['description']}")
+        dpg.set_value("step_description_text", step["description"])
+    
+    # Update all step cards using configure_item (no glitching!)
+    for i, (step_tag, img_tag, txt_tag) in enumerate(g_step_elements):
+        is_active = i == SELECTED_STEP
+        # Update step card theme
+        with dpg.theme() as step_theme:
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, COLORS["bg_card"] if is_active else COLORS["bg_sidebar"])
+                dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["accent_blue"] if is_active else COLORS["border"])
+        dpg.bind_item_theme(step_tag, step_theme)
+        
+        # Update icon tint color
+        new_tint = COLORS["accent_blue"] if is_active else COLORS["text_secondary"]
+        dpg.configure_item(img_tag, tint_color=new_tint)
+        
+        # Update text color
+        new_color = COLORS["text_primary"] if is_active else COLORS["text_secondary"]
+        dpg.configure_item(txt_tag, color=new_color)
+
 def build_scan(parent, fonts, icons):
+    global g_icons
+    g_icons = icons  # Store icons in global variable for later use
     dpg.add_spacer(height=20, parent=parent)
     with dpg.handler_registry():
         dpg.add_mouse_click_handler(callback=_handle_click)
@@ -506,6 +606,29 @@ def build_scan(parent, fonts, icons):
                     pass
                 dpg.add_spacer(height=10)
                 dpg.add_button(label="Quarantine Selected", callback=_quarantine_selected, tag="quarantine_btn")
+
+            dpg.add_spacer(height=20)
+            # How It Works section - Detection Pipeline (like the photo)
+            with dpg.child_window(width=EMPTY_STATE_WIDTH, height=220, tag="how_it_works_container", no_scrollbar=True):
+                dpg.add_text("Detection Pipeline", color=COLORS["text_primary"])
+                dpg.bind_item_font(dpg.last_item(), fonts["heading"])
+                dpg.add_spacer(height=15)
+                
+                # Horizontal pipeline of steps
+                with dpg.group(horizontal=True, tag="steps_group"):
+                    _build_step_cards(icons)
+                
+                dpg.add_spacer(height=15)
+                # Description panel below - no scrollbar, no cut text!
+                with dpg.group(tag="step_description_panel"):
+                    # Add a border using a child window with minimal height that expands
+                    with dpg.child_window(width=-1, height=60, border=True, tag="step_description_child", no_scrollbar=True):
+                        dpg.add_spacer(height=10)
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=15)
+                            dpg.add_text(DETECTION_STEPS[0]["description"], color=COLORS["text_secondary"], 
+                                        wrap=EMPTY_STATE_WIDTH - 30, tag="step_description_text")
+                        dpg.add_spacer(height=10)
 
     with dpg.theme() as btn_theme:
         with dpg.theme_component(dpg.mvButton):

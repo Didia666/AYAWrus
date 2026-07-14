@@ -46975,5 +46975,47 @@
         "result": "SUSPICIOUS",
         "probability": null,
         "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-13 22:45:35",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\gimp-3.2.4-setup.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-13 22:46:04",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Git-2.49.0-64-bit.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-13 22:47:10",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\install.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-13 22:47:23",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\PT Installer 6.0.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-13 22:47:26",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\rustup-init.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-13 22:49:29",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Trae-Setup-x64.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
     }
 ]
