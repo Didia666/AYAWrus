@@ -4,6 +4,8 @@ import threading
 import time
 import sys
 import os
+import traceback
+from ui.activity_feed import _rebuild_activity_feed
 
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -136,19 +138,33 @@ def _quarantine_selected(sender, app_data):
             print(f"Quarantined {file_path}: {result}")
         except Exception as e:
             print(f"Error quarantining {file_path}: {e}")
-    # Remove quarantined items from list
     DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] not in SELECTED_QUARANTINE_ITEMS]
     SELECTED_QUARANTINE_ITEMS = set()
     _rebuild_threats_table()
-    # Refresh history
     from ui.history import _rebuild_history
     _rebuild_history()
+    _rebuild_activity_feed()
+
 
 def _open_xai_panel(sender, app_data, user_data):
     """Open the XAI explanation panel for the selected threat."""
+
     threat = user_data
-    # Create XAI panel window
-    with dpg.window(label="🎓 AI Explanation Panel", tag="xai_panel_window", width=800, height=700, pos=(200, 100), modal=True):
+
+    # If the panel already exists, delete it first
+    if dpg.does_item_exist("xai_panel_window"):
+        dpg.delete_item("xai_panel_window")
+
+    with dpg.window(
+        label="🎓 AI Explanation Panel",
+        tag="xai_panel_window",
+        width=800,
+        height=700,
+        pos=(200, 100),
+        modal=True,
+        on_close=lambda: dpg.delete_item("xai_panel_window")
+    ):
+
         with dpg.theme() as xai_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_WindowBg, COLORS["bg_card"])
@@ -157,14 +173,16 @@ def _open_xai_panel(sender, app_data, user_data):
                 dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
-        
+
         dpg.bind_item_theme("xai_panel_window", xai_theme)
-        
-        # Header
+
         dpg.add_text("🎓 AI Explanation Panel", color=COLORS["accent_blue"])
-        dpg.add_text(f"File: {os.path.basename(threat['file_path'])}", color=COLORS["text_secondary"])
+        dpg.add_text(
+            f"File: {os.path.basename(threat['file_path'])}",
+            color=COLORS["text_secondary"]
+        )
         dpg.add_spacer(height=10)
-        
+
         # Get XAI report (generate if not present)
         xai_report = threat.get("xai_report")
         if not xai_report and BACKEND_AVAILABLE:
@@ -183,21 +201,21 @@ def _open_xai_panel(sender, app_data, user_data):
                 )
             except Exception as e:
                 print(f"Failed to generate XAI report: {e}")
-        
+
         if xai_report:
             # Prediction info
             dpg.add_text("Prediction:", color=COLORS["accent_blue"])
             dpg.add_text(xai_report["prediction"], color=COLORS["text_primary"])
             dpg.add_spacer(height=5)
-            
+
             dpg.add_text("Confidence:", color=COLORS["accent_blue"])
             dpg.add_text(f"{xai_report['confidence']:.1f}%", color=COLORS["text_primary"])
             dpg.add_spacer(height=5)
-            
+
             dpg.add_text("Risk Level:", color=COLORS["accent_blue"])
             dpg.add_text(xai_report["risk_level"], color=COLORS["accent_orange"])
             dpg.add_spacer(height=10)
-            
+
             # Scan steps
             dpg.add_text("Scan Process Simulation:", color=COLORS["accent_blue"])
             dpg.add_separator()
@@ -206,7 +224,7 @@ def _open_xai_panel(sender, app_data, user_data):
                 dpg.add_text(f"   {step['description']}", color=COLORS["text_secondary"])
                 dpg.add_spacer(height=3)
             dpg.add_spacer(height=10)
-            
+
             # Suspicious characteristics
             if xai_report["suspicious_characteristics"]:
                 dpg.add_text("Detected Suspicious Characteristics:", color=COLORS["accent_blue"])
@@ -216,21 +234,21 @@ def _open_xai_panel(sender, app_data, user_data):
                     dpg.add_text(f"  {char['description']}", color=COLORS["text_secondary"])
                     dpg.add_spacer(height=3)
                 dpg.add_spacer(height=10)
-            
+
             # Detailed explanation
             dpg.add_text("Detailed Explanation:", color=COLORS["accent_blue"])
             dpg.add_separator()
             with dpg.child_window(height=150, width=-1, border=True):
                 dpg.add_text(xai_report["explanation"], wrap=750)
             dpg.add_spacer(height=10)
-            
+
             # Recommendations
             dpg.add_text("Recommended Actions:", color=COLORS["accent_blue"])
             dpg.add_separator()
             for rec in xai_report["recommendations"]:
                 dpg.add_text(f"→ {rec}")
             dpg.add_spacer(height=10)
-            
+
             # Learn Why section
             dpg.add_text("📚 Learn Why:", color=COLORS["accent_blue"])
             dpg.add_separator()
@@ -241,9 +259,17 @@ def _open_xai_panel(sender, app_data, user_data):
                     dpg.add_spacer(height=8)
         else:
             dpg.add_text("XAI explanation not available for this file.", color=COLORS["text_secondary"])
-        
-        dpg.add_spacer(height=10)
-        dpg.add_button(label="Close", width=100, callback=lambda: dpg.delete_item("xai_panel_window"))
+            dpg.add_spacer(height=10)
+
+        dpg.add_button(
+            label="Close",
+            width=100,
+            callback=lambda: (
+                dpg.delete_item("xai_panel_window")
+                if dpg.does_item_exist("xai_panel_window")
+                else None
+            )
+        )
 
 
 def _rebuild_threats_table():
@@ -255,17 +281,17 @@ def _rebuild_threats_table():
                       scrollY=True, height=220, width=-1,
                       tag="threats_table", parent="threats_container"):
             pass
-    
+
     if dpg.does_item_exist("threats_table"):
         dpg.delete_item("threats_table", children_only=True)
-        
+
         dpg.add_table_column(label="Select", width_stretch=False, init_width_or_weight=60, parent="threats_table")
         dpg.add_table_column(label="Explain", width_stretch=False, init_width_or_weight=90, parent="threats_table")
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=200, parent="threats_table")
         dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=350, parent="threats_table")
         dpg.add_table_column(label="Confidence", width_stretch=False, init_width_or_weight=100, parent="threats_table")
         dpg.add_table_column(label="Type", width_stretch=False, init_width_or_weight=100, parent="threats_table")
-        
+
         if not DETECTED_THREATS:
             with dpg.table_row(parent="threats_table"):
                 for _ in range(6):
@@ -304,33 +330,35 @@ def _update_scan_progress():
         SCAN_IN_PROGRESS = True
         DETECTED_THREATS = []
         SELECTED_QUARANTINE_ITEMS = set()
-        
+
         # Update UI state
-        dpg.set_value("scan_ready_heading", "Scanning...")
-        dpg.set_item_label("start_scan_btn", "Scanning...")
-        dpg.configure_item("start_scan_btn", enabled=False)
-        
-        if dpg.does_item_exist("scan_progress_container"):
-            dpg.delete_item("scan_progress_container", children_only=True)
-        
-            with dpg.group(parent="scan_progress_container"):
-                dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
-                dpg.add_spacer(height=20)
-                dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar")
-        
+        with dpg.mutex():
+            dpg.set_value("scan_ready_heading", "Scanning...")
+            dpg.set_item_label("start_scan_btn", "Scanning...")
+            dpg.configure_item("start_scan_btn", enabled=False)
+
+            if dpg.does_item_exist("scan_progress_container"):
+                dpg.delete_item("scan_progress_container", children_only=True)
+
+                with dpg.group(parent="scan_progress_container"):
+                    dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
+                    dpg.add_spacer(height=20)
+                    dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar")
+
         if not BACKEND_AVAILABLE:
             time.sleep(2)  # Simulate scan
-            dpg.set_value("scan_ready_heading", "Scan Complete!")
-            if dpg.does_item_exist("scan_status_text"):
-                dpg.set_value("scan_status_text", "Scan completed successfully! (Backend not loaded)")
-            if dpg.does_item_exist("scan_progress_bar"):
-                dpg.set_value("scan_progress_bar", 1.0)
+            with dpg.mutex():
+                dpg.set_value("scan_ready_heading", "Scan Complete!")
+                if dpg.does_item_exist("scan_status_text"):
+                    dpg.set_value("scan_status_text", "Scan completed successfully! (Backend not loaded)")
+                if dpg.does_item_exist("scan_progress_bar"):
+                    dpg.set_value("scan_progress_bar", 1.0)
         else:
             start_time = time.time()
             files_scanned = 0
             threats_found = 0
             files_to_scan = []
-            
+
             # Collect files to scan first
             if SELECTED_SCAN == "quick":
                 for folder in ms.QUICK_SCAN_DIRS:
@@ -340,7 +368,7 @@ def _update_scan_progress():
                                 file_path = os.path.join(root, file)
                                 if not ms.is_excluded(file_path):
                                     files_to_scan.append(file_path)
-            
+
             elif SELECTED_SCAN == "full":
                 for folder in ms.REGULAR_SCAN_DIRS:
                     if os.path.exists(folder):
@@ -356,7 +384,7 @@ def _update_scan_progress():
                                 file_path = os.path.join(root, file)
                                 if not ms.is_excluded(file_path):
                                     files_to_scan.append(file_path)
-            
+
             elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
                 if os.path.isfile(CURRENT_CUSTOM_PATH):
                     if not ms.is_excluded(CURRENT_CUSTOM_PATH):
@@ -367,28 +395,32 @@ def _update_scan_progress():
                             file_path = os.path.join(root, file)
                             if not ms.is_excluded(file_path):
                                 files_to_scan.append(file_path)
-            
+
             # Scan files
             total_files = len(files_to_scan)
             for i, file_path in enumerate(files_to_scan):
-                if dpg.does_item_exist("scan_status_text"):
-                    dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(file_path)}")
-                if dpg.does_item_exist("scan_progress_bar"):
-                    dpg.set_value("scan_progress_bar", (i + 1) / max(1, total_files))
-                
+                # Throttle UI updates to reduce mutex/lock churn on large scans
+                if i % 5 == 0 or i == total_files - 1:
+                    with dpg.mutex():
+                        if dpg.does_item_exist("scan_status_text"):
+                            dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(file_path)}")
+                        if dpg.does_item_exist("scan_progress_bar"):
+                            dpg.set_value("scan_progress_bar", (i + 1) / max(1, total_files))
+
                 result = ms.scan_file(file_path, auto_quarantine=False)
                 files_scanned += 1
                 if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
                     threats_found += 1
                     DETECTED_THREATS.append(result)
-            
+
             duration = time.time() - start_time
-            dpg.set_value("scan_ready_heading", "Scan Complete!")
-            if dpg.does_item_exist("scan_status_text"):
-                dpg.set_value("scan_status_text", f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found.")
-            if dpg.does_item_exist("scan_progress_bar"):
-                dpg.set_value("scan_progress_bar", 1.0)
-            
+            with dpg.mutex():
+                dpg.set_value("scan_ready_heading", "Scan Complete!")
+                if dpg.does_item_exist("scan_status_text"):
+                    dpg.set_value("scan_status_text", f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found.")
+                if dpg.does_item_exist("scan_progress_bar"):
+                    dpg.set_value("scan_progress_bar", 1.0)
+
             # Send Telegram notification
             if BACKEND_AVAILABLE:
                 try:
@@ -402,45 +434,53 @@ def _update_scan_progress():
                         ms.send_telegram_notification(msg)
                 except Exception as e:
                     print(f"Error sending Telegram notification: {e}")
-            
+
             # Show threats table if threats found
-            if dpg.does_item_exist("threats_container"):
-                dpg.show_item("threats_container")
-                _rebuild_threats_table()
-            
-            # Refresh history page after scan completes
+            with dpg.mutex():
+                if dpg.does_item_exist("threats_container"):
+                    dpg.show_item("threats_container")
+                    _rebuild_threats_table()
+
+            # Refresh history and activity feed after scan completes
             from ui.history import _rebuild_history
-            _rebuild_history()
-            
+            with dpg.mutex():
+                _rebuild_history()
+                _rebuild_activity_feed()
+
     except Exception as e:
-        dpg.set_value("scan_ready_heading", "Scan Failed")
-        if dpg.does_item_exist("scan_status_text"):
-            dpg.set_value("scan_status_text", f"Error: {str(e)}")
+        print("=" * 80)
+        traceback.print_exc()
+        print("=" * 80)
+
+        with dpg.mutex():
+            dpg.set_value("scan_ready_heading", "Scan Failed")
+            if dpg.does_item_exist("scan_status_text"):
+                dpg.set_value("scan_status_text", f"{type(e).__name__}: {e}")
+
     finally:
         SCAN_IN_PROGRESS = False
-        dpg.configure_item("start_scan_btn", enabled=True)
-        _update_start_button()
+        with dpg.mutex():
+            dpg.configure_item("start_scan_btn", enabled=True)
+            _update_start_button()
 
 def _start_scan(sender, app_data):
     if SCAN_IN_PROGRESS:
         return
-    
+
     if SELECTED_SCAN == "custom" and not CURRENT_CUSTOM_PATH:
         dpg.show_item("custom_scan_picker")
         return
-    
-    # Hide threats container when starting new scan
+
     if dpg.does_item_exist("threats_container"):
         dpg.hide_item("threats_container")
-    
-    # Reset state
+
     thread = threading.Thread(target=_update_scan_progress, daemon=True)
     thread.start()
 
 def _update_start_button():
     if SCAN_IN_PROGRESS:
         return
-    
+
     button_labels = {
         "quick": "Start Quick Scan",
         "full": "Start Full Scan",
@@ -483,7 +523,7 @@ def _build_step_cards(icons):
                 dpg.add_spacer(width=(card_width - icon_size) // 2)
                 # Store image tag
                 img_tag = f"step_img_{i}"
-                dpg.add_image(icons[step["icon"]], width=icon_size, height=icon_size, 
+                dpg.add_image(icons[step["icon"]], width=icon_size, height=icon_size,
                              tint_color=COLORS["accent_blue"] if is_active else COLORS["text_secondary"],
                              tag=img_tag)
             dpg.add_spacer(height=8)
@@ -491,19 +531,19 @@ def _build_step_cards(icons):
                 dpg.add_spacer(width=5)
                 # Store text tag
                 txt_tag = f"step_txt_{i}"
-                dpg.add_text(step["title"], color=COLORS["text_primary"] if is_active else COLORS["text_secondary"], 
+                dpg.add_text(step["title"], color=COLORS["text_primary"] if is_active else COLORS["text_secondary"],
                             wrap=card_width - 10, tag=txt_tag)
-        
+
         # Apply theme to step card
         with dpg.theme() as step_theme:
             with dpg.theme_component(dpg.mvChildWindow):
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, COLORS["bg_card"] if is_active else COLORS["bg_sidebar"])
                 dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["accent_blue"] if is_active else COLORS["border"])
         dpg.bind_item_theme(step_tag, step_theme)
-        
+
         # Store the tags for later use
         g_step_elements.append((step_tag, img_tag, txt_tag))
-        
+
         # Add spacer + arrow between steps (except last one)
         if i < len(DETECTION_STEPS) - 1:
             dpg.add_spacer(width=10, parent="steps_group")
@@ -518,7 +558,7 @@ def _update_step_description():
         step = DETECTION_STEPS[SELECTED_STEP]
         print(f"Setting description to: {step['description']}")
         dpg.set_value("step_description_text", step["description"])
-    
+
     # Update all step cards using configure_item (no glitching!)
     for i, (step_tag, img_tag, txt_tag) in enumerate(g_step_elements):
         is_active = i == SELECTED_STEP
@@ -528,11 +568,11 @@ def _update_step_description():
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, COLORS["bg_card"] if is_active else COLORS["bg_sidebar"])
                 dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["accent_blue"] if is_active else COLORS["border"])
         dpg.bind_item_theme(step_tag, step_theme)
-        
+
         # Update icon tint color
         new_tint = COLORS["accent_blue"] if is_active else COLORS["text_secondary"]
         dpg.configure_item(img_tag, tint_color=new_tint)
-        
+
         # Update text color
         new_color = COLORS["text_primary"] if is_active else COLORS["text_secondary"]
         dpg.configure_item(txt_tag, color=new_color)
@@ -593,7 +633,7 @@ def build_scan(parent, fonts, icons):
                     dpg.add_spacer(width=START_BUTTON_OFFSET)
                     dpg.add_button(label="Start Quick Scan", width=btn_width, height=36, tag="start_scan_btn", callback=_start_scan)
                 _rebuild_custom_path_controls()
-            
+
             dpg.add_spacer(height=20)
             # Threats container (initially hidden)
             with dpg.child_window(width=EMPTY_STATE_WIDTH, height=350, tag="threats_container", show=False, no_scrollbar=True):
@@ -613,11 +653,11 @@ def build_scan(parent, fonts, icons):
                 dpg.add_text("Detection Pipeline", color=COLORS["text_primary"])
                 dpg.bind_item_font(dpg.last_item(), fonts["heading"])
                 dpg.add_spacer(height=15)
-                
+
                 # Horizontal pipeline of steps
                 with dpg.group(horizontal=True, tag="steps_group"):
                     _build_step_cards(icons)
-                
+
                 dpg.add_spacer(height=15)
                 # Description panel below - no scrollbar, no cut text!
                 with dpg.group(tag="step_description_panel"):
@@ -626,7 +666,7 @@ def build_scan(parent, fonts, icons):
                         dpg.add_spacer(height=10)
                         with dpg.group(horizontal=True):
                             dpg.add_spacer(width=15)
-                            dpg.add_text(DETECTION_STEPS[0]["description"], color=COLORS["text_secondary"], 
+                            dpg.add_text(DETECTION_STEPS[0]["description"], color=COLORS["text_secondary"],
                                         wrap=EMPTY_STATE_WIDTH - 30, tag="step_description_text")
                         dpg.add_spacer(height=10)
 

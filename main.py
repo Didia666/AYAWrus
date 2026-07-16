@@ -1,4 +1,6 @@
 import dearpygui.dearpygui as dpg
+import traceback
+
 from ui.theme import apply_global_theme
 from ui.sidebar import build_sidebar
 from ui.dashboard import build_dashboard
@@ -42,8 +44,8 @@ with dpg.window(tag="primary_window", no_scrollbar=True):
 try: 
     from ui.cyberlearn_assistant_dpg import init_cyberlearn_for_dpg 
     init_cyberlearn_for_dpg() 
-except Exception as e: 
-    print(f"CyberLearn init failed: {e}")
+except Exception:
+    traceback.print_exc()
 
 dpg.create_viewport(
     title='AYAWrus',

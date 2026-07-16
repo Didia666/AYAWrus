@@ -25,9 +25,9 @@ def build_threat_chart(fonts, icons):
         threat_values = [0, 0, 0, 0, 0, 0, 0]
         x_values = list(range(len(days)))
 
-        # Get real data from history log
+        # Get real data from history log - limit to last 10000 entries to avoid huge load
         if BACKEND_AVAILABLE:
-            log = ms.load_log()
+            log = ms.load_log(limit=10000)
             today = datetime.now().date()
             for entry in log:
                 try:
