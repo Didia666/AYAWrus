@@ -260,11 +260,11 @@ def _rebuild_threats_table():
         dpg.delete_item("threats_table", children_only=True)
         
         dpg.add_table_column(label="Select", width_stretch=False, init_width_or_weight=60, parent="threats_table")
+        dpg.add_table_column(label="Explain", width_stretch=False, init_width_or_weight=90, parent="threats_table")
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=200, parent="threats_table")
         dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=350, parent="threats_table")
         dpg.add_table_column(label="Confidence", width_stretch=False, init_width_or_weight=100, parent="threats_table")
         dpg.add_table_column(label="Type", width_stretch=False, init_width_or_weight=100, parent="threats_table")
-        dpg.add_table_column(label="Action", width_stretch=False, init_width_or_weight=80, parent="threats_table")
         
         if not DETECTED_THREATS:
             with dpg.table_row(parent="threats_table"):
@@ -279,6 +279,8 @@ def _rebuild_threats_table():
                     # Checkbox
                     checked = threat["file_path"] in SELECTED_QUARANTINE_ITEMS
                     dpg.add_checkbox(default_value=checked, callback=_toggle_select_item, user_data=threat["file_path"])
+                    # Explain button placed in the first visible action column
+                    dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
                     # File name
                     dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"])
                     # Location
@@ -295,8 +297,6 @@ def _rebuild_threats_table():
                     # Type
                     type_color = COLORS["accent_red"] if threat["result"] == "MALICIOUS" else COLORS["accent_orange"]
                     dpg.add_text(threat["result"], color=type_color)
-                    # Explain button
-                    dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
 
 def _update_scan_progress():
     global SCAN_IN_PROGRESS, DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
@@ -565,8 +565,8 @@ def build_scan(parent, fonts, icons):
 
             dpg.add_spacer(height=CARD_GAP)
 
-            with dpg.child_window(width=EMPTY_STATE_WIDTH, height=450, tag="scan_empty_state", no_scrollbar=True):
-                dpg.add_spacer(height=115)
+            with dpg.child_window(width=EMPTY_STATE_WIDTH, height=260, tag="scan_empty_state", no_scrollbar=True):
+                dpg.add_spacer(height=20)
 
                 with dpg.group(horizontal=True):
                     dpg.add_spacer(width=_center_spacer(48))
@@ -609,7 +609,7 @@ def build_scan(parent, fonts, icons):
 
             dpg.add_spacer(height=20)
             # How It Works section - Detection Pipeline (like the photo)
-            with dpg.child_window(width=EMPTY_STATE_WIDTH, height=220, tag="how_it_works_container", no_scrollbar=True):
+            with dpg.child_window(width=EMPTY_STATE_WIDTH, height=240, tag="how_it_works_container", no_scrollbar=True):
                 dpg.add_text("Detection Pipeline", color=COLORS["text_primary"])
                 dpg.bind_item_font(dpg.last_item(), fonts["heading"])
                 dpg.add_spacer(height=15)
