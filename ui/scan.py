@@ -10,7 +10,11 @@ from ui.activity_feed import _rebuild_activity_feed
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
+    import quarantines.quarantine as qq
+    import config as cfg
+    import security.exclusions as se
     import Malware_System as ms
+    import notifications.telegram as tg
     BACKEND_AVAILABLE = True
 except Exception as e:
     print(f"Warning: Could not load Malware_System backend: {e}")
@@ -134,7 +138,7 @@ def _quarantine_selected(sender, app_data):
         return
     for file_path in SELECTED_QUARANTINE_ITEMS:
         try:
-            result = ms.quarantine_file(file_path)
+            result = qq.quarantine_file(file_path)
             print(f"Quarantined {file_path}: {result}")
         except Exception as e:
             print(f"Error quarantining {file_path}: {e}")
@@ -361,20 +365,20 @@ def _update_scan_progress():
 
             # Collect files to scan first
             if SELECTED_SCAN == "quick":
-                for folder in ms.QUICK_SCAN_DIRS:
+                for folder in cfg.QUICK_SCAN_DIRS:
                     if os.path.exists(folder):
                         for root, dirs, files in os.walk(folder):
                             for file in files:
                                 file_path = os.path.join(root, file)
-                                if not ms.is_excluded(file_path):
+                                if not se.is_excluded(file_path):
                                     files_to_scan.append(file_path)
 
             elif SELECTED_SCAN == "full":
-                for folder in ms.REGULAR_SCAN_DIRS:
+                for folder in cfg.REGULAR_SCAN_DIRS:
                     if os.path.exists(folder):
                         for root, dirs, files in os.walk(folder):
                             skip = False
-                            for skip_dir in ms.SKIP_DIRS:
+                            for skip_dir in cfg.SKIP_DIRS:
                                 if os.path.abspath(root).lower().startswith(os.path.abspath(skip_dir).lower()):
                                     skip = True
                                     break
@@ -382,18 +386,18 @@ def _update_scan_progress():
                                 continue
                             for file in files:
                                 file_path = os.path.join(root, file)
-                                if not ms.is_excluded(file_path):
+                                if not se.is_excluded(file_path):
                                     files_to_scan.append(file_path)
 
             elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
                 if os.path.isfile(CURRENT_CUSTOM_PATH):
-                    if not ms.is_excluded(CURRENT_CUSTOM_PATH):
+                    if not se.is_excluded(CURRENT_CUSTOM_PATH):
                         files_to_scan.append(CURRENT_CUSTOM_PATH)
                 elif os.path.isdir(CURRENT_CUSTOM_PATH):
                     for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
                         for file in files:
                             file_path = os.path.join(root, file)
-                            if not ms.is_excluded(file_path):
+                            if not se.is_excluded(file_path):
                                 files_to_scan.append(file_path)
 
             # Scan files
@@ -424,14 +428,14 @@ def _update_scan_progress():
             # Send Telegram notification
             if BACKEND_AVAILABLE:
                 try:
-                    config = ms.load_config()
+                    config = tg.load_config()
                     if config.get("telegram_bot_token") and config.get("telegram_chat_id"):
                         msg = (
                             f"🔍 Scan Complete!\n"
                             f"Scanned {files_scanned} files in {duration:.1f}s\n"
                             f"Threats found: {threats_found}"
                         )
-                        ms.send_telegram_notification(msg)
+                        tg.send_telegram_notification(msg)
                 except Exception as e:
                     print(f"Error sending Telegram notification: {e}")
 

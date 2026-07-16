@@ -6,7 +6,8 @@ import os
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import security.allowed as sa
+    import security.exclusions as se
     BACKEND_AVAILABLE = True
 except Exception as e:
     print(f"Warning: Could not load Malware_System backend: {e}")
@@ -21,16 +22,16 @@ def _add_exclusion(sender, app_data, user_data):
     path = dpg.get_value("exclusion_input").strip()
     if path:
         if BACKEND_AVAILABLE:
-            ms.add_exclusion(path)
+            se.add_exclusion(path)
         dpg.set_value("exclusion_input", "")
         _render_list()
 
 def _remove_exclusion(sender, app_data, user_data):
     index = user_data
     if BACKEND_AVAILABLE:
-        exclusions = ms.list_exclusions()
+        exclusions = se.list_exclusions()
         if index < len(exclusions):
-            ms.remove_exclusion(exclusions[index])
+            se.remove_exclusion(exclusions[index])
     _render_list()
 
 def _folder_picked(sender, app_data):
@@ -42,7 +43,7 @@ def _render_list():
     if dpg.does_item_exist("exclusions_count_text"):
         exclusions = []
         if BACKEND_AVAILABLE:
-            exclusions = ms.list_exclusions()
+            exclusions = se.list_exclusions()
         count = len(exclusions)
         dpg.set_value("exclusions_count_text", f"Current Exclusions ({count})")
     
@@ -51,7 +52,7 @@ def _render_list():
         
         exclusions = []
         if BACKEND_AVAILABLE:
-            exclusions = ms.list_exclusions()
+            exclusions = se.list_exclusions()
         
         for i, path in enumerate(exclusions):
             with dpg.child_window(width=CARD_WIDTH, height=ROW_HEIGHT, no_scrollbar=True,

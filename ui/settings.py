@@ -3,20 +3,20 @@ from ui.theme import COLORS
 import threading
 import sys
 import os
-
+import notifications.telegram as tg
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-try:
-    import Malware_System as ms
-    BACKEND_AVAILABLE = True
-except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
-    BACKEND_AVAILABLE = False
+# try:
+#     import Malware_System as ms
+#     BACKEND_AVAILABLE = True
+# except Exception as e:
+#     print(f"Warning: Could not load Malware_System backend: {e}")
+#     BACKEND_AVAILABLE = False
 
 
 def refresh_settings():
     """Refresh settings view"""
-    config = ms.load_config()
+    config = tg.load_config()
     if dpg.does_item_exist("telegram_token"):
         dpg.set_value("telegram_token", config.get("telegram_bot_token", ""))
     if dpg.does_item_exist("telegram_chat_id"):
@@ -30,7 +30,7 @@ def send_report_to_telegram():
     
     def send_in_thread():
         try:
-            success = ms.send_scan_report()
+            success = tg.send_scan_report()
             if dpg.does_item_exist("report_status"):
                 if success:
                     dpg.set_value("report_status", "Report sent!")
@@ -50,7 +50,7 @@ def save_settings():
         "telegram_bot_token": dpg.get_value("telegram_token"),
         "telegram_chat_id": dpg.get_value("telegram_chat_id")
     }
-    ms.save_config(config)
+    tg.save_config(config)
     if dpg.does_item_exist("settings_status"):
         dpg.set_value("settings_status", "Settings saved!")
 
@@ -115,7 +115,7 @@ def show_instruction_modal():
 def test_telegram():
     """Test Telegram notification"""
     save_settings()
-    success = ms.send_telegram_notification(
+    success = tg.send_telegram_notification(
         "[OK] Test Notification\n"
         "Your Telegram bot is configured correctly!"
     )
