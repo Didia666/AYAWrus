@@ -5167,7 +5167,7 @@
     },
     {
         "timestamp": "2026-07-16 20:28:16",
-        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\finals\\GradingSystemFinal\\packages\\Microsoft.Extensions.DependencyInjection.Abstractions.8.0.2\\lib\\net6.0\\Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "file_path": "C:\\Users\\PLPASIG\\DoWwnloads\\Group Project\\finals\\GradingSystemFinal\\packages\\Microsoft.Extensions.DependencyInjection.Abstractions.8.0.2\\lib\\net6.0\\Microsoft.Extensions.DependencyInjection.Abstractions.dll",
         "result": "ERROR",
         "probability": null,
         "details": "PE extraction failed: 'NoneType' object has no attribute 'feature_vector"
