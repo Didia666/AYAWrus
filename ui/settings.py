@@ -21,11 +21,6 @@ def refresh_settings():
         dpg.set_value("telegram_token", config.get("telegram_bot_token", ""))
     if dpg.does_item_exist("telegram_chat_id"):
         dpg.set_value("telegram_chat_id", config.get("telegram_chat_id", ""))
-    if dpg.does_item_exist("ai_api_url"):
-        dpg.set_value("ai_api_url", config.get("ai_api_url", ""))
-    # Do not pre-fill API key in UI for security, but allow editing if stored
-    if dpg.does_item_exist("ai_api_key"):
-        dpg.set_value("ai_api_key", config.get("ai_api_key", ""))
 
 
 def send_report_to_telegram():
@@ -53,14 +48,68 @@ def save_settings():
     """Save settings"""
     config = {
         "telegram_bot_token": dpg.get_value("telegram_token"),
-        "telegram_chat_id": dpg.get_value("telegram_chat_id"),
-        "ai_api_url": dpg.get_value("ai_api_url"),
-        # Store API key only if provided; empty string will remove it from config
-        "ai_api_key": dpg.get_value("ai_api_key")
+        "telegram_chat_id": dpg.get_value("telegram_chat_id")
     }
     ms.save_config(config)
     if dpg.does_item_exist("settings_status"):
         dpg.set_value("settings_status", "Settings saved!")
+
+
+def show_instruction_modal():
+    """Show instruction modal for getting Telegram bot token and chat ID"""
+    modal_tag = "telegram_instruction_modal"
+    if dpg.does_item_exist(modal_tag):
+        dpg.show_item(modal_tag)
+        dpg.focus_item(modal_tag)
+        return
+    
+    with dpg.window(label="Telegram Setup Instructions", tag=modal_tag, width=600, height=550, modal=True):
+        with dpg.theme() as modal_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_WindowBg, COLORS["bg_card"])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, COLORS["text_primary"])
+                dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["border"])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, COLORS["accent_blue"])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (76, 150, 246))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (46, 120, 236))
+                dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+        
+        dpg.bind_item_theme(modal_tag, modal_theme)
+        
+        dpg.add_text("📱 How to Get Telegram Bot Token & Chat ID", color=COLORS["accent_blue"])
+        dpg.add_spacer(height=10)
+        
+        with dpg.child_window(width=-1, height=400, border=True):
+            dpg.add_spacer(height=10)
+            
+            # Bot Token Instructions
+            dpg.add_text("Step 1: Get Bot Token", color=COLORS["text_primary"])
+            dpg.add_text("1. Open Telegram and search for @BotFather", color=COLORS["text_secondary"])
+            dpg.add_text("2. Start a chat with BotFather and send /newbot", color=COLORS["text_secondary"])
+            dpg.add_text("3. Follow the instructions to create your bot", color=COLORS["text_secondary"])
+            dpg.add_text("4. BotFather will give you a token (looks like 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11)", color=COLORS["text_secondary"])
+            dpg.add_spacer(height=15)
+            
+            # Chat ID Instructions
+            dpg.add_text("Step 2: Get Chat ID", color=COLORS["text_primary"])
+            dpg.add_text("1. Start a chat with your newly created bot", color=COLORS["text_secondary"])
+            dpg.add_text("2. Send any message to the bot", color=COLORS["text_secondary"])
+            dpg.add_text("3. Visit this URL in your browser (replace YOUR_BOT_TOKEN):", color=COLORS["text_secondary"])
+            dpg.add_text("   https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates", color=COLORS["accent_blue"])
+            dpg.add_text("4. Look for \"chat\":{\"id\":123456789...} in the response", color=COLORS["text_secondary"])
+            dpg.add_text("5. Copy that number as your Chat ID", color=COLORS["text_secondary"])
+            dpg.add_spacer(height=15)
+            
+            dpg.add_text("💡 Tips:", color=COLORS["text_primary"])
+            dpg.add_text("- Keep your bot token secret!", color=COLORS["text_secondary"])
+            dpg.add_text("- You can always get your token again from @BotFather with /mybots", color=COLORS["text_secondary"])
+            dpg.add_spacer(height=10)
+        
+        dpg.add_spacer(height=10)
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Close", width=100, height=36, callback=lambda: dpg.hide_item(modal_tag))
 
 
 def test_telegram():
@@ -85,7 +134,7 @@ def build_settings(parent, fonts, icons):
         with dpg.group():
             dpg.add_text("Settings", tag="settings_page_title")
             dpg.bind_item_font("settings_page_title", fonts["heading"])
-            dpg.add_text("Configure Telegram notifications and AI API", color=COLORS["text_secondary"])
+            dpg.add_text("Configure Telegram notifications", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
             
             # Telegram Settings
@@ -106,31 +155,12 @@ def build_settings(parent, fonts, icons):
                 dpg.add_spacer(height=10)
                 
                 with dpg.group(horizontal=True):
+                    dpg.add_button(label="Instruction", width=150, height=36, callback=show_instruction_modal)
                     dpg.add_button(label="Test Notification", width=150, height=36, callback=test_telegram)
                     dpg.add_button(label="Save Settings", width=150, height=36, callback=save_settings)
                 
                 dpg.add_spacer(height=10)
                 dpg.add_text("", tag="settings_status", color=COLORS["text_secondary"])
-                
-                dpg.add_separator()
-                dpg.add_spacer(height=15)
-                
-                # AI API Settings
-                dpg.add_text("AI API Configuration", color=COLORS["text_primary"])
-                dpg.add_spacer(height=5)
-                
-                with dpg.group():
-                    dpg.add_text("API URL:", color=COLORS["text_secondary"])
-                    dpg.add_input_text(tag="ai_api_url", width=-1, hint="Enter AI API URL (e.g., https://api.openai.com/v1)")
-                
-                dpg.add_spacer(height=10)
-                
-                with dpg.group():
-                    dpg.add_text("API Key:", color=COLORS["text_secondary"])
-                    dpg.add_input_text(tag="ai_api_key", width=-1, password=True, hint="Enter your API key")
-                
-                dpg.add_spacer(height=10)
-                dpg.add_button(label="Save API Settings", width=150, height=36, callback=save_settings)
                 
                 dpg.add_separator()
                 dpg.add_spacer(height=15)

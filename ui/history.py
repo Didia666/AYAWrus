@@ -70,7 +70,7 @@ def _history_row(entry, index, icons):
         dpg.add_text(timestamp, color=COLORS["text_secondary"],
                     pos=(ROW_WIDTH - DATE_COLUMN_WIDTH, 26))
 
-def _rebuild_history(icons=None):
+def _rebuild_history(icons=None, limit=50):
     global GLOBAL_ICONS
     if icons is not None:
         GLOBAL_ICONS = icons
@@ -84,7 +84,7 @@ def _rebuild_history(icons=None):
         
         entries = []
         if BACKEND_AVAILABLE:
-            entries = ms.load_log()
+            entries = ms.load_log(limit=limit)
             # Reverse to show newest first
             entries = list(reversed(entries))
         
@@ -92,10 +92,12 @@ def _rebuild_history(icons=None):
             with dpg.group(parent="history_group"):
                 dpg.add_text("No scan history yet", color=COLORS["text_secondary"])
         else:
-            for i, entry in enumerate(entries):
-                _history_row(entry, i, icons)
-                if i < len(entries) - 1:
-                    dpg.add_spacer(height=ROW_GAP, parent="history_group")
+            with dpg.group(parent="history_group"):
+                for i, entry in enumerate(entries):
+                    _history_row(entry, i, icons)
+
+                    if i < len(entries) - 1:
+                        dpg.add_spacer(height=ROW_GAP)  
 
 def build_history(parent, fonts, icons):
     global GLOBAL_ICONS
