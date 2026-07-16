@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import history.logs as hs
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning: Could not load history backend: {e}")
     BACKEND_AVAILABLE = False
 
 
@@ -27,7 +27,7 @@ def build_threat_chart(fonts, icons):
 
         # Get real data from history log - limit to last 10000 entries to avoid huge load
         if BACKEND_AVAILABLE:
-            log = ms.load_log(limit=10000)
+            log = hs.load_log(limit=10000)
             today = datetime.now().date()
             for entry in log:
                 try:

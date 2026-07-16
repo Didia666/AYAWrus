@@ -6,14 +6,13 @@ import threading
 import time
 import sys
 import os
-
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import history.logs as hs
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning: Could not load history backend: {e}")
     BACKEND_AVAILABLE = False
 
 CARD_GAP = 20
@@ -75,7 +74,7 @@ def build_dashboard(parent, fonts, icons):
             files_scanned = 0
             
             if BACKEND_AVAILABLE:
-                log = ms.load_log()
+                log = hs.load_log()
                 files_scanned = len(log)
                 
                 threats = [e for e in log if e.get("result") in ["MALICIOUS", "SUSPICIOUS"]]

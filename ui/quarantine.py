@@ -6,7 +6,7 @@ import os
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import quarantines.quarantine as qq
     BACKEND_AVAILABLE = True
 except Exception as e:
     print(f"Warning: Could not load Malware_System backend: {e}")
@@ -32,7 +32,7 @@ def _restore_file(sender, app_data, user_data):
     dest_path = user_data
     print(f"Restoring: {dest_path}")
     if BACKEND_AVAILABLE:
-        result = ms.restore_file(dest_path)
+        result = qq.restore_file(dest_path)
         print(f"Restore result: {result}")
     _rebuild_quarantine_table()
     # Refresh history
@@ -43,7 +43,7 @@ def _delete_file(sender, app_data, user_data):
     dest_path = user_data
     print(f"Deleting: {dest_path}")
     if BACKEND_AVAILABLE:
-        result = ms.delete_file(dest_path)
+        result = qq.delete_file(dest_path)
         print(f"Delete result: {result}")
     _rebuild_quarantine_table()
     # Refresh history
@@ -71,7 +71,7 @@ def _rebuild_quarantine_table():
         
         entries = []
         if BACKEND_AVAILABLE:
-            entries = ms.list_quarantine_items()
+            entries = qq.list_quarantine_items()
             print(f"Quarantine entries: {len(entries)}")
         
         if not entries:
