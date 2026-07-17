@@ -14,13 +14,14 @@ except ImportError:
 
 model = None
 selected_feature_indices = None
+expected_input_dim = None
 _model_loaded = False
 
 
 def _load_model_once():
     """Load model, extractor, and selected features exactly once, and only
     in the main process — worker processes never need the model."""
-    global model, selected_feature_indices, _model_loaded
+    global model, selected_feature_indices, expected_input_dim, _model_loaded
 
     if _model_loaded:
         return
@@ -38,8 +39,10 @@ def _load_model_once():
         try:
             sess = rt.InferenceSession("rf_ember_model.onnx")
             input_name = sess.get_inputs()[0].name
+            input_shape = sess.get_inputs()[0].shape
             label_name = sess.get_outputs()[0].name
             prob_name = sess.get_outputs()[1].name if len(sess.get_outputs()) > 1 else None
+            expected_input_dim = input_shape[1] if len(input_shape) > 1 and isinstance(input_shape[1], int) else None
 
             def predict_proba(x):
                 return sess.run([prob_name], {input_name: x.astype(np.float32)})[0]
@@ -50,7 +53,8 @@ def _load_model_once():
             model = type('', (), {})()
             model.predict_proba = predict_proba
             model.predict = predict
-            print("Loaded model from ONNX file")
+            model.expected_input_dim = expected_input_dim
+            print(f"Loaded model from ONNX file (expects {expected_input_dim} features)")
         except Exception as e:
             print(f"Failed to load ONNX model: {e}")
 
