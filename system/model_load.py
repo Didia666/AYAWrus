@@ -67,7 +67,5 @@ def _load_model_once():
 
     _model_loaded = True
 
-# Only load in the main process — spawned workers importing this module
-# will skip this entirely and stay lightweight.
-if multiprocessing.current_process().name == "MainProcess":
-    _load_model_once()
+# Load the model in all processes, including worker processes, so scan subprocesses can access it.
+_load_model_once()

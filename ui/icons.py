@@ -27,6 +27,7 @@ ICON_PATHS = {
     "lock": "assets/icons/lock.png",
     "refresh": "assets/icons/refresh-cw.png",
     "trash": "assets/icons/trash-2.png",
+    "logo": "assets/icons/ayawrus_logo.png",
 }
 
 def _whiten_icon(path):
@@ -54,6 +55,9 @@ def load_icons():
     textures = {}
     with dpg.texture_registry():
         for name, path in ICON_PATHS.items():
+            if not os.path.exists(path):
+                print(f"Warning [ui/icons.py]: icon file not found: {path}")
+                continue
             white_path = _whiten_icon(path)
             width, height, channels, data = dpg.load_image(white_path)
             texture_tag = dpg.add_static_texture(width, height, data, tag=f"tex_{name}")

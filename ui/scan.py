@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 from ui.theme import COLORS
+import multiprocessing
 import threading
 import time
 import sys
@@ -28,6 +29,8 @@ CARD_GAP = 20
 CONTENT_WIDTH = 400 * 3 + CARD_GAP * 2  # 1240 — shared by cards row and empty-state container
 SELECTED_SCAN = "quick"
 SCAN_IN_PROGRESS = False
+SCAN_CANCEL_REQUESTED = False
+SCAN_PROCESS = None
 CURRENT_CUSTOM_PATH = ""
 DETECTED_THREATS = []
 SELECTED_QUARANTINE_ITEMS = set()
@@ -94,6 +97,14 @@ def scan_card(key, icon_texture, label, subtitle, label_offset, subtitle_offset,
         with dpg.group(horizontal=True):
             dpg.add_spacer(width=subtitle_offset)
             dpg.add_text(subtitle, color=COLORS["text_secondary"])
+
+
+def _scan_file_worker(file_path, queue):
+    try:
+        result = sf.scan_file(file_path, auto_quarantine=False)
+        queue.put(result)
+    except Exception as e:
+        queue.put({"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)})
 
     dpg.bind_item_theme(f"scan_{key}_card", _card_theme(is_active))
 
@@ -333,9 +344,10 @@ def _rebuild_threats_table():
                     dpg.add_text(threat["result"], color=type_color)
 
 def _update_scan_progress():
-    global SCAN_IN_PROGRESS, DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
+    global SCAN_IN_PROGRESS, DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS, SCAN_CANCEL_REQUESTED
     try:
         SCAN_IN_PROGRESS = True
+        SCAN_CANCEL_REQUESTED = False
         DETECTED_THREATS = []
         SELECTED_QUARANTINE_ITEMS = set()
         # Clear global lists from config to prevent memory leak
@@ -357,6 +369,8 @@ def _update_scan_progress():
                     dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar")
                     dpg.add_spacer(height=6)
                     dpg.add_text("Elapsed: 0.0s", color=COLORS["text_secondary"], tag="scan_elapsed_time")
+                    dpg.add_spacer(height=4)
+                    dpg.add_text("Threats found: 0", color=COLORS["text_secondary"], tag="scan_threat_count")
 
         if not BACKEND_AVAILABLE:
             time.sleep(2)  # Simulate scan
@@ -376,6 +390,8 @@ def _update_scan_progress():
             # Scan files as they are discovered, with dynamic estimated progress
             def scan_path(path):
                 nonlocal files_scanned, threats_found, estimated_total, last_ui_update
+                if SCAN_CANCEL_REQUESTED:
+                    return
                 if not se.is_excluded(path):
                     try:
                         # Skip very large files to prevent hanging (adjust limit as needed)
@@ -383,32 +399,72 @@ def _update_scan_progress():
                             file_size = os.path.getsize(path)
                             # Skip files larger than 500MB (adjust limit as needed)
                             if file_size > 500 * 1024 * 1024:
-                                files_scanned +=1
+                                files_scanned += 1
                                 return
-                        except Exception as e:
+                        except Exception:
                             pass  # If we can't get size, continue
-                        
-                        result = sf.scan_file(path, auto_quarantine=False)
+
+                        queue = multiprocessing.Queue()
+                        process = multiprocessing.Process(target=_scan_file_worker, args=(path, queue), daemon=True)
+                        process.start()
+                        global SCAN_PROCESS
+                        SCAN_PROCESS = process
+
+                        while process.is_alive():
+                            if SCAN_CANCEL_REQUESTED:
+                                process.terminate()
+                                process.join(timeout=1)
+                                break
+                            current_time = time.time()
+                            if current_time - last_ui_update > 0.2:
+                                estimated_total = max(estimated_total, files_scanned + 100)
+                                progress = min(0.99, files_scanned / max(1, estimated_total))
+                                if dpg.does_item_exist("scan_status_text"):
+                                    dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
+                                if dpg.does_item_exist("scan_progress_bar"):
+                                    dpg.set_value("scan_progress_bar", progress)
+                                if dpg.does_item_exist("scan_elapsed_time"):
+                                    dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
+                                last_ui_update = current_time
+                            time.sleep(0.05)
+
+                        current_time = time.time()
+                        if dpg.does_item_exist("scan_elapsed_time"):
+                            dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
+
+                        if SCAN_CANCEL_REQUESTED:
+                            return
+
+                        result = {
+                            "result": "ERROR",
+                            "probability": 0,
+                            "file_path": path,
+                            "details": "Scan process terminated"
+                        }
+                        if not queue.empty():
+                            result = queue.get()
                         files_scanned += 1
-                        
+
                         if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
                             threats_found += 1
                             DETECTED_THREATS.append(result)
-                        
+                            if dpg.does_item_exist("scan_threat_count"):
+                                dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
+
                         current_time = time.time()
                         if current_time - last_ui_update > 0.2:
                             estimated_total = max(estimated_total, files_scanned + 100)
                             progress = min(0.99, files_scanned / max(1, estimated_total))
-                            
                             if dpg.does_item_exist("scan_status_text"):
                                 dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
                             if dpg.does_item_exist("scan_progress_bar"):
                                 dpg.set_value("scan_progress_bar", progress)
-                            
+                            if dpg.does_item_exist("scan_elapsed_time"):
+                                dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
                             last_ui_update = current_time
                     except Exception as e:
                         print(f"Error scanning file {path}: {e}")
-                        files_scanned +=1
+                        files_scanned += 1
 
             if SELECTED_SCAN == "quick":
                 for folder in cfg.QUICK_SCAN_DIRS:
@@ -416,6 +472,12 @@ def _update_scan_progress():
                         for root, dirs, files in os.walk(folder):
                             for file in files:
                                 scan_path(os.path.join(root, file))
+                                if SCAN_CANCEL_REQUESTED:
+                                    break
+                            if SCAN_CANCEL_REQUESTED:
+                                break
+                    if SCAN_CANCEL_REQUESTED:
+                        break
 
             elif SELECTED_SCAN == "full":
                 for folder in cfg.REGULAR_SCAN_DIRS:
@@ -430,6 +492,12 @@ def _update_scan_progress():
                                 continue
                             for file in files:
                                 scan_path(os.path.join(root, file))
+                                if SCAN_CANCEL_REQUESTED:
+                                    break
+                            if SCAN_CANCEL_REQUESTED:
+                                break
+                    if SCAN_CANCEL_REQUESTED:
+                        break
 
             elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
                 if os.path.isfile(CURRENT_CUSTOM_PATH):
@@ -438,6 +506,10 @@ def _update_scan_progress():
                     for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
                         for file in files:
                             scan_path(os.path.join(root, file))
+                            if SCAN_CANCEL_REQUESTED:
+                                break
+                        if SCAN_CANCEL_REQUESTED:
+                            break
 
             duration = time.time() - start_time
             with dpg.mutex():
@@ -448,6 +520,8 @@ def _update_scan_progress():
                     dpg.set_value("scan_progress_bar", 1.0)
                 if dpg.does_item_exist("scan_elapsed_time"):
                     dpg.set_value("scan_elapsed_time", f"Elapsed: {duration:.1f}s")
+                if dpg.does_item_exist("scan_threat_count"):
+                    dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
 
             # Send Telegram notification
             if BACKEND_AVAILABLE:
@@ -490,6 +564,8 @@ def _update_scan_progress():
         SCAN_IN_PROGRESS = False
         with dpg.mutex():
             dpg.configure_item("start_scan_btn", enabled=True)
+            if dpg.does_item_exist("cancel_scan_btn"):
+                dpg.configure_item("cancel_scan_btn", enabled=False)
             _update_start_button()
 
 def _start_scan(sender, app_data):
@@ -507,6 +583,8 @@ def _start_scan(sender, app_data):
         dpg.set_value("scan_ready_heading", "Scanning...")
         dpg.set_item_label("start_scan_btn", "Scanning...")
         dpg.configure_item("start_scan_btn", enabled=False)
+        if dpg.does_item_exist("cancel_scan_btn"):
+            dpg.configure_item("cancel_scan_btn", enabled=True)
 
         if dpg.does_item_exist("scan_progress_container"):
             dpg.delete_item("scan_progress_container", children_only=True)
@@ -514,9 +592,25 @@ def _start_scan(sender, app_data):
                 dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
                 dpg.add_spacer(height=20)
                 dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar", default_value=0.0)
+                dpg.add_spacer(height=6)
+                dpg.add_text("Elapsed: 0.0s", color=COLORS["text_secondary"], tag="scan_elapsed_time")
+                dpg.add_spacer(height=4)
+                dpg.add_text("Threats found: 0", color=COLORS["text_secondary"], tag="scan_threat_count")
 
+    global SCAN_CANCEL_REQUESTED
+    SCAN_CANCEL_REQUESTED = False
     thread = threading.Thread(target=_update_scan_progress, daemon=True)
     thread.start()
+
+def _cancel_scan(sender, app_data):
+    global SCAN_CANCEL_REQUESTED
+    SCAN_CANCEL_REQUESTED = True
+    with dpg.mutex():
+        if dpg.does_item_exist("scan_status_text"):
+            dpg.set_value("scan_status_text", "Cancel requested. Finishing current file...")
+        if dpg.does_item_exist("cancel_scan_btn"):
+            dpg.configure_item("cancel_scan_btn", enabled=False)
+
 
 def _update_start_button():
     if SCAN_IN_PROGRESS:
@@ -673,6 +767,8 @@ def build_scan(parent, fonts, icons):
                 with dpg.group(horizontal=True, tag="scan_button_group"):
                     dpg.add_spacer(width=START_BUTTON_OFFSET)
                     dpg.add_button(label="Start Quick Scan", width=btn_width, height=36, tag="start_scan_btn", callback=_start_scan)
+                    dpg.add_spacer(width=10)
+                    dpg.add_button(label="Cancel Scan", width=btn_width, height=36, tag="cancel_scan_btn", callback=_cancel_scan, enabled=False)
                 _rebuild_custom_path_controls()
 
             dpg.add_spacer(height=20)
