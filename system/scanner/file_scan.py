@@ -6,7 +6,7 @@ from system.security.exclusions import is_excluded
 from system.security.allowed import allow_threat
 from system.scanner.extractor import get_extractor
 from system.history.logs import add_log_entry
-from system.model_load import model, selected_feature_indices
+from system.model_load import model, selected_feature_indices, expected_input_dim
 from system.quarantines.quarantine import quarantine_file
 from system.utils.utility import categorize_threat
 from system.notifications import send_telegram_notification
@@ -42,6 +42,27 @@ def classify_file(file_path):
         return ("script", header, file_size)
 
     return ("skip", None, file_size)
+
+def _prepare_model_features(features):
+    X = np.asarray(features, dtype=np.float32)
+    if X.ndim == 1:
+        X = X.reshape(1, -1)
+
+    if selected_feature_indices is not None:
+        if X.shape[1] > selected_feature_indices.max():
+            X = X[:, selected_feature_indices]
+        else:
+            raise ValueError(f"Feature vector too short ({X.shape[1]}) for selected indices")
+
+    expected_dim = getattr(model, "expected_input_dim", expected_input_dim)
+    if expected_dim is not None:
+        if X.shape[1] > expected_dim:
+            X = X[:, :expected_dim]
+        elif X.shape[1] < expected_dim:
+            X = np.pad(X, ((0, 0), (0, expected_dim - X.shape[1])), mode="constant")
+
+    return X
+
 
 def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
     extractor = get_extractor()   #
@@ -81,16 +102,17 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         add_log_entry(file_path, result="UNKNOWN", details="Model not loaded")
         return {"result": "UNKNOWN", "probability": 0, "file_path": file_path, "details": "Model not available"}
     
-    # Convert to numpy array
-    X = np.array(features).reshape(1, -1)
-    if selected_feature_indices is not None:
-        if X.shape[1] > selected_feature_indices.max():
-            X = X[:, selected_feature_indices]
-        else:
-            add_log_entry(file_path, result="ERROR",
-                        details=f"Feature vector too short ({X.shape[1]}) for selected indices")
-            return {"result": "ERROR", "probability": 0, "file_path": file_path,
-                    "details": "Feature schema mismatch — extractor/model version drift"}
+    try:
+        X = _prepare_model_features(features)
+    except ValueError as e:
+        add_log_entry(file_path, result="ERROR", details=str(e))
+        return {"result": "ERROR", "probability": 0, "file_path": file_path,
+                "details": "Feature schema mismatch — extractor/model version drift"}
+
+    if X.shape[1] != getattr(model, "expected_input_dim", expected_input_dim or X.shape[1]):
+        add_log_entry(file_path, result="ERROR", details=f"Feature vector shape mismatch ({X.shape[1]})")
+        return {"result": "ERROR", "probability": 0, "file_path": file_path,
+                "details": "Feature schema mismatch — extractor/model version drift"}
 
     # Predict malware probability
     try:
