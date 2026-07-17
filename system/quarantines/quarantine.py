@@ -41,7 +41,26 @@ def quarantine_file(file_path):
         # Move file to quarantine if it exists at original location!
         if os.path.exists(file_path):
             print(f"Moving {file_path} to {dest_path}")
-            shutil.move(file_path, dest_path)
+
+            print("Source exists:", os.path.exists(file_path))
+            print("Destination exists before move:", os.path.exists(dest_path))
+
+            new_path = shutil.move(file_path, dest_path)
+            
+            print("shutil.move returned:", new_path)
+            print("Destination exists after move:", os.path.exists(dest_path))
+            print("Source exists after move:", os.path.exists(file_path))
+
+            # Verify the move actually happened
+            if os.path.exists(file_path):
+                raise RuntimeError(
+                    f"File still exists at original location after move: {file_path}"
+                )
+
+            if not os.path.exists(dest_path):
+                raise RuntimeError(
+                    f"File was not found in quarantine after move: {dest_path}"
+                )
         else:
             # Check if file is already in quarantine (maybe from auto scan)
             possible_quarantined_files = os.listdir(QUARANTINE_DIR) if os.path.exists(QUARANTINE_DIR) else []
@@ -159,20 +178,26 @@ def restore_file(dest_path):
             
             try:
                 os.makedirs(os.path.dirname(original), exist_ok=True)
+
+                # Remove the read-only attribute
+                os.chmod(actual_dest, stat.S_IWRITE)
+
                 shutil.move(actual_dest, original)
-                # Restore normal permissions!
-                os.chmod(original, 0o644)  # Read/write for user, read for others
+
+                # Restore normal permissions on the restored file
+                os.chmod(original, 0o644)
+
                 entries.pop(i)
                 _save_quarantine_index(entries)
-                # Log restore action!
+
                 add_log_entry(original, "RESTORED", prob, f"Restored from {actual_dest}")
+
                 print(f"Restored file to: {original}")
                 return f"Restored to {original}"
+
             except Exception as err:
                 print(f"Error restoring: {err}")
-                return f"Failed to restore: {err}"
-    print("Item not found in quarantine index")
-    return "Item not found in quarantine index"
+                return f"Failed to restore: {err}"           
 
 def delete_file(dest_path):
     try:

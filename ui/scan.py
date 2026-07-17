@@ -6,6 +6,7 @@ import sys
 import os
 import traceback
 from ui.activity_feed import _rebuild_activity_feed
+from ui.dashboard import refresh_dashboard_stats
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
@@ -149,6 +150,7 @@ def _quarantine_selected(sender, app_data):
     from ui.history import _rebuild_history
     _rebuild_history()
     _rebuild_activity_feed()
+    refresh_dashboard_stats()
 
 
 def _open_xai_panel(sender, app_data, user_data):
@@ -340,11 +342,21 @@ def _update_scan_progress():
         cfg.DETECTED_MALWARE.clear()
         cfg.DETECTED_SUSPICIOUS.clear()
 
-        if dpg.does_item_exist("scan_status_text"):
-            with dpg.mutex():
-                dpg.set_value("scan_status_text", "Starting scan...")
-                if dpg.does_item_exist("scan_progress_bar"):
-                    dpg.set_value("scan_progress_bar", 0.0)
+        # Update UI state
+        with dpg.mutex():
+            dpg.set_value("scan_ready_heading", "Scanning...")
+            dpg.set_item_label("start_scan_btn", "Scanning...")
+            dpg.configure_item("start_scan_btn", enabled=False)
+
+            if dpg.does_item_exist("scan_progress_container"):
+                dpg.delete_item("scan_progress_container", children_only=True)
+
+                with dpg.group(parent="scan_progress_container"):
+                    dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
+                    dpg.add_spacer(height=20)
+                    dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar")
+                    dpg.add_spacer(height=6)
+                    dpg.add_text("Elapsed: 0.0s", color=COLORS["text_secondary"], tag="scan_elapsed_time")
 
         if not BACKEND_AVAILABLE:
             time.sleep(2)  # Simulate scan
@@ -434,6 +446,8 @@ def _update_scan_progress():
                     dpg.set_value("scan_status_text", f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found.")
                 if dpg.does_item_exist("scan_progress_bar"):
                     dpg.set_value("scan_progress_bar", 1.0)
+                if dpg.does_item_exist("scan_elapsed_time"):
+                    dpg.set_value("scan_elapsed_time", f"Elapsed: {duration:.1f}s")
 
             # Send Telegram notification
             if BACKEND_AVAILABLE:
@@ -455,11 +469,12 @@ def _update_scan_progress():
                     dpg.show_item("threats_container")
                     _rebuild_threats_table()
 
-            # Refresh history and activity feed after scan completes
+            # Refresh history, activity feed, and dashboard after scan completes
             from ui.history import _rebuild_history
             with dpg.mutex():
                 _rebuild_history()
                 _rebuild_activity_feed()
+                refresh_dashboard_stats()
 
     except Exception as e:
         print("=" * 80)

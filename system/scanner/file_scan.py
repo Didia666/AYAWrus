@@ -160,6 +160,27 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
     except Exception as e:
         print(f"Unexpected error scanning {file_path}: {e}")
         return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
+    #     # Send Telegram notification
+    #     message = (
+    #         f"[!] Malware Detected!\n"
+    #         f"File: {os.path.basename(file_path)}\n"
+    #         f"Path: {file_path}\n"
+    #         f"Probability: {prob:.2%}\n"
+    #         f"Severity: {category}"
+    #     )
+    #     send_telegram_notification(message)
+        
+    #     if auto_quarantine:
+    #         if prob >= 0.90:
+    #             print("Before quarantine, exists:", os.path.exists(file_path))
+    #             quarantine_file(file_path)
+    #             print("After quarantine, exists:", os.path.exists(file_path))
+    #         else:
+    #             allow_threat(file_path, category, "MALICIOUS")
+    #     return {"result": "MALICIOUS", "probability": prob, "file_path": file_path, "category": category, "xai_report": xai_report, "file_bytes": file_bytes, "features": features}
+    # else:
+    #     # Only log clean files if they have a high enough probability of being malware
+    #     return {"result": "CLEAN", "probability": prob, "file_path": file_path, "xai_report": xai_report, "file_bytes": file_bytes, "features": features}
     
 def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
     if is_excluded(file_path, excluded_roots):
@@ -198,7 +219,10 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
         send_telegram_notification(message)
         
         if auto_quarantine:
+            # Quarantine suspicious script files instead of allowing them
+            print("Before quarantine, exists:", os.path.exists(file_path))
             quarantine_file(file_path)
+            print("After quarantine, exists:", os.path.exists(file_path))
         
         return {"result": "SUSPICIOUS", "probability": 0.7, "file_path": file_path, "keywords": found_keywords, "xai_report": xai_report}
         
