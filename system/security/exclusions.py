@@ -1,7 +1,7 @@
 import os
 import json
 
-from config import EXCLUSIONS_FILE
+from system.config import EXCLUSIONS_FILE
 
 # Exclusions
 def _load_exclusions():

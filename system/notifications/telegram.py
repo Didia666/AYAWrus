@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from config import CONFIG_FILE
+from system.config import CONFIG_FILE
 
 def load_config():
     """Load configuration from config.json"""

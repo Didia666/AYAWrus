@@ -5,7 +5,7 @@ import os
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from Malware_System import scan_file, display_xai_explanation
+from system.cli import scan_file, display_xai_explanation
 
 test_file = r"d:\SUMMER\AYAWrus_10_07_26\test_suspicious.ps1"
 print(f"Scanning file: {test_file}")

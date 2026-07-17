@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import the functions
-from Malware_System import (
+from system.cli import (
     _load_quarantine_index,
     list_quarantine_items,
     _normalize_path

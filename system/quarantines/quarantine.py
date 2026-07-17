@@ -3,8 +3,8 @@ import json
 import shutil
 import stat
 from datetime import datetime
-from config import QUARANTINE_INDEX_FILE, QUARANTINE_DIR, _normalize_path, DETECTED_MALWARE, DETECTED_SUSPICIOUS
-from history.logs import load_log, add_log_entry
+from system.config import QUARANTINE_INDEX_FILE, QUARANTINE_DIR, _normalize_path, DETECTED_MALWARE, DETECTED_SUSPICIOUS
+from system.history.logs import load_log, add_log_entry
 
 
 def _load_quarantine_index():

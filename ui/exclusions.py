@@ -6,11 +6,11 @@ import os
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import security.allowed as sa
-    import security.exclusions as se
+    import system.security.allowed as sa
+    import system.security.exclusions as se
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning [ui/exclusions.py]: Could not load backend dependency 'security.allowed' or 'security.exclusions': {e}")
     BACKEND_AVAILABLE = False
 
 # exclusions.py

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import history.logs as hs
+    import system.history.logs as hs
     BACKEND_AVAILABLE = True
 except Exception as e:
     print(f"Warning: Could not load history backend: {e}")

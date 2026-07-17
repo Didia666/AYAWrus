@@ -6,10 +6,10 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import system.history.logs as hl
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning [ui/activity_feed.py]: Could not load backend dependency 'history.logs': {e}")
     BACKEND_AVAILABLE = False
 
 
@@ -82,7 +82,7 @@ def _rebuild_activity_feed(fonts=None, icons=None):
     activities = []
 
     if BACKEND_AVAILABLE:
-        log = ms.load_log(limit=10)
+        log = hl.load_log(limit=10)
         for entry in reversed(log):
             entry_result = entry.get("result", "INFO")
             entry_file = entry.get("file_path", "Unknown file")

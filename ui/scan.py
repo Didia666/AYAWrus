@@ -6,18 +6,19 @@ import sys
 import os
 import traceback
 from ui.activity_feed import _rebuild_activity_feed
-
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import quarantines.quarantine as qq
-    import config as cfg
-    import security.exclusions as se
-    import Malware_System as ms
-    import notifications.telegram as tg
+    import system.quarantines as qq
+    import system.config as cfg
+    import system.security.exclusions as se
+    import system.scanner.file_scan as sf
+    import system.notifications.telegram as tg
+    from system.xai.engine import XAIExplanationEngine
+    xai_engine = XAIExplanationEngine()
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning [ui/scan.py]: Could not load backend dependency while initializing scan UI: {e}")
     BACKEND_AVAILABLE = False
 
 #scan.py
@@ -196,7 +197,7 @@ def _open_xai_panel(sender, app_data, user_data):
                 if not file_bytes and os.path.exists(threat["file_path"]):
                     with open(threat["file_path"], "rb") as f:
                         file_bytes = f.read()
-                xai_report = ms.xai_engine.analyze_file(
+                xai_report = xai_engine.analyze_file(
                     threat["file_path"],
                     file_bytes or b"",
                     features or [],
@@ -411,7 +412,7 @@ def _update_scan_progress():
                         if dpg.does_item_exist("scan_progress_bar"):
                             dpg.set_value("scan_progress_bar", (i + 1) / max(1, total_files))
 
-                result = ms.scan_file(file_path, auto_quarantine=False)
+                result = sf.scan_file(file_path, auto_quarantine=False)
                 files_scanned += 1
                 if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
                     threats_found += 1

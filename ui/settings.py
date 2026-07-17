@@ -3,7 +3,7 @@ from ui.theme import COLORS
 import threading
 import sys
 import os
-import notifications.telegram as tg
+import system.notifications.telegram as tg
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # try:
