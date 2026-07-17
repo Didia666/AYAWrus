@@ -6984,5 +6984,684 @@
         "result": "RESTORED",
         "probability": 0.6431757807731628,
         "details": "Restored from C:\\Users\\Karl\\Downloads\\BSIT 3E\\SE\\AYAWrus\\system\\Quarantine\\d3dcompiler_47.dll.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 15:52:22",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Eventdetailspage.txt",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 15:55:52",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Packet_Tracer822_64bit_setup_signed.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5321558713912964,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 16:00:30",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\SS_V4.5.807.001_W6R.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5302433371543884,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 16:05:33",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Trae-Setup-x64.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5130302309989929,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 16:08:06",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\wps_wid.cid-1542527816.1758093881.exe",
+        "result": "MALICIOUS",
+        "probability": 0.6198441982269287,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 16:10:26",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Checkout Handler PHP_files\\conversation-small-fg3ssda8.css",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 16:10:27",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Checkout Handler PHP_files\\root-nbwzfwhk.css",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 16:23:53",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 16:24:01",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 16:24:52",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:02:36",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:02:44",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:04:14",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:08:33",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:08:41",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:09:31",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "DELETED",
+        "probability": null,
+        "details": "Deleted from quarantine at D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:09:49",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:09:58",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:12:08",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "DELETED",
+        "probability": null,
+        "details": "Deleted from quarantine at D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:12:35",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:12:44",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:13:45",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:13:54",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:17:13",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:17:22",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:18:07",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_2.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:31:37",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:31:45",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:33:05",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "RESTORED",
+        "probability": null,
+        "details": "Restored from D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_2.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 17:33:24",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:33:32",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:35",
+        "file_path": "D:\\Test\\..\\Git-2.51.1-64-bit.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5281625986099243,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:37",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$R4I8DD5.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:39",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$RJN4Q61.jsx",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:41",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$R1QL4TM\\PHPMailer-master\\README.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:42",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$R1QL4TM\\PHPMailer-master\\SMTPUTF8.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:49",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$RBJRTGJ\\Parking-System\\admin\\PHPMailer\\README.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:50",
+        "file_path": "D:\\Test\\..\\$RECYCLE.BIN\\S-1-5-21-3897408507-3786248733-319551322-1001\\$RBJRTGJ\\Parking-System\\admin\\PHPMailer\\SMTPUTF8.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:55",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\history_log.json.bak",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:56",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\Malware_System backup.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:57",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\Malware_System_backup2.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:40:58",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\testinglag.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:00",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\test_suspicious.ps1",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:04",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\build\\educational_sample\\Analysis-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:05",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\build\\educational_sample\\PYZ-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:06",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\build\\fake_malware\\Analysis-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:07",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\build\\fake_malware\\PYZ-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:09",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\config.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:10",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\history_log.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:11",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:12",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:13",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_2.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:14",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_3.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:15",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:16",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat_1.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:17",
+        "file_path": "D:\\Test\\..\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat_2.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:19",
+        "file_path": "D:\\Test\\..\\AYAWrus\\EMBER2024\\build\\lib\\thrember\\features.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, base64, start-process"
+    },
+    {
+        "timestamp": "2026-07-17 17:41:20",
+        "file_path": "D:\\Test\\..\\AYAWrus\\EMBER2024\\src\\thrember\\features.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, base64, start-process"
+    },
+    {
+        "timestamp": "2026-07-17 17:42:08",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:42:16",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:45:33",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 17:46:17",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat_3.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:02:30",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:02:38",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:07:08",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:07:16",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:19:39",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:19:47",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:24:24",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "DELETED",
+        "probability": null,
+        "details": "Deleted from quarantine at D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat_3.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:52",
+        "file_path": "D:history_log.json.bak",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:53",
+        "file_path": "D:Malware_System backup.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:54",
+        "file_path": "D:Malware_System_backup2.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:55",
+        "file_path": "D:testinglag.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:56",
+        "file_path": "D:test_suspicious.ps1",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:58",
+        "file_path": "D:build\\educational_sample\\Analysis-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 18:30:59",
+        "file_path": "D:build\\educational_sample\\PYZ-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:00",
+        "file_path": "D:build\\fake_malware\\Analysis-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:01",
+        "file_path": "D:build\\fake_malware\\PYZ-00.toc",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:02",
+        "file_path": "D:system\\config.py",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:03",
+        "file_path": "D:system\\history_log.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell, cmd.exe, downloadstring, base64, invoke-webrequest, start-process, reg add, taskkill"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:04",
+        "file_path": "D:system\\Quarantine\\another_threat- Copy.bat.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:05",
+        "file_path": "D:system\\Quarantine\\quarantine_test.bat.quarantine",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:31:54",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:32:02",
+        "file_path": "D:\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:33:21",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:33:43",
+        "file_path": "D:\\Test\\another_threat- Copy.bat",
+        "result": "RESTORED",
+        "probability": null,
+        "details": "Restored from D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:34:07",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:34:15",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:35:34",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:35:44",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "RESTORED",
+        "probability": null,
+        "details": "Restored from D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:36:52",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:37:00",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-17 18:37:45",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:38:56",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\quarantine_test.bat",
+        "result": "QUARANTINED",
+        "probability": null,
+        "details": "Quarantined to D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\quarantine_test.bat_1.quarantine"
+    },
+    {
+        "timestamp": "2026-07-17 18:40:18",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Eventdetailspage.txt",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-17 18:44:06",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Packet_Tracer822_64bit_setup_signed.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5321558713912964,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-17 18:49:14",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Test\\another_threat- Copy.bat",
+        "result": "RESTORED",
+        "probability": null,
+        "details": "Restored from D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\another_threat- Copy.bat_1.quarantine"
     }
 ]
