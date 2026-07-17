@@ -149,7 +149,9 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         
         if auto_quarantine:
             if prob >= 0.90:
+                print("Before quarantine, exists:", os.path.exists(file_path))
                 quarantine_file(file_path)
+                print("After quarantine, exists:", os.path.exists(file_path))
             else:
                 allow_threat(file_path, category, "MALICIOUS")
         return {"result": "MALICIOUS", "probability": prob, "file_path": file_path, "category": category, "xai_report": xai_report, "file_bytes": file_bytes, "features": features}
@@ -197,7 +199,9 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
         
         if auto_quarantine:
             # Quarantine suspicious script files instead of allowing them
+            print("Before quarantine, exists:", os.path.exists(file_path))
             quarantine_file(file_path)
+            print("After quarantine, exists:", os.path.exists(file_path))
         
         return {"result": "SUSPICIOUS", "probability": 0.7, "file_path": file_path, "keywords": found_keywords, "xai_report": xai_report}
         

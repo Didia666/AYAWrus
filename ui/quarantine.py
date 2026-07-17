@@ -31,24 +31,34 @@ def _risk_badge(risk):
 def _restore_file(sender, app_data, user_data):
     dest_path = user_data
     print(f"Restoring: {dest_path}")
+
     if BACKEND_AVAILABLE:
         result = qq.restore_file(dest_path)
         print(f"Restore result: {result}")
+
     _rebuild_quarantine_table()
-    # Refresh history
+
     from ui.history import _rebuild_history
     _rebuild_history()
+
+    from ui.dashboard import refresh_dashboard_stats
+    refresh_dashboard_stats()
 
 def _delete_file(sender, app_data, user_data):
     dest_path = user_data
     print(f"Deleting: {dest_path}")
+
     if BACKEND_AVAILABLE:
         result = qq.delete_file(dest_path)
         print(f"Delete result: {result}")
+
     _rebuild_quarantine_table()
-    # Refresh history
+
     from ui.history import _rebuild_history
     _rebuild_history()
+
+    from ui.dashboard import refresh_dashboard_stats
+    refresh_dashboard_stats()
 
 def _rebuild_quarantine_table():
     if dpg.does_item_exist("quarantine_table"):
