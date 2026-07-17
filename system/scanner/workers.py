@@ -1,10 +1,13 @@
 import os
+from thrember.features import PEFeatureExtractor
+from system.scanner.extractor import get_extractor
 
 
-def _extract_worker_batch(file_paths, header_peek_size):
+
+def extract_worker_batch(file_paths, header_peek_size):
     """Process a batch of files in one worker task instead of one task per file,
     cutting inter-process communication overhead roughly by the batch size."""
-    # model = joblib.load("rf_ember_model.onnx")
+    extractor = get_extractor()
     results = []
     for file_path in file_paths:
         try:
@@ -39,19 +42,4 @@ def _extract_worker_batch(file_paths, header_peek_size):
             features
         ))
     return results
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

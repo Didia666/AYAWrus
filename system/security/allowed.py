@@ -1,8 +1,8 @@
 import os
 import json
 from datetime import datetime
-from config import ALLOWED_THREATS_FILE
-from quarantines.quarantine import quarantine_file
+from system.config import ALLOWED_THREATS_FILE
+from system.quarantines.quarantine import quarantine_file
 
 def _load_allowed_threats():
     if not os.path.exists(ALLOWED_THREATS_FILE):

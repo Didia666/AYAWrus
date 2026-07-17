@@ -6,10 +6,10 @@ import os
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    import Malware_System as ms
+    import system.history.logs as hl
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load Malware_System backend: {e}")
+    print(f"Warning [ui/history.py]: Could not load backend dependency 'history.logs': {e}")
     BACKEND_AVAILABLE = False
 
 # history.py
@@ -84,7 +84,7 @@ def _rebuild_history(icons=None, limit=50):
         
         entries = []
         if BACKEND_AVAILABLE:
-            entries = ms.load_log(limit=limit)
+            entries = hl.load_log(limit=limit)
             # Reverse to show newest first
             entries = list(reversed(entries))
         

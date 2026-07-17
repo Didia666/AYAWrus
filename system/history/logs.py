@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-from config import LOG_FILE, _log_buffer, _log_buffer_lock, _buffering_active
+from system.config import LOG_FILE, _log_buffer, _log_buffer_lock, _buffering_active
 
 
 

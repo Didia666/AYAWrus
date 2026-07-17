@@ -7,6 +7,28 @@ import threading
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SELECTED_FEATURES_FILE = os.path.join(BASE_DIR, "selected_features.pkl")
 
+
+# ===========================================
+# SCANNINNG
+# ===========================================
+
+
+HEADER_PEEK_SIZE = 4096  # enough for magic to fingerprint almost anything
+KNOWN_SKIP_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip",
+                   ".dll", ".sys", ".ttf", ".woff", ".ico", ".avi", ".mkv", ".wav"}
+KNOWN_SCRIPT_EXTS = {".ps1", ".bat", ".cmd", ".vbs", ".py", ".sh"}
+SUS_WRODS = [
+    "powershell",
+    "cmd.exe",
+    "downloadstring",
+    "base64",
+    "invoke-webrequest",
+    "start-process",
+    "reg add",
+    "taskkill",
+]
+
+
 # ===========================================
 # QUARANTINE
 # ===========================================
@@ -31,6 +53,23 @@ def _normalize_path(path):
         return os.path.normcase(os.path.abspath(os.path.normpath(path)))
     except Exception:
         return str(path)
+    
+def normalize_user_path(path: str) -> str:
+    try:
+        if not isinstance(path, str):
+            return path
+        p = os.path.abspath(path)
+        parts = p.split(os.sep)
+        # Windows: C:\Users\<name>\...
+        if len(parts) > 3 and parts[1].lower() == "users":
+            cur = os.path.basename(current_user_profile())
+            if parts[2].lower() != cur.lower():
+                candidate = os.sep.join([parts[0], parts[1], cur] + parts[3:])
+                if os.path.exists(candidate):
+                    return candidate
+        return path
+    except Exception:
+        return path
     
 # ===========================================
 # ALLOWED AND EXCLUSIONS
@@ -86,3 +125,8 @@ SKIP_DIRS = [
     os.path.join(os.environ.get("SystemDrive", "C:") + "\$Recycle.Bin"),
     os.path.join(os.environ.get("SystemDrive", "C:") + "\System Volume Information")
 ]
+
+# ===========================================
+# TELEGRAM
+# ===========================================
+CONFIG_FILE = "../config.json"

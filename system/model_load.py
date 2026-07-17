@@ -3,7 +3,7 @@ import os
 import joblib
 import numpy as np
 from thrember.features import PEFeatureExtractor
-from config import SELECTED_FEATURES_FILE
+from system.config import SELECTED_FEATURES_FILE
 
 
 try:
@@ -20,7 +20,7 @@ _model_loaded = False
 def _load_model_once():
     """Load model, extractor, and selected features exactly once, and only
     in the main process — worker processes never need the model."""
-    global model, extractor, selected_feature_indices, _model_loaded
+    global model, selected_feature_indices, _model_loaded
 
     if _model_loaded:
         return

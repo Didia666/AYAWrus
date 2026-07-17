@@ -1,10 +1,11 @@
 import os
 import time
 from datetime import datetime
-from history.logs import load_log
-from notifications.telegram import send_telegram_notification
-from quarantines.quarantine import list_quarantine_items
-
+from system.history.logs import load_log
+from system.notifications.telegram import send_telegram_notification
+from system.quarantines.quarantine import list_quarantine_items
+from system.security.allowed import list_allowed_threats
+from system.security.exclusions import list_exclusions
 def generate_incident_report():
     log = load_log()
 
