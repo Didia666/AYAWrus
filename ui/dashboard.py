@@ -1,3 +1,5 @@
+from logging import log
+
 import dearpygui.dearpygui as dpg
 from ui.activity_feed import build_activity_feed
 from ui.threat_chart import build_threat_chart, create_chart_theme
@@ -10,9 +12,10 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     import system.history.logs as hs
+    import system.quarantines.quarantine as qq
     BACKEND_AVAILABLE = True
 except Exception as e:
-    print(f"Warning: Could not load history backend: {e}")
+    print(f"Warning: Could not load dashboard backend: {e}")
     BACKEND_AVAILABLE = False
 
 CARD_GAP = 20
@@ -35,6 +38,58 @@ def animate_number(tag, target_value, duration=0.6, is_int=True):
         except:
             pass
     threading.Thread(target=_animate, daemon=True).start()
+
+def _get_dashboard_stats():
+    """Returns threat_score, active_threats, files_scanned."""
+    threat_score = 0
+    active_threats = 0
+    files_scanned = 0
+
+    if BACKEND_AVAILABLE:
+        # Files scanned comes from history
+        log = hs.load_log()
+        files_scanned = len(log)
+
+        quarantine_entries = qq.list_quarantine_items()
+
+        print("Dashboard quarantine entries:", quarantine_entries)
+        print("Dashboard active threats:", len(quarantine_entries))
+
+        active_threats = len(quarantine_entries)
+
+        # Calculate threat score
+        if quarantine_entries:
+            high_severity = 0
+
+            for item in quarantine_entries:
+                try:
+                    if float(item.get("probability", 0)) >= 0.7:
+                        high_severity += 1
+                except Exception:
+                    pass
+
+            threat_score = min(
+                100,
+                int(
+                    (high_severity / max(1, active_threats)) * 100
+                    + active_threats * 5
+                ),
+            )
+
+    return threat_score, active_threats, files_scanned
+
+
+def refresh_dashboard_stats():
+    """Refresh the dashboard stat cards."""
+
+    if not dpg.does_item_exist("threat_score_value"):
+        return
+
+    threat_score, active_threats, files_scanned = _get_dashboard_stats()
+
+    animate_number("threat_score_value", threat_score)
+    animate_number("active_threats_value", active_threats)
+    animate_number("files_scanned_value", files_scanned)
 
 def stat_card(icon_texture, label, value, subtitle, color, tag_prefix, fonts):
     with dpg.child_window(width=400, height=140, tag=f"{tag_prefix}_card"):
@@ -68,22 +123,8 @@ def build_dashboard(parent, fonts, icons):
             dpg.add_text("Real-time threat monitoring and analytics", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
 
-            # Get real data from backend
-            threat_score = 0
-            active_threats = 0
-            files_scanned = 0
-            
-            if BACKEND_AVAILABLE:
-                log = hs.load_log()
-                files_scanned = len(log)
-                
-                threats = [e for e in log if e.get("result") in ["MALICIOUS", "SUSPICIOUS"]]
-                active_threats = len(threats)
-                
-                # Calculate threat score
-                if threats:
-                    high_severity = sum(1 for t in threats if (t.get("probability") or 0) >= 0.7)
-                    threat_score = min(100, int((high_severity / max(1, len(threats))) * 100 + len(threats) * 5))
+            # Get dashboard statistics
+            threat_score, active_threats, files_scanned = _get_dashboard_stats()
 
             # Determine threat score icon and color
             if threat_score >= 70:
