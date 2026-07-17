@@ -1,0 +1,998 @@
+[
+    {
+        "timestamp": "2026-07-15 11:35:08",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 11:37:08",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\SpineViewer.exe",
+        "result": "CLEAN",
+        "probability": 0.1325136423110962,
+        "details": "Category: CLEAN"
+    },
+    {
+        "timestamp": "2026-07-15 11:37:14",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\main.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:17",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\.package-lock.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:22",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:22",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:22",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:22",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:27",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:27",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:27",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:27",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:34",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:34",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:38:35",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:42:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 11:44:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\SpineViewer.exe",
+        "result": "CLEAN",
+        "probability": 0.1325136423110962,
+        "details": "Category: CLEAN"
+    },
+    {
+        "timestamp": "2026-07-15 11:44:26",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\main.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:45:27",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\.package-lock.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 11:47:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 11:49:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\SpineViewer.exe",
+        "result": "CLEAN",
+        "probability": 0.1325136423110962,
+        "details": "Category: CLEAN"
+    },
+    {
+        "timestamp": "2026-07-15 11:57:16",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 12:03:08",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 12:05:07",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\SpineViewer.exe",
+        "result": "CLEAN",
+        "probability": 0.1325136423110962,
+        "details": "Category: CLEAN"
+    },
+    {
+        "timestamp": "2026-07-15 12:05:13",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\main.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:15",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\.package-lock.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:20",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:21",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:25",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:25",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:32",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:32",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:32",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:32",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\cjs\\loaders.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\esm\\loaders.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\browser\\utils.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\browser\\utils.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\browser\\utils.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\browser\\utils.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\cjs\\utils.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\cjs\\utils.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:54",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\cjs\\utils.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:55",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\cjs\\utils.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:55",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\esm\\utils.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:55",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\esm\\utils.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:06:55",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\utils\\dist\\esm\\utils.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:03",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\earcut\\dist\\earcut.dev.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:04",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\electron-squirrel-startup\\node_modules\\debug\\CHANGELOG.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\electron-squirrel-startup\\node_modules\\debug\\README.md",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: powershell"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:23",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:24",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:25",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\pixi.js\\dist\\browser\\pixi.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:32",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\src\\assets\\js\\pixi.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:07:33",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\assets\\js\\pixi.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:12:53",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\NIKKESpineViewer.exe",
+        "result": "MALICIOUS",
+        "probability": 0.90183424949646,
+        "details": "Category: SEVERE"
+    },
+    {
+        "timestamp": "2026-07-15 12:14:52",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\SpineViewer.exe",
+        "result": "CLEAN",
+        "probability": 0.1325136423110962,
+        "details": "Category: CLEAN"
+    },
+    {
+        "timestamp": "2026-07-15 12:14:58",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\main.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:00",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\.package-lock.json",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:05",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\browser\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\cjs\\core.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:06",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\core\\dist\\esm\\core.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\browser\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:09",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\cjs\\extract.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:10",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.min.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:10",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\extract\\dist\\esm\\extract.mjs.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:17",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\index.d.ts",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:17",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:17",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:18",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:18",
+        "file_path": "C:\\Users\\Karl\\Downloads\\Activity 5\\Classroom Files\\NIKKESpineViewer\\SpineViewer-anosu\\resources\\app\\node_modules\\@pixi\\loaders\\dist\\browser\\loaders.min.js.map",
+        "result": "SUSPICIOUS",
+        "probability": null,
+        "details": "Keywords: base64"
+    },
+    {
+        "timestamp": "2026-07-15 12:16:18",
+        "file_path": 

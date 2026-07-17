@@ -192,9 +192,10 @@ def _open_xai_panel(sender, app_data, user_data):
         xai_report = threat.get("xai_report")
         if not xai_report and BACKEND_AVAILABLE:
             try:
-                file_bytes = threat.get("file_bytes")
-                features = threat.get("features")
-                if not file_bytes and os.path.exists(threat["file_path"]):
+                file_bytes = None
+                features = None
+                # Always read from disk to avoid keeping big data in memory
+                if os.path.exists(threat["file_path"]):
                     with open(threat["file_path"], "rb") as f:
                         file_bytes = f.read()
                 xai_report = xai_engine.analyze_file(
@@ -335,20 +336,15 @@ def _update_scan_progress():
         SCAN_IN_PROGRESS = True
         DETECTED_THREATS = []
         SELECTED_QUARANTINE_ITEMS = set()
+        # Clear global lists from config to prevent memory leak
+        cfg.DETECTED_MALWARE.clear()
+        cfg.DETECTED_SUSPICIOUS.clear()
 
-        # Update UI state
-        with dpg.mutex():
-            dpg.set_value("scan_ready_heading", "Scanning...")
-            dpg.set_item_label("start_scan_btn", "Scanning...")
-            dpg.configure_item("start_scan_btn", enabled=False)
-
-            if dpg.does_item_exist("scan_progress_container"):
-                dpg.delete_item("scan_progress_container", children_only=True)
-
-                with dpg.group(parent="scan_progress_container"):
-                    dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
-                    dpg.add_spacer(height=20)
-                    dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar")
+        if dpg.does_item_exist("scan_status_text"):
+            with dpg.mutex():
+                dpg.set_value("scan_status_text", "Starting scan...")
+                if dpg.does_item_exist("scan_progress_bar"):
+                    dpg.set_value("scan_progress_bar", 0.0)
 
         if not BACKEND_AVAILABLE:
             time.sleep(2)  # Simulate scan
@@ -360,19 +356,54 @@ def _update_scan_progress():
                     dpg.set_value("scan_progress_bar", 1.0)
         else:
             start_time = time.time()
+            last_ui_update = 0.0  # Tracks timestamp of last UI redraw
             files_scanned = 0
             threats_found = 0
-            files_to_scan = []
+            estimated_total = 100
 
-            # Collect files to scan first
+            # Scan files as they are discovered, with dynamic estimated progress
+            def scan_path(path):
+                nonlocal files_scanned, threats_found, estimated_total, last_ui_update
+                if not se.is_excluded(path):
+                    try:
+                        # Skip very large files to prevent hanging (adjust limit as needed)
+                        try:
+                            file_size = os.path.getsize(path)
+                            # Skip files larger than 500MB (adjust limit as needed)
+                            if file_size > 500 * 1024 * 1024:
+                                files_scanned +=1
+                                return
+                        except Exception as e:
+                            pass  # If we can't get size, continue
+                        
+                        result = sf.scan_file(path, auto_quarantine=False)
+                        files_scanned += 1
+                        
+                        if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
+                            threats_found += 1
+                            DETECTED_THREATS.append(result)
+                        
+                        current_time = time.time()
+                        if current_time - last_ui_update > 0.2:
+                            estimated_total = max(estimated_total, files_scanned + 100)
+                            progress = min(0.99, files_scanned / max(1, estimated_total))
+                            
+                            if dpg.does_item_exist("scan_status_text"):
+                                dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
+                            if dpg.does_item_exist("scan_progress_bar"):
+                                dpg.set_value("scan_progress_bar", progress)
+                            
+                            last_ui_update = current_time
+                    except Exception as e:
+                        print(f"Error scanning file {path}: {e}")
+                        files_scanned +=1
+
             if SELECTED_SCAN == "quick":
                 for folder in cfg.QUICK_SCAN_DIRS:
                     if os.path.exists(folder):
                         for root, dirs, files in os.walk(folder):
                             for file in files:
-                                file_path = os.path.join(root, file)
-                                if not se.is_excluded(file_path):
-                                    files_to_scan.append(file_path)
+                                scan_path(os.path.join(root, file))
 
             elif SELECTED_SCAN == "full":
                 for folder in cfg.REGULAR_SCAN_DIRS:
@@ -386,37 +417,15 @@ def _update_scan_progress():
                             if skip:
                                 continue
                             for file in files:
-                                file_path = os.path.join(root, file)
-                                if not se.is_excluded(file_path):
-                                    files_to_scan.append(file_path)
+                                scan_path(os.path.join(root, file))
 
             elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
                 if os.path.isfile(CURRENT_CUSTOM_PATH):
-                    if not se.is_excluded(CURRENT_CUSTOM_PATH):
-                        files_to_scan.append(CURRENT_CUSTOM_PATH)
+                    scan_path(CURRENT_CUSTOM_PATH)
                 elif os.path.isdir(CURRENT_CUSTOM_PATH):
                     for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
                         for file in files:
-                            file_path = os.path.join(root, file)
-                            if not se.is_excluded(file_path):
-                                files_to_scan.append(file_path)
-
-            # Scan files
-            total_files = len(files_to_scan)
-            for i, file_path in enumerate(files_to_scan):
-                # Throttle UI updates to reduce mutex/lock churn on large scans
-                if i % 5 == 0 or i == total_files - 1:
-                    with dpg.mutex():
-                        if dpg.does_item_exist("scan_status_text"):
-                            dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(file_path)}")
-                        if dpg.does_item_exist("scan_progress_bar"):
-                            dpg.set_value("scan_progress_bar", (i + 1) / max(1, total_files))
-
-                result = sf.scan_file(file_path, auto_quarantine=False)
-                files_scanned += 1
-                if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
-                    threats_found += 1
-                    DETECTED_THREATS.append(result)
+                            scan_path(os.path.join(root, file))
 
             duration = time.time() - start_time
             with dpg.mutex():
@@ -478,6 +487,18 @@ def _start_scan(sender, app_data):
 
     if dpg.does_item_exist("threats_container"):
         dpg.hide_item("threats_container")
+
+    with dpg.mutex():
+        dpg.set_value("scan_ready_heading", "Scanning...")
+        dpg.set_item_label("start_scan_btn", "Scanning...")
+        dpg.configure_item("start_scan_btn", enabled=False)
+
+        if dpg.does_item_exist("scan_progress_container"):
+            dpg.delete_item("scan_progress_container", children_only=True)
+            with dpg.group(parent="scan_progress_container"):
+                dpg.add_text("Starting scan...", color=COLORS["text_secondary"], tag="scan_status_text")
+                dpg.add_spacer(height=20)
+                dpg.add_progress_bar(width=EMPTY_STATE_WIDTH - 100, tag="scan_progress_bar", default_value=0.0)
 
     thread = threading.Thread(target=_update_scan_progress, daemon=True)
     thread.start()
