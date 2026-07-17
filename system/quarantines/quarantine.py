@@ -152,7 +152,12 @@ def list_quarantine_items():
                 e['_alt_dest'] = alt_dest
         else:
             e['_exists'] = True
-    return entries
+
+    # Return latest entries first
+    try:
+        return sorted(entries, key=lambda e: e.get("timestamp", ""), reverse=True)
+    except Exception:
+        return list(reversed(entries))
 
 def is_quarantined(file_path: str) -> bool:
     entries = _load_quarantine_index()

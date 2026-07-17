@@ -105,8 +105,12 @@ def build_sidebar(icons):
         with dpg.handler_registry():
             dpg.add_mouse_click_handler(callback=_handle_click)
         dpg.add_spacer(height=15)
-        dpg.add_text("AYAWrus", color=COLORS["text_primary"])
-        dpg.add_text("MALWARE DEFENSE", color=COLORS["text_secondary"])
+        logo_texture = icons.get("logo") if icons is not None else None
+        if logo_texture:
+            dpg.add_image(logo_texture, width=200, height=70, tint_color=COLORS["accent_blue"])
+        else:
+            dpg.add_text("AYAWrus", color=COLORS["text_primary"])
+            dpg.add_text("MALWARE DEFENSE", color=COLORS["text_secondary"])
         dpg.add_spacer(height=20)
         dpg.add_separator()
         dpg.add_spacer(height=15)
