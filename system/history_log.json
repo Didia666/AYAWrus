@@ -1685,5 +1685,19 @@
         "result": "UNKNOWN",
         "probability": null,
         "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 10:26:08",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\SS_V4.5.807.001_W6R.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5302433371543884,
+        "details": "Category: MEDIUM"
+    },
+    {
+        "timestamp": "2026-07-18 10:30:33",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Trae-Setup-x64.exe",
+        "result": "MALICIOUS",
+        "probability": 0.5130302309989929,
+        "details": "Category: MEDIUM"
     }
 ]

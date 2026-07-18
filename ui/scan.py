@@ -47,13 +47,13 @@ SCAN_TYPES = [
 
 # Define malware detection steps with descriptions and icons
 DETECTION_STEPS = [
-    {"title": "File\nSelected", "icon": "search", "description": "Step 1: Target file is loaded and its path verified by the engine."},
-    {"title": "File Type\nVerification", "icon": "monitor_cog", "description": "Step 2: Magic bytes and extension analyzed. Confirms PE32/PE64 format."},
-    {"title": "PE Analysis", "icon": "chart_area", "description": "Step 3: Portable Executable headers, sections, imports, and entropy calculated."},
-    {"title": "Feature\nExtraction", "icon": "chart_bar", "description": "Step 4: 168 features extracted: API calls, section names, byte histograms, metadata."},
-    {"title": "Random\nForest AI", "icon": "shield_cog", "description": "Step 5: Feature vector evaluated by 200-tree ensemble model trained on labeled malware."},
-    {"title": "Prediction", "icon": "shield_check", "description": "Step 6: Model outputs class (Benign/Malicious) and confidence percentage."},
-    {"title": "Quarantine", "icon": "octagon_alert", "description": "Step 7: If malicious, file is isolated from the filesystem in the secure vault."}
+    {"title": "File\nSelected", "icon": "search", "description": "Step 1: The selected file is loaded into the system. Its location and basic information are checked to ensure the file can be safely analyzed."},
+    {"title": "File Type\nVerification", "icon": "monitor_cog", "description": "Step 2: The system verifies that the file is a valid Windows executable by examining its internal file signature instead of relying only on the file extension. This helps detect files that may have been renamed to hide their true type."},
+    {"title": "PE Analysis", "icon": "chart_area", "description": "Step 3: The internal structure of the executable is examined. The system analyzes important information such as program sections, imported system functions, and data patterns that may indicate suspicious behavior."},
+    {"title": "Feature\nExtraction", "icon": "chart_bar", "description": "Step 4: The system collects 168 measurable characteristics from the file, including its structure, metadata, imported functions, and byte patterns. These characteristics act as clues that help distinguish between legitimate software and malware."},
+    {"title": "Random\nForest AI", "icon": "shield_cog", "description": "Step 5: The extracted characteristics are analyzed by an Artificial Intelligence (AI) model called Random Forest. The model compares the file's patterns with thousands of previously learned examples of both safe and malicious software before making a decision."},
+    {"title": "Prediction", "icon": "shield_check", "description": "Step 6: Based on the analysis, the AI predicts whether the file is likely to be Benign (safe) or Malicious (potentially harmful). It also provides a confidence score that indicates how certain the prediction is."},
+    {"title": "Quarantine", "icon": "octagon_alert", "description": "Step 7: If the file is identified as malicious, it is automatically moved to a secure quarantine location where it cannot be executed or interact with other files. This helps prevent potential damage while allowing the file to be reviewed or restored if needed."}
 ]
 
 SELECTED_STEP = 0
