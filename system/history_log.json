@@ -1489,5 +1489,208 @@
         "result": "UNKNOWN",
         "probability": null,
         "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:10:12",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\DiscordSetup.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:11:45",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Epson_L3210_Series_EM_10_Web.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:14:53",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\GeForce_Experience_v3.28.0.417.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:23:39",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\qbittorrent_5.0.1_x64_setup.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:28:55",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\SS_V4.5.807.001_W6R.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:31:01",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\StarRail_setup_ua_2b187a7bfa93.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:34:41",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Trae-Setup-x64.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:37:02",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\TRAE_SOLO-Setup-x64.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:38:07",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\wps_wid.cid-1542527816.1758093881.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:40:15",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Y20A_C2_UWL_PP-inst-E1.EXE",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:41:49",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Final Exercise 3\\InputDirector.v2.3.build173.Domain.Setup.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:45:03",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\mingw-get-setup.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:46:11",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\PT Installer 6.0.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:46:30",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\RobloxPlayerInstaller.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:50:08",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\finals\\GradingSystemFinal\\bin\\Debug\\GradingSystemFinal.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 08:53:38",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\finals\\GradingSystemFinal\\obj\\Debug\\GradingSystemFinal.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:15:29",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\GradingSystem3\\GradingSystem2\\GradingSystem\\bin\\Debug\\net8.0-windows\\GradingSystem.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:16:34",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\GradingSystem3\\GradingSystem2\\GradingSystem\\obj\\Debug\\net8.0-windows\\apphost.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:21:20",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\WinFormsApp1\\WinFormsApp1\\bin\\Debug\\net8.0-windows\\WinFormsApp1.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:23:47",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\WinFormsApp1\\WinFormsApp1\\bin\\Release\\net8.0-windows\\WinFormsApp1.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:25:17",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\WinFormsApp1\\WinFormsApp1\\bin\\Release\\net8.0-windows\\publish\\WinFormsApp1.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:27:57",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\WinFormsApp1\\WinFormsApp1\\obj\\Debug\\net8.0-windows\\apphost.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:29:05",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\WinFormsApp1\\WinFormsApp1\\obj\\Release\\net8.0-windows\\apphost.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:30:31",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Malware\\Malware-Detection-System\\suspicious_dummy.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:37:24",
+        "file_path": "D:\\Lethal Company\\Lethal Company.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:49:51",
+        "file_path": "D:\\Lethal Company\\_CommonRedist\\vcredist\\2019\\VC_redist.x64.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:50:02",
+        "file_path": "D:\\Lethal Company\\_CommonRedist\\vcredist\\2019\\VC_redist.x86.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
+    },
+    {
+        "timestamp": "2026-07-18 09:57:57",
+        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Packet_Tracer822_64bit_setup_signed.exe",
+        "result": "DELETED",
+        "probability": 0.5321558713912964,
+        "details": "Deleted from quarantine at D:\\AYAWrus\\AYAWrus\\system\\Quarantine\\Packet_Tracer822_64bit_setup_signed.exe.quarantine"
+    },
+    {
+        "timestamp": "2026-07-18 09:58:07",
+        "file_path": "D:\\Lethal Company\\Lethal Company.exe",
+        "result": "UNKNOWN",
+        "probability": null,
+        "details": "Model not loaded"
     }
 ]
