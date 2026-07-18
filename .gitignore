@@ -13,3 +13,6 @@ venv_old/
 # ML stuff
 *.pkl
 *.dat
+
+system/history_log.json
+system/history_log.json.bak
