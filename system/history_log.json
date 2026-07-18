@@ -1568,13 +1568,6 @@
         "details": "Model not loaded"
     },
     {
-        "timestamp": "2026-07-18 08:45:03",
-        "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\mingw-get-setup.exe",
-        "result": "UNKNOWN",
-        "probability": null,
-        "details": "Model not loaded"
-    },
-    {
         "timestamp": "2026-07-18 08:46:11",
         "file_path": "C:\\Users\\PLPASIG\\Downloads\\Group Project\\PT Installer 6.0.exe",
         "result": "UNKNOWN",

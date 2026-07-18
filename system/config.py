@@ -15,7 +15,9 @@ SELECTED_FEATURES_FILE = os.path.join(BASE_DIR, "selected_features.pkl")
 
 HEADER_PEEK_SIZE = 4096  # enough for magic to fingerprint almost anything
 KNOWN_SKIP_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip",
-                   ".dll", ".sys", ".ttf", ".woff", ".ico", ".avi", ".mkv", ".wav"}
+                   ".dll", ".sys", ".ttf", ".woff", ".ico", ".avi", ".mkv", ".wav",
+                   ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods",
+                   ".odp", ".rtf", ".csv", ".txt"}
 KNOWN_SCRIPT_EXTS = {".ps1", ".bat", ".cmd", ".vbs", ".py", ".sh"}
 SUS_WRODS = [
     "powershell",
