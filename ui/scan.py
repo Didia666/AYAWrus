@@ -1,6 +1,5 @@
 import dearpygui.dearpygui as dpg
 from ui.theme import COLORS
-import multiprocessing
 import threading
 import time
 import sys
@@ -29,8 +28,6 @@ CARD_GAP = 20
 CONTENT_WIDTH = 400 * 3 + CARD_GAP * 2  # 1240 — shared by cards row and empty-state container
 SELECTED_SCAN = "quick"
 SCAN_IN_PROGRESS = False
-SCAN_CANCEL_REQUESTED = False
-SCAN_PROCESS = None
 CURRENT_CUSTOM_PATH = ""
 DETECTED_THREATS = []
 SELECTED_QUARANTINE_ITEMS = set()
@@ -99,14 +96,7 @@ def scan_card(key, icon_texture, label, subtitle, label_offset, subtitle_offset,
             dpg.add_text(subtitle, color=COLORS["text_secondary"])
 
 
-def _scan_file_worker(file_path, queue):
-    try:
-        result = sf.scan_file(file_path, auto_quarantine=False)
-        queue.put(result)
-    except Exception as e:
-        queue.put({"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)})
 
-    dpg.bind_item_theme(f"scan_{key}_card", _card_theme(is_active))
 
 def _handle_click(sender, app_data):
     # First check for scan type card clicks
@@ -404,63 +394,23 @@ def _update_scan_progress():
                         except Exception:
                             pass  # If we can't get size, continue
 
-                        queue = multiprocessing.Queue()
-                        process = multiprocessing.Process(target=_scan_file_worker, args=(path, queue), daemon=True)
-                        process.start()
-                        global SCAN_PROCESS
-                        SCAN_PROCESS = process
-
-                        while process.is_alive():
-                            if SCAN_CANCEL_REQUESTED:
-                                process.terminate()
-                                process.join(timeout=1)
-                                break
-                            current_time = time.time()
-                            if current_time - last_ui_update > 0.2:
-                                estimated_total = max(estimated_total, files_scanned + 100)
-                                progress = min(0.99, files_scanned / max(1, estimated_total))
-                                if dpg.does_item_exist("scan_status_text"):
-                                    dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
-                                if dpg.does_item_exist("scan_progress_bar"):
-                                    dpg.set_value("scan_progress_bar", progress)
-                                if dpg.does_item_exist("scan_elapsed_time"):
-                                    dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
-                                last_ui_update = current_time
-                            time.sleep(0.05)
-
-                        current_time = time.time()
-                        if dpg.does_item_exist("scan_elapsed_time"):
-                            dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
-
-                        if SCAN_CANCEL_REQUESTED:
-                            return
-
-                        result = {
-                            "result": "ERROR",
-                            "probability": 0,
-                            "file_path": path,
-                            "details": "Scan process terminated"
-                        }
-                        if not queue.empty():
-                            result = queue.get()
+                        result = sf.scan_file(path, auto_quarantine=False)
                         files_scanned += 1
 
                         if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
                             threats_found += 1
                             DETECTED_THREATS.append(result)
-                            if dpg.does_item_exist("scan_threat_count"):
-                                dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
 
                         current_time = time.time()
                         if current_time - last_ui_update > 0.2:
                             estimated_total = max(estimated_total, files_scanned + 100)
                             progress = min(0.99, files_scanned / max(1, estimated_total))
+
                             if dpg.does_item_exist("scan_status_text"):
                                 dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
                             if dpg.does_item_exist("scan_progress_bar"):
                                 dpg.set_value("scan_progress_bar", progress)
-                            if dpg.does_item_exist("scan_elapsed_time"):
-                                dpg.set_value("scan_elapsed_time", f"Elapsed: {current_time - start_time:.1f}s")
+
                             last_ui_update = current_time
                     except Exception as e:
                         print(f"Error scanning file {path}: {e}")
