@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import threading
 from system.config import CONFIG_FILE
 
 def load_config():
@@ -15,8 +16,8 @@ def save_config(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-def send_telegram_notification(message):
-    """Send notification via Telegram bot"""
+def _send_telegram_sync(message):
+    """Synchronous Telegram notification (internal use)"""
     config = load_config()
     bot_token = config.get("telegram_bot_token")
     chat_id = config.get("telegram_chat_id")
@@ -30,7 +31,14 @@ def send_telegram_notification(message):
             "chat_id": chat_id,
             "text": message
         }
-        response = requests.post(url, params=params)
+        # Add timeout to prevent hanging
+        response = requests.post(url, params=params, timeout=5)
         return response.status_code == 200
     except Exception:
         return False
+
+def send_telegram_notification(message):
+    """Send notification via Telegram bot asynchronously"""
+    thread = threading.Thread(target=_send_telegram_sync, args=(message,), daemon=True)
+    thread.start()
+    return True
