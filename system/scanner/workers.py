@@ -1,6 +1,6 @@
 import os
 from system.scanner.extractor import get_extractor
-from system.scanner.workers import classify_file
+from system.scanner.file_scan import classify_file
 
 
 
