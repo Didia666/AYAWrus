@@ -164,7 +164,7 @@ def _open_xai_panel(sender, app_data, user_data):
         dpg.delete_item("xai_panel_window")
 
     with dpg.window(
-        label="🎓 AI Explanation Panel",
+        label="AI Explanation Panel",
         tag="xai_panel_window",
         width=800,
         height=700,
