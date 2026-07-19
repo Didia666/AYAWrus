@@ -14,6 +14,7 @@ try:
     import system.config as cfg
     import system.security.exclusions as se
     import system.scanner.file_scan as sf
+    import system.scanner.scanner as sc
     import system.notifications.telegram as tg
     from system.xai.engine import XAIExplanationEngine
     xai_engine = XAIExplanationEngine()
@@ -375,91 +376,105 @@ def _update_scan_progress():
             last_ui_update = 0.0  # Tracks timestamp of last UI redraw
             files_scanned = 0
             threats_found = 0
-            estimated_total = 100
-
-            # Scan files as they are discovered, with dynamic estimated progress
-            def scan_path(path):
-                nonlocal files_scanned, threats_found, estimated_total, last_ui_update
-                if SCAN_CANCEL_REQUESTED:
+            
+            # First collect all candidate files (PE and scripts) for accurate progress
+            candidate_files = []
+            
+            def collect_files(folder, skip_dirs=None):
+                nonlocal candidate_files
+                if not os.path.exists(folder):
                     return
-                if not se.is_excluded(path):
-                    try:
-                        # Skip very large files to prevent hanging (adjust limit as needed)
-                        try:
-                            file_size = os.path.getsize(path)
-                            # Skip files larger than 500MB (adjust limit as needed)
-                            if file_size > 500 * 1024 * 1024:
-                                files_scanned += 1
-                                return
-                        except Exception:
-                            pass  # If we can't get size, continue
-
-                        result = sf.scan_file(path, auto_quarantine=False)
-                        files_scanned += 1
-
-                        if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
-                            threats_found += 1
-                            DETECTED_THREATS.append(result)
-
-                        current_time = time.time()
-                        if current_time - last_ui_update > 0.2:
-                            estimated_total = max(estimated_total, files_scanned + 100)
-                            progress = min(0.99, files_scanned / max(1, estimated_total))
-
-                            if dpg.does_item_exist("scan_status_text"):
-                                dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
-                            if dpg.does_item_exist("scan_progress_bar"):
-                                dpg.set_value("scan_progress_bar", progress)
-
-                            last_ui_update = current_time
-                    except Exception as e:
-                        print(f"Error scanning file {path}: {e}")
-                        files_scanned += 1
-
+                for root, dirs, files in os.walk(folder):
+                    if SCAN_CANCEL_REQUESTED:
+                        break
+                    if skip_dirs:
+                        skip = False
+                        for skip_dir in skip_dirs:
+                            if os.path.abspath(root).lower().startswith(os.path.abspath(skip_dir).lower()):
+                                skip = True
+                                break
+                        if skip:
+                            continue
+                    for file in files:
+                        path = os.path.join(root, file)
+                        ext = os.path.splitext(path)[1].lower()
+                        # Skip known non-scannable files early
+                        if ext in cfg.KNOWN_SKIP_EXTS:
+                            continue
+                        # Check if it's a PE file (we'll verify later with classify_file) or a script
+                        if ext in cfg.KNOWN_SCRIPT_EXTS:
+                            candidate_files.append(path)
+                        else:
+                            # For non-script, non-skipped files, we'll check if they're PE later
+                            candidate_files.append(path)
+            
+            # Collect candidate files based on scan type
             if SELECTED_SCAN == "quick":
                 for folder in cfg.QUICK_SCAN_DIRS:
-                    if os.path.exists(folder):
-                        for root, dirs, files in os.walk(folder):
-                            for file in files:
-                                scan_path(os.path.join(root, file))
-                                if SCAN_CANCEL_REQUESTED:
-                                    break
-                            if SCAN_CANCEL_REQUESTED:
-                                break
+                    collect_files(folder)
                     if SCAN_CANCEL_REQUESTED:
                         break
-
             elif SELECTED_SCAN == "full":
                 for folder in cfg.REGULAR_SCAN_DIRS:
-                    if os.path.exists(folder):
-                        for root, dirs, files in os.walk(folder):
-                            skip = False
-                            for skip_dir in cfg.SKIP_DIRS:
-                                if os.path.abspath(root).lower().startswith(os.path.abspath(skip_dir).lower()):
-                                    skip = True
-                                    break
-                            if skip:
-                                continue
-                            for file in files:
-                                scan_path(os.path.join(root, file))
-                                if SCAN_CANCEL_REQUESTED:
-                                    break
-                            if SCAN_CANCEL_REQUESTED:
-                                break
+                    collect_files(folder, skip_dirs=cfg.SKIP_DIRS)
                     if SCAN_CANCEL_REQUESTED:
                         break
-
             elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
                 if os.path.isfile(CURRENT_CUSTOM_PATH):
-                    scan_path(CURRENT_CUSTOM_PATH)
+                    candidate_files.append(CURRENT_CUSTOM_PATH)
                 elif os.path.isdir(CURRENT_CUSTOM_PATH):
-                    for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
-                        for file in files:
-                            scan_path(os.path.join(root, file))
-                            if SCAN_CANCEL_REQUESTED:
-                                break
-                        if SCAN_CANCEL_REQUESTED:
-                            break
+                    collect_files(CURRENT_CUSTOM_PATH)
+            
+            total_files = len(candidate_files)
+            
+            # Now scan the candidate files
+            for path in candidate_files:
+                if SCAN_CANCEL_REQUESTED:
+                    break
+                ext = os.path.splitext(path)[1].lower()
+                if se.is_excluded(path):
+                    files_scanned += 1
+                    continue
+                try:
+                    # Skip very large files to prevent hanging (adjust limit as needed)
+                    try:
+                        file_size = os.path.getsize(path)
+                        if file_size > 500 * 1024 * 1024:  # 500MB limit
+                            files_scanned += 1
+                            continue
+                    except Exception:
+                        pass  # If we can't get size, continue
+
+                    # Check if it's a script file first
+                    if ext in cfg.KNOWN_SCRIPT_EXTS:
+                        result = sf.scan_text(path, auto_quarantine=False)
+                    else:
+                        result = sf.scan_file(path, auto_quarantine=False)
+                    
+                    files_scanned += 1
+
+                    if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
+                        threats_found += 1
+                        DETECTED_THREATS.append(result)
+
+                    current_time = time.time()
+                    if current_time - last_ui_update > 0.2:
+                        progress = min(0.99, files_scanned / max(1, total_files))
+                        duration = current_time - start_time
+
+                        if dpg.does_item_exist("scan_status_text"):
+                            dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned}/{total_files} files)")
+                        if dpg.does_item_exist("scan_progress_bar"):
+                            dpg.set_value("scan_progress_bar", progress)
+                        if dpg.does_item_exist("scan_elapsed_time"):
+                            dpg.set_value("scan_elapsed_time", f"Elapsed: {duration:.1f}s")
+                        if dpg.does_item_exist("scan_threat_count"):
+                            dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
+
+                        last_ui_update = current_time
+                except Exception as e:
+                    print(f"Error scanning file {path}: {e}")
+                    files_scanned += 1
 
             duration = time.time() - start_time
             with dpg.mutex():

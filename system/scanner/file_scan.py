@@ -1,6 +1,6 @@
 import os
-import magic
 import numpy as np
+import threading
 from system.config import HEADER_PEEK_SIZE, KNOWN_SCRIPT_EXTS, KNOWN_SKIP_EXTS, DETECTED_MALWARE, DETECTED_SUSPICIOUS, SUS_WRODS
 from system.security.exclusions import is_excluded
 from system.security.allowed import allow_threat
@@ -11,13 +11,6 @@ from system.quarantines.quarantine import quarantine_file
 from system.utils.utility import categorize_threat
 from system.notifications import send_telegram_notification
 from system.xai.engine import xai_engine
-
-_magic_instance = None
-def _get_magic():
-    global _magic_instance
-    if _magic_instance is None:
-        _magic_instance = magic.Magic(mime=True)
-    return _magic_instance
 
 def classify_file(file_path):
     ext = os.path.splitext(file_path)[1].lower()
@@ -124,14 +117,20 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         
         category = categorize_threat(prob)
 
-        # Generate XAI explanation (without modifying core detection logic)
+        # Generate XAI explanation asynchronously (without blocking scan)
         result_str = "MALICIOUS" if prediction == 1 else "CLEAN"
         xai_report = None
+        
+        # We'll store xai_report later if needed, but for now, run analysis in background
         if result_str == "MALICIOUS":
-            try:
-                xai_report = xai_engine.analyze_file(file_path, file_bytes, features, prob, result_str)
-            except Exception as xai_error:
-                print(f"XAI analysis failed: {xai_error}")
+            def _run_xai():
+                try:
+                    # Make a copy of file_bytes in case it's garbage collected
+                    file_bytes_copy = file_bytes
+                    xai_engine.analyze_file(file_path, file_bytes_copy, features, prob, result_str)
+                except Exception as xai_error:
+                    print(f"XAI analysis failed: {xai_error}")
+            threading.Thread(target=_run_xai, daemon=True).start()
 
         if prediction == 1:
             DETECTED_MALWARE.append(file_path)
@@ -199,11 +198,15 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
     xai_report = None
     
     if found_keywords:
-        try:
-            # Reuses the file_bytes already stored in RAM
-            xai_report = xai_engine.analyze_file(file_path, file_bytes, [], 0.7, result_str)
-        except Exception as xai_error:
-            print(f"XAI analysis failed for script: {xai_error}")
+        # Run XAI analysis asynchronously for scripts too!
+        def _run_xai_script():
+            try:
+                file_bytes_copy = file_bytes
+                xai_engine.analyze_file(file_path, file_bytes_copy, [], 0.7, result_str)
+            except Exception as xai_error:
+                print(f"XAI analysis failed for script: {xai_error}")
+        threading.Thread(target=_run_xai_script, daemon=True).start()
+        xai_report = None  # We'll generate it on demand if user clicks "Explain"
             
         DETECTED_SUSPICIOUS.append(file_path)
         add_log_entry(file_path, "SUSPICIOUS", details=f"Keywords: {', '.join(found_keywords)}")
