@@ -14,6 +14,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #     BACKEND_AVAILABLE = False
 
 
+AVAILABLE_AI_MODELS = [
+    "nvidia/nemotron-3.5-lightning:free",
+    "nvidia/nemotron-70b-reward:free",
+    "mistralai/mistral-7b-instruct-v0.3",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "meta-llama/llama-3.1-70b-instruct:free",
+    "openai/chatgpt-4o-latest",
+    "anthropic/claude-3.5-sonnet",
+    "google/gemini-pro-1.5",
+    "custom",
+]
+
+
 def refresh_settings():
     """Refresh settings view"""
     config = tg.load_config()
@@ -21,6 +34,19 @@ def refresh_settings():
         dpg.set_value("telegram_token", config.get("telegram_bot_token", ""))
     if dpg.does_item_exist("telegram_chat_id"):
         dpg.set_value("telegram_chat_id", config.get("telegram_chat_id", ""))
+    if dpg.does_item_exist("ai_api_url"):
+        dpg.set_value("ai_api_url", config.get("ai_api_url", ""))
+    if dpg.does_item_exist("ai_api_key"):
+        dpg.set_value("ai_api_key", config.get("ai_api_key", ""))
+    saved_model = config.get("ai_model", "nvidia/nemotron-3.5-lightning:free")
+    if dpg.does_item_exist("ai_model_combo"):
+        if saved_model in AVAILABLE_AI_MODELS:
+            dpg.set_value("ai_model_combo", saved_model)
+        else:
+            dpg.set_value("ai_model_combo", "custom")
+    if dpg.does_item_exist("ai_model_custom"):
+        if saved_model not in AVAILABLE_AI_MODELS or saved_model == "custom":
+            dpg.set_value("ai_model_custom", saved_model if saved_model != "custom" else "")
 
 
 def send_report_to_telegram():
@@ -46,10 +72,18 @@ def send_report_to_telegram():
 
 def save_settings():
     """Save settings"""
-    config = {
-        "telegram_bot_token": dpg.get_value("telegram_token"),
-        "telegram_chat_id": dpg.get_value("telegram_chat_id")
-    }
+    config = tg.load_config()
+    config["telegram_bot_token"] = dpg.get_value("telegram_token")
+    config["telegram_chat_id"] = dpg.get_value("telegram_chat_id")
+    config["ai_api_url"] = dpg.get_value("ai_api_url")
+    config["ai_api_key"] = dpg.get_value("ai_api_key")
+    model_combo = dpg.get_value("ai_model_combo") if dpg.does_item_exist("ai_model_combo") else None
+    if model_combo and model_combo != "custom":
+        config["ai_model"] = model_combo
+    elif dpg.does_item_exist("ai_model_custom"):
+        custom_model = dpg.get_value("ai_model_custom").strip()
+        if custom_model:
+            config["ai_model"] = custom_model
     tg.save_config(config)
     if dpg.does_item_exist("settings_status"):
         dpg.set_value("settings_status", "Settings saved!")
@@ -134,7 +168,7 @@ def build_settings(parent, fonts, icons):
         with dpg.group():
             dpg.add_text("Settings", tag="settings_page_title")
             dpg.bind_item_font("settings_page_title", fonts["heading"])
-            dpg.add_text("Configure Telegram notifications", color=COLORS["text_secondary"])
+            dpg.add_text("Configure Telegram notifications and AI API settings", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
             
             # Telegram Settings
@@ -161,6 +195,54 @@ def build_settings(parent, fonts, icons):
                 
                 dpg.add_spacer(height=10)
                 dpg.add_text("", tag="settings_status", color=COLORS["text_secondary"])
+                
+                dpg.add_separator()
+                dpg.add_spacer(height=15)
+                
+                # AI API Settings
+                dpg.add_text("AI API Settings", color=COLORS["text_primary"])
+                dpg.add_spacer(height=5)
+                
+                with dpg.group():
+                    dpg.add_text("API URL:", color=COLORS["text_secondary"])
+                    dpg.add_input_text(tag="ai_api_url", width=-1, hint="e.g. https://openrouter.ai/api/v1/chat/completions")
+                
+                dpg.add_spacer(height=10)
+                
+                with dpg.group():
+                    dpg.add_text("API Key:", color=COLORS["text_secondary"])
+                    dpg.add_input_text(tag="ai_api_key", width=-1, password=True, hint="Enter your OpenRouter or compatible API key")
+                
+                dpg.add_spacer(height=10)
+                
+                with dpg.group():
+                    dpg.add_text("AI Model:", color=COLORS["text_secondary"])
+                    dpg.add_combo(
+                        tag="ai_model_combo",
+                        items=AVAILABLE_AI_MODELS,
+                        default_value="nvidia/nemotron-3.5-lightning:free",
+                        width=-1,
+                        callback=lambda: dpg.configure_item(
+                            "ai_model_custom",
+                            show=(dpg.get_value("ai_model_combo") == "custom")
+                        )
+                    )
+                
+                dpg.add_spacer(height=5)
+                
+                with dpg.group(tag="ai_model_custom_group"):
+                    dpg.add_input_text(
+                        tag="ai_model_custom",
+                        width=-1,
+                        hint="Enter custom model name (e.g. 'openai/gpt-4')",
+                        show=False
+                    )
+                
+                dpg.add_spacer(height=10)
+                dpg.add_text(
+                    "💡 Get an API key from https://openrouter.ai",
+                    color=COLORS["accent_blue"]
+                )
                 
                 dpg.add_separator()
                 dpg.add_spacer(height=15)

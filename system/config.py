@@ -15,9 +15,7 @@ SELECTED_FEATURES_FILE = os.path.join(BASE_DIR, "selected_features.pkl")
 
 HEADER_PEEK_SIZE = 4096  # enough for magic to fingerprint almost anything
 KNOWN_SKIP_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip",
-                   ".dll", ".sys", ".ttf", ".woff", ".ico", ".avi", ".mkv", ".wav",
-                   ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods",
-                   ".odp", ".rtf", ".csv", ".txt"}
+                   ".dll", ".sys", ".ttf", ".woff", ".ico", ".avi", ".mkv", ".wav"}
 KNOWN_SCRIPT_EXTS = {".ps1", ".bat", ".cmd", ".vbs", ".py", ".sh"}
 SUS_WRODS = [
     "powershell",
@@ -93,7 +91,7 @@ _buffering_active = False
 # NOTIFICATIONS
 # ===========================================
 
-CONFIG_FILE = "../config.json"
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
 
 # ===========================================
@@ -131,4 +129,4 @@ SKIP_DIRS = [
 # ===========================================
 # TELEGRAM
 # ===========================================
-CONFIG_FILE = "../config.json"
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
