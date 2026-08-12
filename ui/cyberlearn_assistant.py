@@ -1,18 +1,21 @@
 """
 CyberLearn Assistant - Educational Cybersecurity Chatbot
-Searchable knowledge base with keyword matching and intelligent topic suggestions.
-No external APIs - fully local implementation.
+Dynamic AI-powered chatbot using OpenRouter API with local knowledge base fallback.
 """
 
 import json
 import os
+import sys
 from datetime import datetime
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from PyQt6 import QtWidgets, QtCore, QtGui
 from PyQt6.QtWidgets import (QPushButton, QDialog, QVBoxLayout, QHBoxLayout,
                              QLabel, QScrollArea, QWidget, QLineEdit, QTextEdit, QFrame)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QIcon
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from system.ai import OpenRouterClient, load_ai_config, save_ai_config
 
 
 class KnowledgeBase:
@@ -258,13 +261,18 @@ class SuggestionButton(QPushButton):
 
 
 class CyberLearnWindow(QDialog):
-    """Main CyberLearn Assistant chat window."""
+    """Main CyberLearn Assistant chat window - AI-powered with OpenRouter API."""
     
     def __init__(self, kb, parent=None):
         super().__init__(parent)
         self.kb = kb
-        self.setWindowTitle("CyberLearn Assistant - Educational Chatbot")
-        self.setMinimumSize(600, 700)
+        self.ai_client = OpenRouterClient()
+        self._ai_enabled = self.ai_client.is_configured()
+        self._pending_query = None
+        self._thinking_bubble = None
+        
+        self.setWindowTitle("CyberLearn Assistant - AI Educational Chatbot")
+        self.setMinimumSize(600, 750)
         self.setWindowModality(Qt.WindowModality.NonModal)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         
@@ -276,32 +284,57 @@ class CyberLearnWindow(QDialog):
         main_layout.setSpacing(8)
         
         # Header
+        header_layout = QHBoxLayout()
+        
         header = QLabel("🎓 CyberLearn Assistant")
         header_font = QFont()
         header_font.setPointSize(13)
         header_font.setBold(True)
         header.setFont(header_font)
         header.setStyleSheet("color: #2c7be5;")
-        main_layout.addWidget(header)
+        header_layout.addWidget(header)
         
+        header_layout.addStretch()
+        
+        # AI status indicator
+        ai_cfg = load_ai_config()
+        self.ai_status_label = QLabel()
+        self.ai_status_label.setStyleSheet("font-size: 9px; padding: 3px 8px; border-radius: 10px;")
+        self._update_ai_status()
+        header_layout.addWidget(self.ai_status_label)
+        
+        main_layout.addLayout(header_layout)
+        
+        subtitle_layout = QHBoxLayout()
         subtitle = QLabel("Learn about cybersecurity, malware, and detection")
         subtitle_font = QFont()
         subtitle_font.setPointSize(9)
         subtitle.setFont(subtitle_font)
         subtitle.setStyleSheet("color: #666;")
-        main_layout.addWidget(subtitle)
+        subtitle_layout.addWidget(subtitle)
+        subtitle_layout.addStretch()
+        
+        model_name = ai_cfg.get("model", "default")
+        model_label = QLabel(f"Model: {model_name}")
+        model_label_font = QFont()
+        model_label_font.setPointSize(8)
+        model_label.setFont(model_label_font)
+        model_label.setStyleSheet("color: #888;")
+        subtitle_layout.addWidget(model_label)
+        
+        main_layout.addLayout(subtitle_layout)
         
         main_layout.addSpacing(8)
         
-        # Search bar
+        # Search / Query bar
         search_layout = QHBoxLayout()
         search_layout.setSpacing(6)
         
-        search_label = QLabel("Search:")
+        search_label = QLabel("Ask:")
         search_layout.addWidget(search_label)
         
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Type keywords (e.g., 'Trojan', 'malware', 'entropy')...")
+        self.search_input.setPlaceholderText("Ask anything about cybersecurity (e.g., 'What is a Trojan?', 'How does ransomware work?')...")
         self.search_input.returnPressed.connect(self._on_search)
         self.search_input.setStyleSheet("""
             QLineEdit {
@@ -316,10 +349,27 @@ class CyberLearnWindow(QDialog):
         """)
         search_layout.addWidget(self.search_input)
         
-        search_btn = QPushButton("Search")
+        search_btn = QPushButton("Send")
         search_btn.setMaximumWidth(80)
         search_btn.clicked.connect(self._on_search)
         search_layout.addWidget(search_btn)
+        
+        clear_btn = QPushButton("New Chat")
+        clear_btn.setMaximumWidth(90)
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 5px;
+                font-size: 10px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+        clear_btn.clicked.connect(self._on_clear_chat)
+        search_layout.addWidget(clear_btn)
         
         main_layout.addLayout(search_layout)
         
@@ -346,20 +396,26 @@ class CyberLearnWindow(QDialog):
         main_layout.addWidget(self.chat_area, 1)
         
         # Welcome message
+        welcome_extra = ""
+        if not self._ai_enabled:
+            welcome_extra = (
+                "\n\n⚠️ Note: No API key configured. Go to Settings > AI API Settings to add your key. "
+                "Using local knowledge base for now."
+            )
         self._add_system_message(
             "👋 Welcome to CyberLearn Assistant!\n\n"
-            "I'm here to help you understand cybersecurity concepts, malware types, "
-            "machine learning detection, and best practices.\n\n"
+            "I'm an AI-powered cybersecurity educator. I can help you understand "
+            "cybersecurity concepts, malware types, machine learning detection, and best practices.\n\n"
             "You can:\n"
-            "• Type keywords in the search box\n"
-            "• Click suggested questions below\n"
-            "• Ask follow-up questions\n\n"
-            "What would you like to learn about?"
+            "• Ask any question in the text box above\n"
+            "• Click suggested questions below to get started\n"
+            "• Ask follow-up questions - I remember our conversation!\n\n"
+            "What would you like to learn about?" + welcome_extra
         )
         
         # Suggestions area
         main_layout.addSpacing(6)
-        suggestions_label = QLabel("📚 Popular Topics:")
+        suggestions_label = QLabel("� Suggested Questions:")
         suggestions_font = QFont()
         suggestions_font.setPointSize(10)
         suggestions_font.setBold(True)
@@ -381,7 +437,6 @@ class CyberLearnWindow(QDialog):
         suggestions_layout.setContentsMargins(4, 4, 4, 4)
         suggestions_layout.setSpacing(4)
         
-        # Show first 6 questions as suggestions
         self.suggestion_buttons = []
         for question in self.kb.get_all_questions()[:6]:
             btn = SuggestionButton(question, self)
@@ -406,6 +461,21 @@ class CyberLearnWindow(QDialog):
         bottom_layout.addWidget(close_btn)
         main_layout.addLayout(bottom_layout)
     
+    def _update_ai_status(self):
+        """Update the AI status indicator label."""
+        if hasattr(self, 'ai_client') and self.ai_client.is_configured():
+            self.ai_status_label.setText("🤖 AI Online")
+            self.ai_status_label.setStyleSheet(
+                "font-size: 9px; padding: 3px 8px; border-radius: 10px;"
+                "background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;"
+            )
+        else:
+            self.ai_status_label.setText("📚 Local Mode")
+            self.ai_status_label.setStyleSheet(
+                "font-size: 9px; padding: 3px 8px; border-radius: 10px;"
+                "background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;"
+            )
+    
     def _add_system_message(self, text):
         """Add system/info message."""
         bubble = MessageBubble(role="system", text=text, timestamp=datetime.now().strftime("%H:%M"))
@@ -418,28 +488,50 @@ class CyberLearnWindow(QDialog):
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
         self._scroll_to_bottom()
     
-    def _add_assistant_message_with_typing(self, topic):
-        """Add assistant message with typing animation."""
+    def _add_thinking_bubble(self):
+        """Show a loading/thinking bubble while waiting for API."""
+        self._thinking_bubble = MessageBubble(
+            role="assistant",
+            text="🧠 Thinking...",
+            timestamp=datetime.now().strftime("%H:%M")
+        )
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, self._thinking_bubble)
+        self._scroll_to_bottom()
+    
+    def _remove_thinking_bubble(self):
+        """Remove the thinking bubble if it exists."""
+        if self._thinking_bubble:
+            self._thinking_bubble.setParent(None)
+            self._thinking_bubble.deleteLater()
+            self._thinking_bubble = None
+    
+    def _add_assistant_text_with_typing(self, text_content: str):
+        """Add assistant message with typing animation using plain text."""
         self._current_answer_widget = MessageBubble(
-            role="assistant", 
-            text="", 
+            role="assistant",
+            text="",
             timestamp=datetime.now().strftime("%H:%M")
         )
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, self._current_answer_widget)
         self._scroll_to_bottom()
         
-        # Get the text edit inside the bubble
         text_edit = self._current_answer_widget.findChild(QTextEdit)
         
-        # Start typing
-        self._typing_thread = TypingSimulator(topic["answer"], delay_ms=15)
+        delay = 8 if len(text_content) > 1500 else (5 if len(text_content) > 500 else 12)
+        self._typing_thread = TypingSimulator(text_content, delay_ms=delay)
         self._typing_thread.text_update.connect(lambda t: text_edit.setPlainText(t) if text_edit else None)
         self._typing_thread.finished.connect(self._on_typing_finished)
         self._typing_thread.start()
     
-    def _add_related_questions(self, topic_id):
+    def _add_related_questions(self, topic_id=None, fallback_query=None):
         """Add related questions as suggestions."""
-        related = self.kb.get_related_topics(topic_id, limit=3)
+        related = []
+        if topic_id:
+            related = self.kb.get_related_topics(topic_id, limit=3)
+        elif fallback_query:
+            results = self.kb.search(fallback_query, limit=3)
+            related = results[1:4] if len(results) > 1 else []
+        
         if related:
             related_text = "📌 You might also want to know:\n\n"
             for idx, rel_topic in enumerate(related, 1):
@@ -460,43 +552,117 @@ class CyberLearnWindow(QDialog):
         self.status_label.setText("Ready")
         self._typing_thread = None
     
-    def _on_search(self):
-        """Handle search."""
-        query = self.search_input.text().strip()
-        if not query:
-            self.status_label.setText("Please enter a search term")
-            return
+    def _on_clear_chat(self):
+        """Clear chat history and reset AI conversation."""
+        if self._typing_thread:
+            self._typing_thread.terminate()
+            self._typing_thread = None
         
-        # Add user message
-        self._add_user_message(f"Search: {query}")
-        self.search_input.clear()
-        self.status_label.setText("Searching...")
+        while self.chat_layout.count() > 1:
+            item = self.chat_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
         
-        # Search knowledge base
+        self.ai_client.reset()
+        self._thinking_bubble = None
+        self._current_answer_widget = None
+        
+        self._add_system_message(
+            "🔄 New conversation started!\n\n"
+            "What would you like to learn about?"
+        )
+        self.status_label.setText("Ready")
+    
+    def _fallback_to_kb_search(self, query: str, show_error: bool = False, error_msg: str = None):
+        """Fallback to local knowledge base search when API is unavailable."""
+        if show_error and error_msg:
+            self._add_system_message(
+                f"⚠️ {error_msg}\n\n"
+                "Falling back to local knowledge base..."
+            )
+        
         results = self.kb.search(query, limit=1)
         
         if results:
             topic = results[0]
-            QTimer.singleShot(600, lambda: self._add_assistant_message_with_typing(topic))
-            QTimer.singleShot(2000, lambda: self._add_related_questions(topic["id"]))
+            QTimer.singleShot(400, lambda: self._add_assistant_text_with_typing(topic["answer"]))
+            QTimer.singleShot(max(1500, int(len(topic["answer"]) * 12)), lambda: self._add_related_questions(topic["id"]))
         else:
             self.status_label.setText("No topics found")
-            self._add_system_message("Sorry, I couldn't find any topics matching that search. Try different keywords!")
+            self._add_system_message(
+                "Sorry, I couldn't find any information on that topic. "
+                "Try different keywords or make sure your API key is configured in Settings."
+            )
+    
+    def _on_ai_response(self, success: bool, content: Optional[str], error: Optional[str], original_query: str):
+        """Callback when AI API response arrives."""
+        self._remove_thinking_bubble()
+        self.search_input.setEnabled(True)
+        
+        if success and content:
+            self._add_assistant_text_with_typing(content)
+            char_count = len(content)
+            est_delay = max(1500, int(char_count * 10))
+            QTimer.singleShot(est_delay, lambda: self._add_related_questions(fallback_query=original_query))
+            self.status_label.setText("AI response received")
+        else:
+            self._fallback_to_kb_search(original_query, show_error=True, error_msg=error or "AI request failed")
+    
+    def _on_search(self):
+        """Handle user query - send to AI API with KB fallback."""
+        query = self.search_input.text().strip()
+        if not query:
+            self.status_label.setText("Please enter a question")
+            return
+        
+        if self._thinking_bubble:
+            self.status_label.setText("Still processing previous request...")
+            return
+        
+        self._add_user_message(query)
+        self.search_input.clear()
+        self.search_input.setEnabled(False)
+        self._pending_query = query
+        
+        if self._ai_enabled:
+            self.status_label.setText("Contacting AI...")
+            self._add_thinking_bubble()
+            
+            captured_query = query
+            self.ai_client.chat_async(
+                query,
+                callback=lambda s, c, e: QTimer.singleShot(0, lambda: self._on_ai_response(s, c, e, captured_query))
+            )
+        else:
+            self.status_label.setText("Searching local knowledge base...")
+            self._fallback_to_kb_search(query)
     
     def _on_topic_selected(self, question):
-        """Handle topic selection from suggestions."""
-        # Find the topic
-        results = self.kb.search(question, limit=1)
-        if results:
-            topic = results[0]
+        """Handle topic selection from suggestions - send to AI."""
+        if self._thinking_bubble:
+            self.status_label.setText("Still processing previous request...")
+            return
+        
+        self._add_user_message(question)
+        self.search_input.setEnabled(False)
+        self._pending_query = question
+        
+        if self._ai_enabled:
+            self.status_label.setText("Generating AI answer...")
+            self._add_thinking_bubble()
             
-            # Add user message
-            self._add_user_message(question)
-            self.status_label.setText("Retrieving information...")
-            
-            # Show answer with typing animation
-            QTimer.singleShot(600, lambda: self._add_assistant_message_with_typing(topic))
-            QTimer.singleShot(2000, lambda: self._add_related_questions(topic["id"]))
+            captured_question = question
+            self.ai_client.chat_async(
+                question,
+                callback=lambda s, c, e: QTimer.singleShot(0, lambda: self._on_ai_response(s, c, e, captured_question))
+            )
+        else:
+            self.status_label.setText("Retrieving from knowledge base...")
+            results = self.kb.search(question, limit=1)
+            if results:
+                topic = results[0]
+                QTimer.singleShot(400, lambda: self._add_assistant_text_with_typing(topic["answer"]))
+                QTimer.singleShot(2000, lambda: self._add_related_questions(topic["id"]))
 
 
 class FloatingButton(QtWidgets.QWidget):

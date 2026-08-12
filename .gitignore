@@ -16,3 +16,10 @@ venv_old/
 
 system/history_log.json
 system/history_log.json.bak
+
+# Environment variables / API keys
+.env
+
+# Configuration files with secrets
+system/config.json
+*.local.json
