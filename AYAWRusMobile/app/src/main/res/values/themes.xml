@@ -1,0 +1,49 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Light-only theme — fully specified Material3 color tokens so NO attribute falls back to system dark defaults -->
+    <style name="Base.Theme.AYAWrusMobileJava" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Window chrome -->
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:statusBarColor">#4A148C</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+
+        <!-- Core Material3 colors (all explicitly set — no fallbacks) -->
+        <item name="colorPrimary">#6A1B9A</item>
+        <item name="colorPrimaryVariant">#4A148C</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#E8D8FF</item>
+        <item name="colorOnPrimaryContainer">#250049</item>
+
+        <item name="colorSecondary">#7C4DFF</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">#E8DEFF</item>
+        <item name="colorOnSecondaryContainer">#23006B</item>
+
+        <item name="colorTertiary">#536DFE</item>
+        <item name="colorOnTertiary">#FFFFFF</item>
+        <item name="colorTertiaryContainer">#DEE1FF</item>
+        <item name="colorOnTertiaryContainer">#00105C</item>
+
+        <item name="colorError">#D32F2F</item>
+        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorErrorContainer">#FFDAD6</item>
+        <item name="colorOnErrorContainer">#410002</item>
+
+        <!-- Surfaces — the main culprit of black UIs when missing -->
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="colorOnBackground">#111827</item>
+
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#111827</item>
+        <item name="colorSurfaceVariant">#F4F0FA</item>
+        <item name="colorOnSurfaceVariant">#46464F</item>
+
+        <!-- Outlines & misc -->
+        <item name="colorOutline">#787680</item>
+        <item name="colorOutlineVariant">#C9C5D0</item>
+    </style>
+
+    <style name="Theme.AYAWrusMobileJava" parent="Base.Theme.AYAWrusMobileJava" />
+</resources>
