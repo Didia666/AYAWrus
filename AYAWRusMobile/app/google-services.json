@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "461010356094",
+    "project_id": "diane-3e2b8",
+    "storage_bucket": "diane-3e2b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461010356094:android:e3901472fc3b12d6bc952f",
+        "android_client_info": {
+          "package_name": "com.ayawrus.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOW0qv2J4tFPuZR1Yv5Zh2r9uqfIH-5lo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
