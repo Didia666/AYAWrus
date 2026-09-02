@@ -69,15 +69,33 @@ def activity_item(title, timestamp, result, tag_suffix, fonts, icons, parent):
     dpg.add_spacer(height=12, parent=parent)
 
 
-def _rebuild_activity_feed(fonts=None, icons=None):
-    """Clear and repopulate the activity feed from the latest log data."""
+def _rebuild_activity_feed_from_data(activities, fonts=None, icons=None):
+    """Clear and repopulate the activity feed using pre-loaded activity data."""
     if not dpg.does_item_exist("activity_feed_list"):
         return
-    # Reuse stored fonts/icons if not passed explicitly
     fonts = fonts or dpg.get_item_user_data("activity_feed_list")[0]
     icons = icons or dpg.get_item_user_data("activity_feed_list")[1]
 
     dpg.delete_item("activity_feed_list", children_only=True)
+
+    if not activities:
+        activities = [
+            ("Custom scan completed", "6/20/2026, 12:34:34 AM", "INFO"),
+            ("Quick scan completed", "6/18/2026, 9:40:24 PM", "INFO"),
+            ("Custom scan completed", "6/18/2026, 9:34:11 PM", "INFO"),
+            ("Full scan completed", "6/18/2026, 9:29:37 PM", "INFO"),
+        ]
+
+    for i, (title, timestamp, result) in enumerate(activities):
+        activity_item(title, timestamp, result, f"item_{i}", fonts, icons, parent="activity_feed_list")
+
+
+def _rebuild_activity_feed(fonts=None, icons=None):
+    """Clear and repopulate the activity feed from the latest log data."""
+    if not dpg.does_item_exist("activity_feed_list"):
+        return
+    fonts = fonts or dpg.get_item_user_data("activity_feed_list")[0]
+    icons = icons or dpg.get_item_user_data("activity_feed_list")[1]
 
     activities = []
 
@@ -103,16 +121,7 @@ def _rebuild_activity_feed(fonts=None, icons=None):
                 title = f"Scan activity: {entry_result}"
             activities.append((title, entry_timestamp, entry_result))
 
-    if not activities:
-        activities = [
-            ("Custom scan completed", "6/20/2026, 12:34:34 AM", "INFO"),
-            ("Quick scan completed", "6/18/2026, 9:40:24 PM", "INFO"),
-            ("Custom scan completed", "6/18/2026, 9:34:11 PM", "INFO"),
-            ("Full scan completed", "6/18/2026, 9:29:37 PM", "INFO"),
-        ]
-
-    for i, (title, timestamp, result) in enumerate(activities):
-        activity_item(title, timestamp, result, f"item_{i}", fonts, icons, parent="activity_feed_list")
+    _rebuild_activity_feed_from_data(activities, fonts, icons)
 
 
 def build_activity_feed(fonts, icons):

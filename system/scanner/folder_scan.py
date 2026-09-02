@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import random
+import threading
 from itertools import islice
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -155,30 +156,35 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
             category = categorize_threat(prob)
             result_str = "MALICIOUS" if pred == 1 else "CLEAN"
 
-            xai_report = None
-            if result_str == "MALICIOUS":
-                try:
-                    with open(f, "rb") as file:
-                        file_bytes = file.read()
-                    xai_report = xai_engine.analyze_file(f, file_bytes, features, prob, result_str)
-                except Exception as e:
-                    print(f"XAI failed: {e}")
-
             if pred == 1:
                 DETECTED_MALWARE.append(f)
                 add_log_entry(f, result="MALICIOUS", probability=prob, details=f"Category: {category}")
-                message = (
-                    f"[!] Malware Detected!\nFile: {os.path.basename(f)}\n"
-                    f"Path: {f}\nProbability: {prob:.2%}\nSeverity: {category}"
-                )
-                send_telegram_notification(message)
-                if prob >= 0.90:
-                    quarantine_file(f)
-                else:
-                    allow_threat(f, category, "MALICIOUS")
-                print({"result": "MALICIOUS", "probability": prob, "file_path": f, "category": category})
-                if xai_report:
-                    display_xai_explanation(xai_report)
+
+                def _post_process_malware(file_path=f, file_prob=prob, file_category=category, file_features=features, file_result=result_str):
+                    try:
+                        with open(file_path, "rb") as file:
+                            file_bytes = file.read()
+                        xai_report = None
+                        try:
+                            xai_report = xai_engine.analyze_file(file_path, file_bytes, file_features, file_prob, file_result)
+                        except Exception as e:
+                            print(f"XAI failed: {e}")
+                        message = (
+                            f"[!] Malware Detected!\nFile: {os.path.basename(file_path)}\n"
+                            f"Path: {file_path}\nProbability: {file_prob:.2%}\nSeverity: {file_category}"
+                        )
+                        send_telegram_notification(message)
+                        if file_prob >= 0.90:
+                            quarantine_file(file_path)
+                        else:
+                            allow_threat(file_path, file_category, "MALICIOUS")
+                        print({"result": "MALICIOUS", "probability": file_prob, "file_path": file_path, "category": file_category})
+                        if xai_report:
+                            display_xai_explanation(xai_report)
+                    except Exception as e:
+                        print(f"Post-process malware error for {file_path}: {e}")
+
+                threading.Thread(target=_post_process_malware, daemon=True).start()
             else:
                 print({"result": "CLEAN", "probability": prob, "file_path": f})
 

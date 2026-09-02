@@ -28,14 +28,23 @@ def animate_number(tag, target_value, duration=0.6, is_int=True):
             progress = i / steps
             current = target_value * progress
             display_val = int(current) if is_int else round(current, 1)
+            alive = True
             try:
-                dpg.set_value(tag, str(display_val))
-            except:
-                pass
+                with dpg.mutex():
+                    if dpg.does_item_exist(tag):
+                        dpg.set_value(tag, str(display_val))
+                    else:
+                        alive = False
+            except Exception:
+                return
+            if not alive:
+                return
             time.sleep(duration / steps)
         try:
-            dpg.set_value(tag, str(target_value))
-        except:
+            with dpg.mutex():
+                if dpg.does_item_exist(tag):
+                    dpg.set_value(tag, str(target_value))
+        except Exception:
             pass
     threading.Thread(target=_animate, daemon=True).start()
 
