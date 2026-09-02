@@ -6,45 +6,72 @@ from system.config import LOG_FILE, _log_buffer, _log_buffer_lock, _buffering_ac
 
 
 def save_log(data):
-    with open(LOG_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    tmp_path = LOG_FILE + ".tmp"
+    try:
+        with open(tmp_path, "w") as f:
+            json.dump(data, f, indent=4)
+        os.replace(tmp_path, LOG_FILE)
+    except Exception:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        raise
 
-def load_log(limit=None):
+def _load_log_from_disk():
     if not os.path.exists(LOG_FILE):
         with open(LOG_FILE, "w") as f:
             json.dump([], f, indent=4)
+        return []
     try:
         with open(LOG_FILE, "r") as f:
-            entries = json.load(f)
-            if limit is not None:
-                return entries[-limit:]
-            return entries
+            return json.load(f)
     except json.JSONDecodeError as e:
         print(f"Log file is corrupt, creating new one: {e}")
-        # Backup corrupt file
         backup_file = LOG_FILE + ".bak"
         if os.path.exists(backup_file):
-            os.remove(backup_file)
-        os.rename(LOG_FILE, backup_file)
-        # Create fresh log
+            try:
+                os.remove(backup_file)
+            except Exception:
+                pass
+        try:
+            os.rename(LOG_FILE, backup_file)
+        except Exception:
+            pass
         with open(LOG_FILE, "w") as f:
             json.dump([], f, indent=4)
         return []
+
+def load_log(limit=None):
+    with _log_buffer_lock:
+        if _buffering_active:
+            entries = list(_log_buffer)
+        else:
+            entries = _load_log_from_disk()
+    if limit is not None:
+        return entries[-limit:]
+    return entries
 
 def begin_log_buffer():
     """Call once at the start of a scan. Loads existing log into memory
     and switches add_log_entry into buffered mode."""
     global _log_buffer, _buffering_active
     with _log_buffer_lock:
-        _log_buffer = load_log()   # one read for the whole scan
-        _buffering_active = True
+        if not _buffering_active:
+            _log_buffer = _load_log_from_disk()
+            _buffering_active = True
 
 def flush_log_buffer():
-    """Call once at the end of a scan. Writes the whole log ONCE."""
+    """Call once at the end of a scan. Writes the whole log ONCE
+    and returns a snapshot of the flushed entries (newest first limited)."""
     global _buffering_active
     with _log_buffer_lock:
-        _buffering_active = False
-        save_log(_log_buffer)      # one write for the whole scan
+        snapshot = list(_log_buffer)
+        if _buffering_active:
+            _buffering_active = False
+            save_log(_log_buffer)
+    return snapshot
 
 def add_log_entry(file_path, result, probability=None, details=None):
     entry = {
@@ -56,10 +83,13 @@ def add_log_entry(file_path, result, probability=None, details=None):
     }
     with _log_buffer_lock:
         if _buffering_active:
-            _log_buffer.append(entry)   # in-memory only, no disk I/O
+            _log_buffer.append(entry)
             return
-    # fallback: old behavior for one-off calls outside a scan
-    log = load_log()
+        buffered = list(_log_buffer)
+    if buffered:
+        log = buffered
+    else:
+        log = _load_log_from_disk()
     log.append(entry)
     save_log(log)
 

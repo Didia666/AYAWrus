@@ -70,6 +70,29 @@ def _history_row(entry, index, icons):
         dpg.add_text(timestamp, color=COLORS["text_secondary"],
                     pos=(ROW_WIDTH - DATE_COLUMN_WIDTH, 26))
 
+def _rebuild_history_from_data(entries, icons=None):
+    global GLOBAL_ICONS
+    if icons is not None:
+        GLOBAL_ICONS = icons
+    else:
+        icons = GLOBAL_ICONS
+        if icons is None:
+            return
+
+    if dpg.does_item_exist("history_group"):
+        dpg.delete_item("history_group", children_only=True)
+
+        if not entries:
+            with dpg.group(parent="history_group"):
+                dpg.add_text("No scan history yet", color=COLORS["text_secondary"])
+        else:
+            with dpg.group(parent="history_group"):
+                for i, entry in enumerate(entries):
+                    _history_row(entry, i, icons)
+                    if i < len(entries) - 1:
+                        dpg.add_spacer(height=ROW_GAP)
+
+
 def _rebuild_history(icons=None, limit=50):
     global GLOBAL_ICONS
     if icons is not None:
@@ -78,26 +101,13 @@ def _rebuild_history(icons=None, limit=50):
         icons = GLOBAL_ICONS
         if icons is None:
             return  # Can't rebuild without icons!
-        
-    if dpg.does_item_exist("history_group"):
-        dpg.delete_item("history_group", children_only=True)
-        
-        entries = []
-        if BACKEND_AVAILABLE:
-            entries = hl.load_log(limit=limit)
-            # Reverse to show newest first
-            entries = list(reversed(entries))
-        
-        if not entries:
-            with dpg.group(parent="history_group"):
-                dpg.add_text("No scan history yet", color=COLORS["text_secondary"])
-        else:
-            with dpg.group(parent="history_group"):
-                for i, entry in enumerate(entries):
-                    _history_row(entry, i, icons)
 
-                    if i < len(entries) - 1:
-                        dpg.add_spacer(height=ROW_GAP)  
+    entries = []
+    if BACKEND_AVAILABLE:
+        entries = hl.load_log(limit=limit)
+        entries = list(reversed(entries))
+
+    _rebuild_history_from_data(entries, icons=icons)
 
 def build_history(parent, fonts, icons):
     global GLOBAL_ICONS
