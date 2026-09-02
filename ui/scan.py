@@ -5,8 +5,9 @@ import time
 import sys
 import os
 import traceback
-from ui.activity_feed import _rebuild_activity_feed
-from ui.dashboard import refresh_dashboard_stats
+from ui.activity_feed import _rebuild_activity_feed, _rebuild_activity_feed_from_data
+from ui.dashboard import refresh_dashboard_stats, animate_number
+from ui.history import _rebuild_history, _rebuild_history_from_data
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
@@ -16,6 +17,9 @@ try:
     import system.scanner.file_scan as sf
     import system.scanner.scanner as sc
     import system.notifications.telegram as tg
+    import system.history.logs as hl
+    import system.history.logs as hs
+    from system.history.logs import begin_log_buffer, flush_log_buffer
     from system.xai.engine import XAIExplanationEngine
     xai_engine = XAIExplanationEngine()
     BACKEND_AVAILABLE = True
@@ -140,19 +144,119 @@ def _quarantine_selected(sender, app_data):
     if not SELECTED_QUARANTINE_ITEMS:
         print("No items selected!")
         return
-    for file_path in SELECTED_QUARANTINE_ITEMS:
-        try:
-            result = qq.quarantine_file(file_path)
-            print(f"Quarantined {file_path}: {result}")
-        except Exception as e:
-            print(f"Error quarantining {file_path}: {e}")
-    DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] not in SELECTED_QUARANTINE_ITEMS]
-    SELECTED_QUARANTINE_ITEMS = set()
-    _rebuild_threats_table()
-    from ui.history import _rebuild_history
-    _rebuild_history()
-    _rebuild_activity_feed()
-    refresh_dashboard_stats()
+
+    items_to_quarantine = list(SELECTED_QUARANTINE_ITEMS)
+
+    try:
+        with dpg.mutex():
+            dpg.configure_item("quarantine_btn", enabled=False)
+            if dpg.does_item_exist("start_scan_btn"):
+                dpg.configure_item("start_scan_btn", enabled=False)
+    except Exception:
+        pass
+
+    def _worker():
+        for file_path in items_to_quarantine:
+            try:
+                result = qq.quarantine_file(file_path)
+                print(f"Quarantined {file_path}: {result}")
+            except Exception as e:
+                print(f"Error quarantining {file_path}: {e}")
+
+        global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
+        DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] not in items_to_quarantine]
+        SELECTED_QUARANTINE_ITEMS = set()
+
+        def _after_ui():
+            try:
+                with dpg.mutex():
+                    _rebuild_threats_table()
+            except Exception as e:
+                print(f"Quarantine post threats rebuild error: {e}")
+            threading.Timer(0.20, _after_history).start()
+
+        def _after_history():
+            try:
+                entries = []
+                if BACKEND_AVAILABLE:
+                    raw = hl.load_log(limit=50)
+                    entries = list(reversed(raw))
+                with dpg.mutex():
+                    _rebuild_history_from_data(entries)
+            except Exception as e:
+                print(f"Quarantine post history rebuild error: {e}")
+            threading.Timer(0.20, _after_activity).start()
+
+        def _after_activity():
+            try:
+                activities = []
+                if BACKEND_AVAILABLE:
+                    log = hl.load_log(limit=10)
+                    for entry in reversed(log):
+                        er = entry.get("result", "INFO")
+                        ef = entry.get("file_path", "Unknown file")
+                        et = entry.get("timestamp", "")
+                        if er == "MALICIOUS":
+                            title = f"Malware detected: {os.path.basename(ef)}"
+                        elif er == "SUSPICIOUS":
+                            title = f"Suspicious file: {os.path.basename(ef)}"
+                        elif er == "CLEAN":
+                            title = f"File scanned: {os.path.basename(ef)}"
+                        elif er == "QUARANTINED":
+                            title = f"File quarantined: {os.path.basename(ef)}"
+                        elif er == "RESTORED":
+                            title = f"File restored: {os.path.basename(ef)}"
+                        elif er == "DELETED":
+                            title = f"File deleted: {os.path.basename(ef)}"
+                        else:
+                            title = f"Scan activity: {er}"
+                        activities.append((title, et, er))
+                with dpg.mutex():
+                    _rebuild_activity_feed_from_data(activities)
+            except Exception as e:
+                print(f"Quarantine post activity rebuild error: {e}")
+            threading.Timer(0.20, _after_dashboard).start()
+
+        def _after_dashboard():
+            threat_score = 0
+            active_threats = 0
+            files_scanned = 0
+            try:
+                if BACKEND_AVAILABLE:
+                    from system.quarantines.quarantine import list_quarantine_items
+                    log = hs.load_log()
+                    files_scanned = len(log)
+                    q_entries = list_quarantine_items()
+                    active_threats = len(q_entries)
+                    if q_entries:
+                        hs_ = 0
+                        for it in q_entries:
+                            try:
+                                if float(it.get("probability", 0)) >= 0.7:
+                                    hs_ += 1
+                            except Exception:
+                                pass
+                        threat_score = min(
+                            100,
+                            int((hs_ / max(1, active_threats)) * 100 + active_threats * 5),
+                        )
+            except Exception as e:
+                print(f"Quarantine post dashboard preload error: {e}")
+            try:
+                with dpg.mutex():
+                    if dpg.does_item_exist("threat_score_value"):
+                        dpg.set_value("threat_score_value", str(threat_score))
+                        dpg.set_value("active_threats_value", str(active_threats))
+                        dpg.set_value("files_scanned_value", str(files_scanned))
+                    dpg.configure_item("quarantine_btn", enabled=True)
+                    if dpg.does_item_exist("start_scan_btn"):
+                        dpg.configure_item("start_scan_btn", enabled=True)
+            except Exception as e:
+                print(f"Quarantine post dashboard render error: {e}")
+
+        threading.Timer(0.02, _after_ui).start()
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 
 def _open_xai_panel(sender, app_data, user_data):
@@ -282,9 +386,78 @@ def _open_xai_panel(sender, app_data, user_data):
         )
 
 
+_THREAT_CHUNK_SIZE = 15
+
+
+def _build_threat_rows_chunk(start_idx):
+    """Add a batch of threat rows to the table inside one small mutex block."""
+    try:
+        with dpg.mutex():
+            if not dpg.does_item_exist("threats_table"):
+                return
+            end_idx = min(start_idx + _THREAT_CHUNK_SIZE, len(DETECTED_THREATS))
+            for threat_idx in range(start_idx, end_idx):
+                threat = DETECTED_THREATS[threat_idx]
+                with dpg.table_row(parent="threats_table"):
+                    checked = threat["file_path"] in SELECTED_QUARANTINE_ITEMS
+                    dpg.add_checkbox(default_value=checked, callback=_toggle_select_item, user_data=threat["file_path"])
+                    dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
+                    dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"])
+                    dpg.add_text(threat["file_path"], color=COLORS["text_secondary"])
+                    prob = threat.get("probability")
+                    if prob is not None:
+                        try:
+                            dpg.add_text(f"{float(prob):.1%}", color=COLORS["accent_red"])
+                        except:
+                            dpg.add_text("-", color=COLORS["text_secondary"])
+                    else:
+                        dpg.add_text("-", color=COLORS["text_secondary"])
+                    type_color = COLORS["accent_red"] if threat["result"] == "MALICIOUS" else COLORS["accent_orange"]
+                    dpg.add_text(threat["result"], color=type_color)
+    except Exception as e:
+        print(f"Threat row chunk error at idx {start_idx}: {e}")
+        return
+
+    next_idx = start_idx + _THREAT_CHUNK_SIZE
+    if next_idx < len(DETECTED_THREATS):
+        threading.Timer(0.02, _build_threat_rows_chunk, args=(next_idx,)).start()
+
+
 def _rebuild_threats_table():
+    """Rebuild the threats table header synchronously, then stream rows in chunks."""
     if dpg.does_item_exist("threats_table"):
-        # Delete and recreate the entire table to fix column issues
+        dpg.delete_item("threats_table")
+        with dpg.table(header_row=True, borders_innerH=True, borders_outerH=False,
+                      borders_innerV=False, borders_outerV=False,
+                      scrollY=True, height=220, width=-1,
+                      tag="threats_table", parent="threats_container"):
+            pass
+
+    if dpg.does_item_exist("threats_table"):
+        dpg.delete_item("threats_table", children_only=True)
+
+        dpg.add_table_column(label="Select", width_stretch=False, init_width_or_weight=60, parent="threats_table")
+        dpg.add_table_column(label="Explain", width_stretch=False, init_width_or_weight=90, parent="threats_table")
+        dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=200, parent="threats_table")
+        dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=350, parent="threats_table")
+        dpg.add_table_column(label="Confidence", width_stretch=False, init_width_or_weight=100, parent="threats_table")
+        dpg.add_table_column(label="Type", width_stretch=False, init_width_or_weight=100, parent="threats_table")
+
+        if not DETECTED_THREATS:
+            with dpg.table_row(parent="threats_table"):
+                for _ in range(6):
+                    if _ == 0:
+                        dpg.add_text("No threats detected", color=COLORS["text_secondary"])
+                    else:
+                        dpg.add_text("")
+            return
+
+        threading.Timer(0.01, _build_threat_rows_chunk, args=(0,)).start()
+
+
+def _rebuild_threats_table_blocking():
+    """Blocking version (used only on initial page build, never after scan)."""
+    if dpg.does_item_exist("threats_table"):
         dpg.delete_item("threats_table")
         with dpg.table(header_row=True, borders_innerH=True, borders_outerH=False,
                       borders_innerV=False, borders_outerV=False,
@@ -312,16 +485,11 @@ def _rebuild_threats_table():
         else:
             for threat in DETECTED_THREATS:
                 with dpg.table_row(parent="threats_table"):
-                    # Checkbox
                     checked = threat["file_path"] in SELECTED_QUARANTINE_ITEMS
                     dpg.add_checkbox(default_value=checked, callback=_toggle_select_item, user_data=threat["file_path"])
-                    # Explain button placed in the first visible action column
                     dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
-                    # File name
                     dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"])
-                    # Location
                     dpg.add_text(threat["file_path"], color=COLORS["text_secondary"])
-                    # Confidence
                     prob = threat.get("probability")
                     if prob is not None:
                         try:
@@ -330,9 +498,115 @@ def _rebuild_threats_table():
                             dpg.add_text("-", color=COLORS["text_secondary"])
                     else:
                         dpg.add_text("-", color=COLORS["text_secondary"])
-                    # Type
                     type_color = COLORS["accent_red"] if threat["result"] == "MALICIOUS" else COLORS["accent_orange"]
                     dpg.add_text(threat["result"], color=type_color)
+
+def _schedule_post_scan_ui_updates():
+    """Run post-scan UI rebuilds with all slow I/O done OFF the mutex,
+    and larger delays between chunks so the render loop never stalls.
+    """
+
+    def _preload_history_then_render():
+        entries = []
+        try:
+            if BACKEND_AVAILABLE:
+                raw = hl.load_log(limit=50)
+                entries = list(reversed(raw))
+        except Exception as e:
+            print(f"Post-scan history preload error: {e}")
+            entries = []
+
+        def _render():
+            try:
+                with dpg.mutex():
+                    _rebuild_history_from_data(entries)
+            except Exception as e:
+                print(f"Post-scan history render error: {e}")
+            threading.Timer(0.22, _preload_activity_then_render).start()
+
+        threading.Timer(0.02, _render).start()
+
+    def _preload_activity_then_render():
+        activities = []
+        try:
+            if BACKEND_AVAILABLE:
+                log = hl.load_log(limit=10)
+                for entry in reversed(log):
+                    entry_result = entry.get("result", "INFO")
+                    entry_file = entry.get("file_path", "Unknown file")
+                    entry_timestamp = entry.get("timestamp", "")
+                    if entry_result == "MALICIOUS":
+                        title = f"Malware detected: {os.path.basename(entry_file)}"
+                    elif entry_result == "SUSPICIOUS":
+                        title = f"Suspicious file: {os.path.basename(entry_file)}"
+                    elif entry_result == "CLEAN":
+                        title = f"File scanned: {os.path.basename(entry_file)}"
+                    elif entry_result == "QUARANTINED":
+                        title = f"File quarantined: {os.path.basename(entry_file)}"
+                    elif entry_result == "RESTORED":
+                        title = f"File restored: {os.path.basename(entry_file)}"
+                    elif entry_result == "DELETED":
+                        title = f"File deleted: {os.path.basename(entry_file)}"
+                    else:
+                        title = f"Scan activity: {entry_result}"
+                    activities.append((title, entry_timestamp, entry_result))
+        except Exception as e:
+            print(f"Post-scan activity preload error: {e}")
+            activities = []
+
+        def _render():
+            try:
+                with dpg.mutex():
+                    _rebuild_activity_feed_from_data(activities)
+            except Exception as e:
+                print(f"Post-scan activity render error: {e}")
+            threading.Timer(0.22, _preload_dashboard_then_render).start()
+
+        threading.Timer(0.02, _render).start()
+
+    def _preload_dashboard_then_render():
+        threat_score = 0
+        active_threats = 0
+        files_scanned = 0
+        try:
+            if BACKEND_AVAILABLE:
+                from system.quarantines.quarantine import list_quarantine_items
+                log = hs.load_log()
+                files_scanned = len(log)
+                quarantine_entries = list_quarantine_items()
+                active_threats = len(quarantine_entries)
+                if quarantine_entries:
+                    high_severity = 0
+                    for item in quarantine_entries:
+                        try:
+                            if float(item.get("probability", 0)) >= 0.7:
+                                high_severity += 1
+                        except Exception:
+                            pass
+                    threat_score = min(
+                        100,
+                        int(
+                            (high_severity / max(1, active_threats)) * 100
+                            + active_threats * 5
+                        ),
+                    )
+        except Exception as e:
+            print(f"Post-scan dashboard preload error: {e}")
+
+        def _render():
+            try:
+                with dpg.mutex():
+                    if dpg.does_item_exist("threat_score_value"):
+                        dpg.set_value("threat_score_value", str(threat_score))
+                        dpg.set_value("active_threats_value", str(active_threats))
+                        dpg.set_value("files_scanned_value", str(files_scanned))
+            except Exception as e:
+                print(f"Post-scan dashboard render error: {e}")
+
+        threading.Timer(0.02, _render).start()
+
+    threading.Timer(0.25, _preload_history_then_render).start()
+
 
 def _update_scan_progress():
     global SCAN_IN_PROGRESS, DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS, SCAN_CANCEL_REQUESTED
@@ -341,11 +615,15 @@ def _update_scan_progress():
         SCAN_CANCEL_REQUESTED = False
         DETECTED_THREATS = []
         SELECTED_QUARANTINE_ITEMS = set()
-        # Clear global lists from config to prevent memory leak
         cfg.DETECTED_MALWARE.clear()
         cfg.DETECTED_SUSPICIOUS.clear()
 
-        # Update UI state
+        if BACKEND_AVAILABLE:
+            try:
+                begin_log_buffer()
+            except Exception:
+                pass
+
         with dpg.mutex():
             dpg.set_value("scan_ready_heading", "Scanning...")
             dpg.set_item_label("start_scan_btn", "Scanning...")
@@ -364,7 +642,7 @@ def _update_scan_progress():
                     dpg.add_text("Threats found: 0", color=COLORS["text_secondary"], tag="scan_threat_count")
 
         if not BACKEND_AVAILABLE:
-            time.sleep(2)  # Simulate scan
+            time.sleep(2)
             with dpg.mutex():
                 dpg.set_value("scan_ready_heading", "Scan Complete!")
                 if dpg.does_item_exist("scan_status_text"):
@@ -373,32 +651,28 @@ def _update_scan_progress():
                     dpg.set_value("scan_progress_bar", 1.0)
         else:
             start_time = time.time()
-            last_ui_update = 0.0  # Tracks timestamp of last UI redraw
+            last_ui_update = 0.0
             files_scanned = 0
             threats_found = 0
             estimated_total = 100
 
-            # Scan files as they are discovered, with dynamic estimated progress
             def scan_path(path):
                 nonlocal files_scanned, threats_found, estimated_total, last_ui_update
                 if SCAN_CANCEL_REQUESTED:
                     return
-                # Skip files with extensions in KNOWN_SKIP_EXTS early
                 ext = os.path.splitext(path)[1].lower()
                 if ext in cfg.KNOWN_SKIP_EXTS:
                     files_scanned +=1
                     return
                 if not se.is_excluded(path):
                     try:
-                        # Skip very large files to prevent hanging (adjust limit as needed)
                         try:
                             file_size = os.path.getsize(path)
-                            # Skip files larger than 500MB (adjust limit as needed)
                             if file_size > 500 * 1024 * 1024:
                                 files_scanned += 1
                                 return
                         except Exception:
-                            pass  # If we can't get size, continue
+                            pass
 
                         result = sf.scan_file(path, auto_quarantine=False)
                         files_scanned += 1
@@ -408,14 +682,23 @@ def _update_scan_progress():
                             DETECTED_THREATS.append(result)
 
                         current_time = time.time()
-                        if current_time - last_ui_update > 0.2:
+                        if current_time - last_ui_update > 0.25:
                             estimated_total = max(estimated_total, files_scanned + 100)
                             progress = min(0.99, files_scanned / max(1, estimated_total))
+                            elapsed = current_time - start_time
 
-                            if dpg.does_item_exist("scan_status_text"):
-                                dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
-                            if dpg.does_item_exist("scan_progress_bar"):
-                                dpg.set_value("scan_progress_bar", progress)
+                            try:
+                                with dpg.mutex():
+                                    if dpg.does_item_exist("scan_status_text"):
+                                        dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
+                                    if dpg.does_item_exist("scan_progress_bar"):
+                                        dpg.set_value("scan_progress_bar", progress)
+                                    if dpg.does_item_exist("scan_elapsed_time"):
+                                        dpg.set_value("scan_elapsed_time", f"Elapsed: {elapsed:.1f}s")
+                                    if dpg.does_item_exist("scan_threat_count"):
+                                        dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
+                            except Exception:
+                                pass
 
                             last_ui_update = current_time
                     except Exception as e:
@@ -468,61 +751,120 @@ def _update_scan_progress():
                             break
 
             duration = time.time() - start_time
-            with dpg.mutex():
-                dpg.set_value("scan_ready_heading", "Scan Complete!")
-                if dpg.does_item_exist("scan_status_text"):
-                    dpg.set_value("scan_status_text", f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found.")
-                if dpg.does_item_exist("scan_progress_bar"):
-                    dpg.set_value("scan_progress_bar", 1.0)
-                if dpg.does_item_exist("scan_elapsed_time"):
-                    dpg.set_value("scan_elapsed_time", f"Elapsed: {duration:.1f}s")
-                if dpg.does_item_exist("scan_threat_count"):
-                    dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
 
-            # Send Telegram notification
             if BACKEND_AVAILABLE:
+                def _flush_async():
+                    try:
+                        flush_log_buffer()
+                    except Exception:
+                        pass
+                threading.Thread(target=_flush_async, daemon=True).start()
+
+            completion_text = f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found."
+            elapsed_text = f"Elapsed: {duration:.1f}s"
+            threat_count_text = f"Threats found: {threats_found}"
+
+            def _apply_completion_status():
                 try:
-                    config = tg.load_config()
-                    if config.get("telegram_bot_token") and config.get("telegram_chat_id"):
-                        msg = (
-                            f"🔍 Scan Complete!\n"
-                            f"Scanned {files_scanned} files in {duration:.1f}s\n"
-                            f"Threats found: {threats_found}"
-                        )
-                        tg.send_telegram_notification(msg)
+                    with dpg.mutex():
+                        dpg.set_value("scan_ready_heading", "Scan Complete!")
+                        if dpg.does_item_exist("scan_status_text"):
+                            dpg.set_value("scan_status_text", completion_text)
+                        if dpg.does_item_exist("scan_progress_bar"):
+                            dpg.set_value("scan_progress_bar", 1.0)
+                        if dpg.does_item_exist("scan_elapsed_time"):
+                            dpg.set_value("scan_elapsed_time", elapsed_text)
+                        if dpg.does_item_exist("scan_threat_count"):
+                            dpg.set_value("scan_threat_count", threat_count_text)
                 except Exception as e:
-                    print(f"Error sending Telegram notification: {e}")
+                    print(f"Completion status apply error: {e}")
 
-            # Show threats table if threats found
-            with dpg.mutex():
-                if dpg.does_item_exist("threats_container"):
-                    dpg.show_item("threats_container")
-                    _rebuild_threats_table()
+            threading.Timer(0.01, _apply_completion_status).start()
 
-            # Refresh history, activity feed, and dashboard after scan completes
-            from ui.history import _rebuild_history
-            with dpg.mutex():
-                _rebuild_history()
-                _rebuild_activity_feed()
-                refresh_dashboard_stats()
+            if BACKEND_AVAILABLE:
+                def _send_completion_notification():
+                    try:
+                        config = tg.load_config()
+                        if config.get("telegram_bot_token") and config.get("telegram_chat_id"):
+                            msg = (
+                                f"🔍 Scan Complete!\n"
+                                f"Scanned {files_scanned} files in {duration:.1f}s\n"
+                                f"Threats found: {threats_found}"
+                            )
+                            tg.send_telegram_notification(msg)
+                    except Exception as e:
+                        print(f"Error sending Telegram notification: {e}")
+                threading.Thread(target=_send_completion_notification, daemon=True).start()
+
+            def _show_threats_container():
+                try:
+                    with dpg.mutex():
+                        if dpg.does_item_exist("threats_container"):
+                            dpg.show_item("threats_container")
+                except Exception as e:
+                    print(f"Show threats container error: {e}")
+
+            def _begin_threats_rebuild():
+                try:
+                    with dpg.mutex():
+                        _rebuild_threats_table()
+                except Exception as e:
+                    print(f"Begin threats rebuild error: {e}")
+                threading.Timer(0.35, _schedule_post_scan_ui_updates).start()
+
+            threading.Timer(0.06, _show_threats_container).start()
+            threading.Timer(0.20, _begin_threats_rebuild).start()
 
     except Exception as e:
         print("=" * 80)
         traceback.print_exc()
         print("=" * 80)
 
-        with dpg.mutex():
-            dpg.set_value("scan_ready_heading", "Scan Failed")
-            if dpg.does_item_exist("scan_status_text"):
-                dpg.set_value("scan_status_text", f"{type(e).__name__}: {e}")
+        if BACKEND_AVAILABLE:
+            def _flush_err_async():
+                try:
+                    flush_log_buffer()
+                except Exception:
+                    pass
+            threading.Thread(target=_flush_err_async, daemon=True).start()
+
+        err_text = f"{type(e).__name__}: {e}"
+
+        def _apply_failure_status():
+            try:
+                with dpg.mutex():
+                    dpg.set_value("scan_ready_heading", "Scan Failed")
+                    if dpg.does_item_exist("scan_status_text"):
+                        dpg.set_value("scan_status_text", err_text)
+            except Exception:
+                pass
+
+        threading.Timer(0.01, _apply_failure_status).start()
 
     finally:
         SCAN_IN_PROGRESS = False
-        with dpg.mutex():
-            dpg.configure_item("start_scan_btn", enabled=True)
-            if dpg.does_item_exist("cancel_scan_btn"):
-                dpg.configure_item("cancel_scan_btn", enabled=False)
-            _update_start_button()
+
+        def _final_flush_if_needed():
+            try:
+                from system.history.logs import _buffering_active as _ba
+                if _ba:
+                    flush_log_buffer()
+            except Exception:
+                pass
+
+        threading.Thread(target=_final_flush_if_needed, daemon=True).start()
+
+        def _re_enable_buttons():
+            try:
+                with dpg.mutex():
+                    dpg.configure_item("start_scan_btn", enabled=True)
+                    if dpg.does_item_exist("cancel_scan_btn"):
+                        dpg.configure_item("cancel_scan_btn", enabled=False)
+                    _update_start_button()
+            except Exception as e:
+                print(f"Re-enable buttons error: {e}")
+
+        threading.Timer(0.04, _re_enable_buttons).start()
 
 def _start_scan(sender, app_data):
     if SCAN_IN_PROGRESS:
