@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,6 +66,13 @@ public class DashboardFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("AYAWrusDash", "onResume: refreshing dashboard");
+        refresh();
+    }
+
     public void refresh() {
         if (tvStatusBanner == null) {
             Log.w("AYAWrusDash", "refresh() called before view was created — ignoring");
@@ -79,9 +87,18 @@ public class DashboardFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     applyData(response.body());
                     Log.i("AYAWrusDash", "refresh: API loaded " + response.body().size() + " results");
+                } else if (response.isSuccessful() && response.body() != null) {
+                    Log.i("AYAWrusDash", "refresh: API returned empty list — showing Awaiting state (no demo data)");
+                    applyAwaitingData();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "No scan history on desktop yet. Run a scan first.", Toast.LENGTH_LONG).show();
+                    }
                 } else {
-                    Log.w("AYAWrusDash", "refresh: API returned empty/null — falling back to MockData");
+                    Log.w("AYAWrusDash", "refresh: API HTTP error (" + response.code() + ") — showing demo fallback");
                     applyData(MockData.getMockScanResults());
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "API error — showing demo dashboard.", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
 
@@ -89,18 +106,25 @@ public class DashboardFragment extends Fragment {
             public void onFailure(Call<List<ScanResult>> call, Throwable t) {
                 Log.w("AYAWrusDash", "refresh: API call failed, using MockData fallback: " + t.getMessage());
                 applyData(MockData.getMockScanResults());
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Cannot reach desktop server: " + t.getMessage() + ". Showing demo.", Toast.LENGTH_LONG).show();
+                }
             }
         });
     }
 
+    private void applyAwaitingData() {
+        tvStatusBanner.setText("Awaiting Scan Data");
+        tvStatusBanner.setBackgroundColor(0xFF607D8B);
+        tvLastScanFile.setText("No recent scans");
+        tvLastScanDetails.setText("Run a scan on the desktop to see live data here");
+        tvCleanCount.setText("0");
+        tvThreatCount.setText("0");
+    }
+
     private void applyData(List<ScanResult> results) {
         if (results == null || results.isEmpty()) {
-            tvStatusBanner.setText("System Online");
-            tvStatusBanner.setBackgroundColor(0xFF4CAF50);
-            tvLastScanFile.setText("No recent scans");
-            tvLastScanDetails.setText("Waiting for scanner data");
-            tvCleanCount.setText("0");
-            tvThreatCount.setText("0");
+            applyAwaitingData();
             return;
         }
 

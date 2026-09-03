@@ -10,6 +10,8 @@ from ui.dashboard import refresh_dashboard_stats, animate_number
 from ui.history import _rebuild_history, _rebuild_history_from_data
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_api_server_started = False
+
 try:
     import system.quarantines as qq
     import system.config as cfg
@@ -20,6 +22,7 @@ try:
     import system.history.logs as hl
     import system.history.logs as hs
     from system.history.logs import begin_log_buffer, flush_log_buffer
+    from system.notifications import enqueue_threat_notification
     from system.xai.engine import XAIExplanationEngine
     xai_engine = XAIExplanationEngine()
     BACKEND_AVAILABLE = True
@@ -36,6 +39,14 @@ SCAN_IN_PROGRESS = False
 CURRENT_CUSTOM_PATH = ""
 DETECTED_THREATS = []
 SELECTED_QUARANTINE_ITEMS = set()
+
+_PROGRESS_COUNTER_LOCK = threading.Lock()
+_PROGRESS_FILES_SCANNED = 0
+_PROGRESS_THREATS_FOUND = 0
+_PROGRESS_CURRENT_NAME = ""
+_PROGRESS_ESTIMATED_TOTAL = 100
+_PROGRESS_START_TIME = 0.0
+_PROGRESS_TICKER_RUNNING = False
 
 READY_HEADING_OFFSET = 567
 START_BUTTON_OFFSET = 535
@@ -608,8 +619,78 @@ def _schedule_post_scan_ui_updates():
     threading.Timer(0.25, _preload_history_then_render).start()
 
 
+def _reset_progress_counters(start_time):
+    global _PROGRESS_FILES_SCANNED, _PROGRESS_THREATS_FOUND, _PROGRESS_CURRENT_NAME
+    global _PROGRESS_ESTIMATED_TOTAL, _PROGRESS_START_TIME
+    with _PROGRESS_COUNTER_LOCK:
+        _PROGRESS_FILES_SCANNED = 0
+        _PROGRESS_THREATS_FOUND = 0
+        _PROGRESS_CURRENT_NAME = ""
+        _PROGRESS_ESTIMATED_TOTAL = 100
+        _PROGRESS_START_TIME = start_time
+
+
+def _bump_files_scanned(name="", delta=1, extra_total=100):
+    global _PROGRESS_FILES_SCANNED, _PROGRESS_CURRENT_NAME, _PROGRESS_ESTIMATED_TOTAL
+    with _PROGRESS_COUNTER_LOCK:
+        _PROGRESS_FILES_SCANNED += delta
+        if name:
+            _PROGRESS_CURRENT_NAME = name
+        _PROGRESS_ESTIMATED_TOTAL = max(_PROGRESS_ESTIMATED_TOTAL, _PROGRESS_FILES_SCANNED + extra_total)
+
+
+def _bump_threats_found(delta=1):
+    global _PROGRESS_THREATS_FOUND
+    with _PROGRESS_COUNTER_LOCK:
+        _PROGRESS_THREATS_FOUND += delta
+
+
+def _snapshot_progress():
+    with _PROGRESS_COUNTER_LOCK:
+        return (
+            _PROGRESS_FILES_SCANNED,
+            _PROGRESS_THREATS_FOUND,
+            _PROGRESS_CURRENT_NAME,
+            _PROGRESS_ESTIMATED_TOTAL,
+            _PROGRESS_START_TIME,
+        )
+
+
+def _progress_ticker_loop():
+    """Single ticker thread: updates UI once every ~120ms using counter snapshots.
+    Eliminates all per-file dpg.mutex() acquisition — mutex held only during the
+    handful of set_value() calls, no file I/O inside."""
+    global _PROGRESS_TICKER_RUNNING
+    tick = 0.0
+    while True:
+        if not SCAN_IN_PROGRESS or SCAN_CANCEL_REQUESTED:
+            time.sleep(0.03)
+            if not SCAN_IN_PROGRESS:
+                break
+            continue
+        files_scanned, threats_found, cur_name, estimated_total, started_at = _snapshot_progress()
+        elapsed = time.time() - started_at
+        progress = min(0.99, files_scanned / max(1, estimated_total))
+        try:
+            with dpg.mutex():
+                if cur_name:
+                    if dpg.does_item_exist("scan_status_text"):
+                        dpg.set_value("scan_status_text", f"Scanning: {cur_name} ({files_scanned} files)")
+                if dpg.does_item_exist("scan_progress_bar"):
+                    dpg.set_value("scan_progress_bar", progress)
+                if dpg.does_item_exist("scan_elapsed_time"):
+                    dpg.set_value("scan_elapsed_time", f"Elapsed: {elapsed:.1f}s")
+                if dpg.does_item_exist("scan_threat_count"):
+                    dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
+        except Exception:
+            pass
+        time.sleep(0.12)
+    _PROGRESS_TICKER_RUNNING = False
+
+
 def _update_scan_progress():
     global SCAN_IN_PROGRESS, DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS, SCAN_CANCEL_REQUESTED
+    global _PROGRESS_TICKER_RUNNING
     try:
         SCAN_IN_PROGRESS = True
         SCAN_CANCEL_REQUESTED = False
@@ -651,59 +732,66 @@ def _update_scan_progress():
                     dpg.set_value("scan_progress_bar", 1.0)
         else:
             start_time = time.time()
-            last_ui_update = 0.0
-            files_scanned = 0
-            threats_found = 0
-            estimated_total = 100
+            _reset_progress_counters(start_time)
+            if not _PROGRESS_TICKER_RUNNING:
+                _PROGRESS_TICKER_RUNNING = True
+                threading.Thread(target=_progress_ticker_loop, daemon=True).start()
 
             def scan_path(path):
-                nonlocal files_scanned, threats_found, estimated_total, last_ui_update
                 if SCAN_CANCEL_REQUESTED:
                     return
-                ext = os.path.splitext(path)[1].lower()
+                try:
+                    ext = os.path.splitext(path)[1].lower()
+                except Exception:
+                    ext = ""
                 if ext in cfg.KNOWN_SKIP_EXTS:
-                    files_scanned +=1
+                    _bump_files_scanned()
                     return
-                if not se.is_excluded(path):
-                    try:
+                try:
+                    if not se.is_excluded(path):
                         try:
                             file_size = os.path.getsize(path)
                             if file_size > 500 * 1024 * 1024:
-                                files_scanned += 1
+                                _bump_files_scanned()
                                 return
                         except Exception:
                             pass
 
-                        result = sf.scan_file(path, auto_quarantine=False)
-                        files_scanned += 1
+                        try:
+                            result = sf.scan_file(path, auto_quarantine=False)
+                        except Exception:
+                            result = None
 
-                        if result["result"] in ["MALICIOUS", "SUSPICIOUS"]:
-                            threats_found += 1
+                        _bump_files_scanned(name=os.path.basename(path))
+
+                        if result and result.get("result") in ("MALICIOUS", "SUSPICIOUS"):
+                            _bump_threats_found()
                             DETECTED_THREATS.append(result)
-
-                        current_time = time.time()
-                        if current_time - last_ui_update > 0.25:
-                            estimated_total = max(estimated_total, files_scanned + 100)
-                            progress = min(0.99, files_scanned / max(1, estimated_total))
-                            elapsed = current_time - start_time
-
                             try:
-                                with dpg.mutex():
-                                    if dpg.does_item_exist("scan_status_text"):
-                                        dpg.set_value("scan_status_text", f"Scanning: {os.path.basename(path)} ({files_scanned} files)")
-                                    if dpg.does_item_exist("scan_progress_bar"):
-                                        dpg.set_value("scan_progress_bar", progress)
-                                    if dpg.does_item_exist("scan_elapsed_time"):
-                                        dpg.set_value("scan_elapsed_time", f"Elapsed: {elapsed:.1f}s")
-                                    if dpg.does_item_exist("scan_threat_count"):
-                                        dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
+                                enqueue_threat_notification(
+                                    result["file_path"],
+                                    result["result"],
+                                    result.get("probability"),
+                                    result.get("category"),
+                                )
                             except Exception:
                                 pass
-
-                            last_ui_update = current_time
-                    except Exception as e:
-                        print(f"Error scanning file {path}: {e}")
-                        files_scanned += 1
+                            try:
+                                from system.api.server import notify_new_malware
+                                try:
+                                    prob_val = result.get("probability")
+                                    if prob_val is not None:
+                                        tl = int(round(float(prob_val) * 100))
+                                    else:
+                                        tl = 90 if result["result"] == "MALICIOUS" else 55
+                                    notify_new_malware(os.path.basename(result["file_path"]), tl)
+                                except Exception:
+                                    pass
+                            except Exception:
+                                pass
+                except Exception as e:
+                    print(f"Error scanning file {path}: {e}")
+                    _bump_files_scanned()
 
             if SELECTED_SCAN == "quick":
                 for folder in cfg.QUICK_SCAN_DIRS:
@@ -750,6 +838,9 @@ def _update_scan_progress():
                         if SCAN_CANCEL_REQUESTED:
                             break
 
+            SCAN_IN_PROGRESS = False
+            time.sleep(0.06)
+            files_scanned, threats_found, _n, _e, _s = _snapshot_progress()
             duration = time.time() - start_time
 
             if BACKEND_AVAILABLE:
@@ -819,6 +910,7 @@ def _update_scan_progress():
         print("=" * 80)
         traceback.print_exc()
         print("=" * 80)
+        SCAN_IN_PROGRESS = False
 
         if BACKEND_AVAILABLE:
             def _flush_err_async():
@@ -1112,3 +1204,38 @@ def build_scan(parent, fonts, icons):
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, COLORS["accent_blue"])
     dpg.bind_item_theme("start_scan_btn", btn_theme)
     dpg.bind_item_theme("quarantine_btn", btn_theme)
+
+    _ensure_api_server_started()
+
+
+def _ensure_api_server_started():
+    """Start the Flask API (alerts SSE + /api routes) on a background thread so
+    the mobile app can poll /api/alerts/latest or stream /api/alerts/stream.
+    Called once when the scan UI builds; subsequent calls are no-ops.
+    """
+    global _api_server_started
+    if _api_server_started or not BACKEND_AVAILABLE:
+        return
+    try:
+        _api_server_started = True
+        import system.api.server as srv_mod
+        srv_mod.init_db()
+        try:
+            srv_mod.sync_history_json_to_db()
+        except Exception:
+            pass
+
+        def _srv_worker():
+            try:
+                host = os.environ.get("SERVER_HOST", "0.0.0.0")
+                port = int(os.environ.get("SERVER_PORT", "5000"))
+                srv_mod.app.run(host=host, port=port, threaded=True, use_reloader=False, debug=False)
+            except Exception as e:
+                print(f"[API Server] Failed to start: {e}")
+
+        t = threading.Thread(target=_srv_worker, daemon=True)
+        t.start()
+        print(f"[API Server] Started (background thread). Mobile alerts available at http://<host>:5000/api/alerts/stream")
+    except Exception as e:
+        print(f"[API Server] Init error (continuing): {e}")
+        _api_server_started = False

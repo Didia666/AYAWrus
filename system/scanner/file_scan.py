@@ -9,7 +9,7 @@ from system.history.logs import add_log_entry
 from system.model_load import model, selected_feature_indices, expected_input_dim
 from system.quarantines.quarantine import quarantine_file
 from system.utils.utility import categorize_threat
-from system.notifications import send_telegram_notification
+from system.notifications import send_telegram_notification, enqueue_threat_notification
 from system.xai.engine import xai_engine
 
 def classify_file(file_path):
@@ -135,23 +135,17 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         if prediction == 1:
             DETECTED_MALWARE.append(file_path)
             add_log_entry(file_path, result="MALICIOUS", probability=prob, details=f"Category: {category}")
-            
-            # Send Telegram notification
-            message = (
-                f"[!] Malware Detected!\n"
-                f"File: {os.path.basename(file_path)}\n"
-                f"Path: {file_path}\n"
-                f"Probability: {prob:.2%}\n"
-                f"Severity: {category}"
-            )
-            send_telegram_notification(message)
-            
+
+            try:
+                enqueue_threat_notification(file_path, "MALICIOUS", prob, category)
+            except Exception:
+                pass
+
             if auto_quarantine:
                 if prob >= 0.90:
                     quarantine_file(file_path)
                 else:
                     allow_threat(file_path, category, "MALICIOUS")
-            # Don't include file_bytes or features in result dict to save memory
             return {"result": "MALICIOUS", "probability": prob, "file_path": file_path, "category": category, "xai_report": xai_report}
         else:
             # Clean results don't need file_bytes or features
@@ -210,23 +204,18 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
             
         DETECTED_SUSPICIOUS.append(file_path)
         add_log_entry(file_path, "SUSPICIOUS", details=f"Keywords: {', '.join(found_keywords)}")
-        
-        # Performance Hint: Push Telegram notifications into an asynchronous background queue 
-        # or thread instead of executing them synchronously inside the critical pathway here.
-        message = (
-            f"[!] Suspicious File Detected!\n"
-            f"File: {os.path.basename(file_path)}\n"
-            f"Path: {file_path}\n"
-            f"Reason: Contains suspicious keyword(s): {', '.join(found_keywords)}"
-        )
-        send_telegram_notification(message)
-        
+
+        try:
+            enqueue_threat_notification(file_path, "SUSPICIOUS", 0.7, "Script/Keyword")
+        except Exception:
+            pass
+
         if auto_quarantine:
-            # Quarantine suspicious script files instead of allowing them
-            print("Before quarantine, exists:", os.path.exists(file_path))
-            quarantine_file(file_path)
-            print("After quarantine, exists:", os.path.exists(file_path))
-        
+            try:
+                quarantine_file(file_path)
+            except Exception:
+                pass
+
         return {"result": "SUSPICIOUS", "probability": 0.7, "file_path": file_path, "keywords": found_keywords, "xai_report": xai_report}
         
     return {"result": "CLEAN", "probability": 0, "file_path": file_path, "xai_report": xai_report}

@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +26,8 @@ public class HistoryFragment extends Fragment {
 
     private ScanAdapter adapter;
     private List<ScanResult> allResults = new ArrayList<>();
+    private TextView tvEmptyState;
+    private RecyclerView rvScanHistory;
 
     @Nullable
     @Override
@@ -32,8 +35,10 @@ public class HistoryFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_history, container, false);
 
-        RecyclerView rvScanHistory = view.findViewById(R.id.rvScanHistory);
+        rvScanHistory = view.findViewById(R.id.rvScanHistory);
         rvScanHistory.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
         adapter = new ScanAdapter(allResults);
         rvScanHistory.setAdapter(adapter);
@@ -43,8 +48,18 @@ public class HistoryFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("AYAWrusHist", "onResume: refreshing history");
+        refresh();
+    }
+
     public void refresh() {
         Log.i("AYAWrusHist", "refresh() called — fetching history from API");
+        if (tvEmptyState != null) {
+            tvEmptyState.setVisibility(View.GONE);
+        }
         fetchHistory();
     }
 
@@ -54,20 +69,28 @@ public class HistoryFragment extends Fragment {
             public void onResponse(Call<List<ScanResult>> call, Response<List<ScanResult>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     updateList(response.body());
-                    Log.i("AYAWrusHist", "fetchHistory: loaded " + response.body().size() + " records from API");
+                    if (response.body().isEmpty()) {
+                        Log.i("AYAWrusHist", "fetchHistory: API returned 0 records (server has no history yet)");
+                    } else {
+                        Log.i("AYAWrusHist", "fetchHistory: loaded " + response.body().size() + " records from API");
+                    }
                 } else {
-                    updateList(filterLast15Days(MockData.getMockScanResults()));
+                    Log.w("AYAWrusHist", "fetchHistory: API error (HTTP " + response.code() + "), showing demo mock data");
+                    List<ScanResult> mock = filterLast15Days(MockData.getMockScanResults());
+                    updateList(mock);
                     if (getContext() != null) {
-                        Toast.makeText(getContext(), "Using mock data (API unavailable)", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "API error — showing demo history. Check desktop server.", Toast.LENGTH_LONG).show();
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<List<ScanResult>> call, Throwable t) {
-                updateList(filterLast15Days(MockData.getMockScanResults()));
+                Log.w("AYAWrusHist", "fetchHistory: API call failed: " + t.getMessage());
+                List<ScanResult> mock = filterLast15Days(MockData.getMockScanResults());
+                updateList(mock);
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Error: " + t.getMessage() + ". Using mock data.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Connection error: " + t.getMessage() + " — showing demo data.", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -75,9 +98,23 @@ public class HistoryFragment extends Fragment {
 
     private void updateList(List<ScanResult> newResults) {
         allResults.clear();
-        allResults.addAll(newResults);
+        if (newResults != null) {
+            allResults.addAll(newResults);
+        }
         if (adapter != null) {
             adapter.notifyDataSetChanged();
+        }
+        updateEmptyStateVisibility();
+    }
+
+    private void updateEmptyStateVisibility() {
+        if (tvEmptyState == null || rvScanHistory == null) return;
+        if (allResults.isEmpty()) {
+            tvEmptyState.setVisibility(View.VISIBLE);
+            rvScanHistory.setVisibility(View.GONE);
+        } else {
+            tvEmptyState.setVisibility(View.GONE);
+            rvScanHistory.setVisibility(View.VISIBLE);
         }
     }
 
@@ -86,7 +123,7 @@ public class HistoryFragment extends Fragment {
         long fifteenDaysAgo = System.currentTimeMillis() - (15L * 24 * 60 * 60 * 1000);
 
         for (ScanResult result : results) {
-            if (result.getTimestamp() >= fifteenDaysAgo) {
+            if (result != null && result.getTimestamp() >= fifteenDaysAgo) {
                 filtered.add(result);
             }
         }

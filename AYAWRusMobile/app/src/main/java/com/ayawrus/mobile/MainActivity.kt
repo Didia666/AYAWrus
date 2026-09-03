@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     private var currentDashboard: DashboardFragment? = null
     private var currentHistory: HistoryFragment? = null
+    private var currentQuarantine: QuarantineFragment? = null
 
     private val alertPollRunnable = object : Runnable {
         override fun run() {
@@ -173,6 +174,7 @@ class MainActivity : AppCompatActivity() {
                         val newDash = DashboardFragment()
                         currentDashboard = newDash
                         currentHistory = null
+                        currentQuarantine = null
                         selectedFragment = newDash
                         setTitleCompat("Dashboard")
                     }
@@ -180,8 +182,17 @@ class MainActivity : AppCompatActivity() {
                         val newHist = HistoryFragment()
                         currentHistory = newHist
                         currentDashboard = null
+                        currentQuarantine = null
                         selectedFragment = newHist
                         setTitleCompat("History")
+                    }
+                    R.id.nav_quarantine -> {
+                        val newQ = QuarantineFragment()
+                        currentQuarantine = newQ
+                        currentDashboard = null
+                        currentHistory = null
+                        selectedFragment = newQ
+                        setTitleCompat("Remote Quarantine")
                     }
                 }
                 selectedFragment?.let {
@@ -204,6 +215,7 @@ class MainActivity : AppCompatActivity() {
                     val dash = DashboardFragment()
                     currentDashboard = dash
                     currentHistory = null
+                    currentQuarantine = null
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragmentContainer, dash)
                         .commit()
@@ -243,6 +255,11 @@ class MainActivity : AppCompatActivity() {
             if (hist != null && hist.isAdded) {
                 hist.refresh()
                 Log.i("AYAWrusMain", "[UI-refresh] HistoryFragment.refresh() called")
+            }
+            val q = currentQuarantine
+            if (q != null && q.isAdded) {
+                q.refresh()
+                Log.i("AYAWrusMain", "[UI-refresh] QuarantineFragment.refresh() called")
             }
         } catch (t: Throwable) {
             Log.w("AYAWrusMain", "[UI-refresh] Failed: ${t.message}")
