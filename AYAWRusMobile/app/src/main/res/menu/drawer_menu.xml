@@ -9,4 +9,8 @@
         android:id="@+id/nav_history"
         android:title="History" />
 
+    <item
+        android:id="@+id/nav_quarantine"
+        android:title="Remote Quarantine" />
+
 </menu>

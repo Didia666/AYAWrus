@@ -85,11 +85,7 @@ def add_log_entry(file_path, result, probability=None, details=None):
         if _buffering_active:
             _log_buffer.append(entry)
             return
-        buffered = list(_log_buffer)
-    if buffered:
-        log = buffered
-    else:
-        log = _load_log_from_disk()
+    log = _load_log_from_disk()
     log.append(entry)
     save_log(log)
 
