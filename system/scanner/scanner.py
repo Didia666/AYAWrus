@@ -9,7 +9,7 @@ from system.scanner.folder_scan import scan_folder_parallel
 
 
 def custom_scan(path):
-    begin_log_buffer()
+    begin_log_buffer(scan_type="custom", target=str(path) if path else "")
     try: 
         if os.path.isfile(path):
             print("Custom scan (single file)")
@@ -30,21 +30,23 @@ def custom_scan(path):
 
 def regular_scan():
     print("=== Running Regular System Scan ===")
-    begin_log_buffer()  # Start buffering log entries
+    target = ", ".join(d for d in REGULAR_SCAN_DIRS if isinstance(d, str)) if isinstance(REGULAR_SCAN_DIRS, (list, tuple)) else ""
+    begin_log_buffer(scan_type="full", target=target)
     try:
         for directory in REGULAR_SCAN_DIRS:
             if os.path.exists(directory):
                 print(f"\nScanning: {directory}")
-                scan_folder_parallel(directory)  # use parallel version
+                scan_folder_parallel(directory)
             else:
                 print(f"Skipping missing folder: {directory}")
     finally:
-        flush_log_buffer()  # Write all buffered log entries at once
+        flush_log_buffer()
 
 
 def quick_scan():
     print("=== QUICK SCAN ===")
-    begin_log_buffer()
+    target = ", ".join(d for d in QUICK_SCAN_DIRS if isinstance(d, str)) if isinstance(QUICK_SCAN_DIRS, (list, tuple)) else ""
+    begin_log_buffer(scan_type="quick", target=target)
     try:
         with ProcessPoolExecutor(max_workers=os.cpu_count()) as pool:
             for folder in QUICK_SCAN_DIRS:
