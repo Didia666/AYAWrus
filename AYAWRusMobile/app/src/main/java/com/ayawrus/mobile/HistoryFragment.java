@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,10 +23,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class HistoryFragment extends Fragment {
+public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchClickListener {
 
-    private ScanAdapter adapter;
-    private List<ScanResult> allResults = new ArrayList<>();
+    private BatchAdapter adapter;
+    private List<ScanBatch> allBatches = new ArrayList<>();
     private TextView tvEmptyState;
     private RecyclerView rvScanHistory;
 
@@ -40,7 +41,7 @@ public class HistoryFragment extends Fragment {
 
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
-        adapter = new ScanAdapter(allResults);
+        adapter = new BatchAdapter(allBatches, this);
         rvScanHistory.setAdapter(adapter);
 
         refresh();
@@ -51,65 +52,74 @@ public class HistoryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("AYAWrusHist", "onResume: refreshing history");
+        Log.i("AYAWrusHist", "onResume: refreshing history (batch list)");
         refresh();
     }
 
     public void refresh() {
-        Log.i("AYAWrusHist", "refresh() called — fetching history from API");
+        Log.i("AYAWrusHist", "refresh() called — fetching batches from API");
         if (tvEmptyState != null) {
             tvEmptyState.setVisibility(View.GONE);
         }
-        fetchHistory();
+        fetchBatches();
     }
 
-    private void fetchHistory() {
-        ApiClient.getService().getHistory(15).enqueue(new Callback<List<ScanResult>>() {
+    private void fetchBatches() {
+        ApiClient.getService().getBatches(30, 100).enqueue(new Callback<List<ScanBatch>>() {
             @Override
-            public void onResponse(Call<List<ScanResult>> call, Response<List<ScanResult>> response) {
+            public void onResponse(Call<List<ScanBatch>> call, Response<List<ScanBatch>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     updateList(response.body());
                     if (response.body().isEmpty()) {
-                        Log.i("AYAWrusHist", "fetchHistory: API returned 0 records (server has no history yet)");
+                        Log.i("AYAWrusHist", "fetchBatches: API returned 0 batches — desktop has no scan runs yet");
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(),
+                                    "No scan batches on desktop yet. Run a scan first.",
+                                    Toast.LENGTH_LONG).show();
+                        }
                     } else {
-                        Log.i("AYAWrusHist", "fetchHistory: loaded " + response.body().size() + " records from API");
+                        Log.i("AYAWrusHist", "fetchBatches: loaded " + response.body().size() + " batches from API");
                     }
                 } else {
-                    Log.w("AYAWrusHist", "fetchHistory: API error (HTTP " + response.code() + "), showing demo mock data");
-                    List<ScanResult> mock = filterLast15Days(MockData.getMockScanResults());
+                    Log.w("AYAWrusHist", "fetchBatches: API error (HTTP " + response.code() + "), showing demo mock batches");
+                    List<ScanBatch> mock = MockData.getMockBatches();
                     updateList(mock);
                     if (getContext() != null) {
-                        Toast.makeText(getContext(), "API error — showing demo history. Check desktop server.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(),
+                                "API error — showing demo batches. Check desktop server.",
+                                Toast.LENGTH_LONG).show();
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<List<ScanResult>> call, Throwable t) {
-                Log.w("AYAWrusHist", "fetchHistory: API call failed: " + t.getMessage());
-                List<ScanResult> mock = filterLast15Days(MockData.getMockScanResults());
+            public void onFailure(Call<List<ScanBatch>> call, Throwable t) {
+                Log.w("AYAWrusHist", "fetchBatches: API call failed: " + t.getMessage());
+                List<ScanBatch> mock = MockData.getMockBatches();
                 updateList(mock);
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Connection error: " + t.getMessage() + " — showing demo data.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(),
+                            "Connection error: " + t.getMessage() + " — showing demo batches.",
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
     }
 
-    private void updateList(List<ScanResult> newResults) {
-        allResults.clear();
-        if (newResults != null) {
-            allResults.addAll(newResults);
+    private void updateList(List<ScanBatch> newBatches) {
+        allBatches.clear();
+        if (newBatches != null) {
+            allBatches.addAll(newBatches);
         }
         if (adapter != null) {
-            adapter.notifyDataSetChanged();
+            adapter.setData(allBatches);
         }
         updateEmptyStateVisibility();
     }
 
     private void updateEmptyStateVisibility() {
         if (tvEmptyState == null || rvScanHistory == null) return;
-        if (allResults.isEmpty()) {
+        if (allBatches.isEmpty()) {
             tvEmptyState.setVisibility(View.VISIBLE);
             rvScanHistory.setVisibility(View.GONE);
         } else {
@@ -118,15 +128,12 @@ public class HistoryFragment extends Fragment {
         }
     }
 
-    private List<ScanResult> filterLast15Days(List<ScanResult> results) {
-        List<ScanResult> filtered = new ArrayList<>();
-        long fifteenDaysAgo = System.currentTimeMillis() - (15L * 24 * 60 * 60 * 1000);
-
-        for (ScanResult result : results) {
-            if (result != null && result.getTimestamp() >= fifteenDaysAgo) {
-                filtered.add(result);
-            }
-        }
-        return filtered;
+    @Override
+    public void onBatchClicked(ScanBatch batch) {
+        if (batch == null) return;
+        FragmentActivity activity = getActivity();
+        if (activity == null) return;
+        BatchDetailBottomSheet sheet = BatchDetailBottomSheet.newInstance(batch);
+        sheet.show(activity.getSupportFragmentManager(), "BatchDetail");
     }
 }

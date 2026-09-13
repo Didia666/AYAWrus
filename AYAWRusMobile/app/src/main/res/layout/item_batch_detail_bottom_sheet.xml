@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingBottom="28dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:background="#D1D5DB" />
+
+    <TextView
+        android:id="@+id/tvBatchDetailTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        tools:text="Quick Scan — 128 files" />
+
+    <TextView
+        android:id="@+id/tvBatchDetailSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textSize="13sp"
+        android:textColor="#6B7280"
+        tools:text="Started 2026-09-03 14:12   ·   Duration 1m 02s   ·   COMPLETED" />
+
+    <TextView
+        android:id="@+id/tvBatchDetailStats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#111827"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:text="Clean 118 · Malicious 7 · Suspicious 3" />
+
+    <LinearLayout
+        android:id="@+id/batchDetailLoadingWrap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingVertical="22dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading files…"
+            android:textSize="14sp"
+            android:textColor="#6B7280" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvBatchDetailEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        android:textSize="14sp"
+        android:textAlignment="center"
+        android:textColor="#9CA3AF"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:text="No files in this batch." />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvBatchFiles"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:nestedScrollingEnabled="false"
+        android:paddingVertical="2dp"
+        tools:itemCount="4"
+        tools:listitem="@layout/item_scan_card" />
+
+    <Button
+        android:id="@+id/btnBatchClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Close"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#111827" />
+
+</LinearLayout>

@@ -397,12 +397,37 @@ def init_db():
             timestamp INTEGER NOT NULL,
             status TEXT NOT NULL DEFAULT 'ACTIVE',
             details TEXT,
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            batch_id TEXT
         )
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON scan_results(timestamp)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON scan_results(status)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_file_path ON scan_results(file_path)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_batch_id ON scan_results(batch_id)")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scan_batches (
+            id TEXT PRIMARY KEY,
+            scan_type TEXT NOT NULL DEFAULT 'custom',
+            target TEXT,
+            started_at_ms INTEGER NOT NULL,
+            started_at TEXT,
+            completed_at_ms INTEGER,
+            completed_at TEXT,
+            elapsed_ms INTEGER NOT NULL DEFAULT 0,
+            total_files INTEGER NOT NULL DEFAULT 0,
+            clean_count INTEGER NOT NULL DEFAULT 0,
+            threat_count INTEGER NOT NULL DEFAULT 0,
+            suspicious_count INTEGER NOT NULL DEFAULT 0,
+            malicious_count INTEGER NOT NULL DEFAULT 0,
+            error_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'COMPLETED',
+            created_at INTEGER NOT NULL
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_batches_started ON scan_batches(started_at_ms)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_batches_status ON scan_batches(status)")
     conn.commit()
     conn.close()
 
@@ -458,6 +483,26 @@ def parse_timestamp(ts_str: str):
         return now.strftime("%Y-%m-%d"), int(now.timestamp() * 1000)
 
 
+def row_to_batch(row) -> dict:
+    return {
+        "id": row["id"],
+        "scanType": row["scan_type"],
+        "target": row["target"],
+        "startedAt": row["started_at"],
+        "startedAtMs": row["started_at_ms"],
+        "completedAt": row["completed_at"],
+        "completedAtMs": row["completed_at_ms"],
+        "elapsedMs": row["elapsed_ms"],
+        "totalFiles": row["total_files"],
+        "cleanCount": row["clean_count"],
+        "threatCount": row["threat_count"],
+        "suspiciousCount": row["suspicious_count"],
+        "maliciousCount": row["malicious_count"],
+        "errorCount": row["error_count"],
+        "status": row["status"],
+    }
+
+
 def row_to_scan_result(row) -> dict:
     return {
         "id": row["id"],
@@ -466,16 +511,168 @@ def row_to_scan_result(row) -> dict:
         "threatLevel": row["threat_level"],
         "dateScanned": row["date_scanned"],
         "timestamp": row["timestamp"],
-        "status": row["status"]
+        "status": row["status"],
+        "batchId": row["batch_id"] if "batch_id" in row.keys() else None,
     }
+
+
+@app.route("/api/batches", methods=["GET"])
+def list_batches_endpoint():
+    try:
+        try:
+            days_param = request.args.get("days", "30")
+            limit_param = request.args.get("limit", "50")
+            try:
+                days = int(days_param)
+            except (ValueError, TypeError):
+                days = 30
+            try:
+                limit = int(limit_param)
+            except (ValueError, TypeError):
+                limit = 50
+            if days < 1:
+                days = 1
+            if days > 365:
+                days = 365
+            if limit < 1:
+                limit = 1
+            if limit > 500:
+                limit = 500
+        except Exception:
+            days = 30
+            limit = 50
+
+        sync_history_json_to_db()
+
+        cutoff_ms = int((datetime.now() - timedelta(days=days)).timestamp() * 1000)
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT * FROM scan_batches
+            WHERE started_at_ms >= ?
+            ORDER BY started_at_ms DESC
+            LIMIT ?
+        """, (cutoff_ms, limit))
+        rows = cursor.fetchall()
+        batches = [row_to_batch(r) for r in rows]
+        resp = jsonify(batches)
+        resp.headers["Content-Type"] = "application/json; charset=utf-8"
+        return resp, 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route("/api/batches/<batch_id>/files", methods=["GET"])
+def batch_files_endpoint(batch_id):
+    if not batch_id or not str(batch_id).strip():
+        return jsonify({"error": "Missing batch id"}), 400
+    try:
+        sync_history_json_to_db()
+        db = get_db()
+        cursor = db.cursor()
+
+        batch_row = None
+        try:
+            cursor.execute("SELECT * FROM scan_batches WHERE id = ?", (batch_id,))
+            batch_row = cursor.fetchone()
+        except Exception:
+            pass
+
+        cursor.execute("""
+            SELECT * FROM scan_results
+            WHERE batch_id = ?
+            ORDER BY timestamp DESC
+        """, (batch_id,))
+        rows = cursor.fetchall()
+
+        if not rows and batch_row is None:
+            from system.history.batches import get_batch as _get_json_batch
+            jb = None
+            try:
+                jb = _get_json_batch(batch_id)
+            except Exception:
+                jb = None
+            if jb is None:
+                return jsonify({"error": "Batch not found", "id": batch_id}), 404
+
+        files = [row_to_scan_result(r) for r in rows]
+        out = {
+            "id": batch_id,
+            "batch": row_to_batch(batch_row) if batch_row else (dict(
+                id=batch_row["id"] if batch_row else batch_id,
+                scanType=batch_row["scan_type"] if batch_row else "unknown",
+                target=batch_row["target"] if batch_row else "",
+                startedAt=batch_row["started_at"] if batch_row else "",
+                startedAtMs=batch_row["started_at_ms"] if batch_row else 0,
+                completedAt=batch_row["completed_at"] if batch_row else "",
+                completedAtMs=batch_row["completed_at_ms"] if batch_row else 0,
+                elapsedMs=batch_row["elapsed_ms"] if batch_row else 0,
+                totalFiles=batch_row["total_files"] if batch_row else len(files),
+                cleanCount=batch_row["clean_count"] if batch_row else 0,
+                threatCount=batch_row["threat_count"] if batch_row else 0,
+                suspiciousCount=batch_row["suspicious_count"] if batch_row else 0,
+                maliciousCount=batch_row["malicious_count"] if batch_row else 0,
+                errorCount=batch_row["error_count"] if batch_row else 0,
+                status=batch_row["status"] if batch_row else "COMPLETED",
+            )),
+            "files": files,
+            "total": len(files),
+        }
+        resp = jsonify(out)
+        resp.headers["Content-Type"] = "application/json; charset=utf-8"
+        return resp, 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
 def sync_history_json_to_db():
     with _db_lock:
+        try:
+            from system.history.batches import list_batches as _list_json_batches
+        except Exception:
+            _list_json_batches = None
+
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         try:
+            if _list_json_batches is not None:
+                try:
+                    json_batches = _list_json_batches() or []
+                    for b in json_batches:
+                        bid = b.get("id")
+                        if not bid:
+                            continue
+                        cursor.execute("SELECT id FROM scan_batches WHERE id = ?", (bid,))
+                        if cursor.fetchone():
+                            continue
+                        cursor.execute("""
+                                INSERT INTO scan_batches (id, scan_type, target, started_at_ms, started_at,
+                                    completed_at_ms, completed_at, elapsed_ms, total_files, clean_count,
+                                    threat_count, suspicious_count, malicious_count, error_count, status, created_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                bid,
+                                (b.get("scan_type") or "custom").lower() if b.get("scan_type") else "custom",
+                                b.get("target") or "",
+                                int(b.get("started_at_ms") or 0),
+                                b.get("started_at") or "",
+                                int(b.get("completed_at_ms") or 0) if b.get("completed_at_ms") else None,
+                                b.get("completed_at") or "",
+                                int(b.get("elapsed_ms") or 0),
+                                int(b.get("total_files") or 0),
+                                int(b.get("clean_count") or 0),
+                                int(b.get("threat_count") or 0),
+                                int(b.get("suspicious_count") or 0),
+                                int(b.get("malicious_count") or 0),
+                                int(b.get("error_count") or 0),
+                                (b.get("status") or "COMPLETED").upper(),
+                                int(datetime.now().timestamp() * 1000),
+                            ))
+                    conn.commit()
+                except Exception as b_err:
+                    print(f"[sync: scan_batches sync failed: {b_err}")
+
             history = load_log()
             quarantine_paths = set()
             try:
@@ -495,9 +692,8 @@ def sync_history_json_to_db():
                 ts_str = entry.get("timestamp", "")
                 date_scanned, timestamp_ms = parse_timestamp(ts_str)
                 scan_id = generate_id(file_path, timestamp_ms)
-                cursor.execute("SELECT id FROM scan_results WHERE id = ?", (scan_id,))
-                if cursor.fetchone():
-                    continue
+                cursor.execute("SELECT id, batch_id FROM scan_results WHERE id = ?", (scan_id,))
+                existing = cursor.fetchone()
                 file_name = os.path.basename(file_path)
                 result = entry.get("result", "CLEAN")
                 verdict = map_verdict(result)
@@ -505,12 +701,22 @@ def sync_history_json_to_db():
                 status = "QUARANTINED" if file_path in quarantine_paths else "ACTIVE"
                 details = entry.get("details", "")
                 details_json = json.dumps(details) if isinstance(details, (dict, list)) else (details or "")
+                batch_id = entry.get("batch_id")
+                if existing:
+                    if not existing["batch_id"] and batch_id:
+                        try:
+                            cursor.execute("UPDATE scan_results SET batch_id = ?, status = ? WHERE id = ?",
+                                           (batch_id, status, scan_id))
+                        except Exception:
+                            pass
+                    continue
                 cursor.execute("""
                     INSERT INTO scan_results (id, file_name, file_path, verdict, threat_level,
-                        date_scanned, timestamp, status, details, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        date_scanned, timestamp, status, details, created_at, batch_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (scan_id, file_name, file_path, verdict, threat_level,
-                      date_scanned, timestamp_ms, status, details_json, int(datetime.now().timestamp() * 1000)))
+                      date_scanned, timestamp_ms, status, details_json,
+                      int(datetime.now().timestamp() * 1000), batch_id))
                 inserted_count += 1
             conn.commit()
             return inserted_count
@@ -723,6 +929,8 @@ def run_server():
     print(f"")
     print(f"  Endpoints:")
     print(f"    GET  /api/health")
+    print(f"    GET  /api/batches?days=N&limit=N")
+    print(f"    GET  /api/batches/{{id}}/files")
     print(f"    GET  /api/history?days=N")
     print(f"    POST /api/quarantine/{{id}}")
     print(f"    POST /api/scan/notify")

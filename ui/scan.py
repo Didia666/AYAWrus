@@ -701,7 +701,22 @@ def _update_scan_progress():
 
         if BACKEND_AVAILABLE:
             try:
-                begin_log_buffer()
+                _st = SELECTED_SCAN or "custom"
+                if _st == "custom" and CURRENT_CUSTOM_PATH:
+                    _tgt = str(CURRENT_CUSTOM_PATH)
+                elif _st == "quick":
+                    try:
+                        _tgt = ", ".join(d for d in cfg.QUICK_SCAN_DIRS if isinstance(d, str)) if isinstance(cfg.QUICK_SCAN_DIRS, (list, tuple)) else ""
+                    except Exception:
+                        _tgt = ""
+                elif _st == "full":
+                    try:
+                        _tgt = ", ".join(d for d in cfg.REGULAR_SCAN_DIRS if isinstance(d, str)) if isinstance(cfg.REGULAR_SCAN_DIRS, (list, tuple)) else ""
+                    except Exception:
+                        _tgt = ""
+                else:
+                    _tgt = ""
+                begin_log_buffer(scan_type=_st, target=_tgt)
             except Exception:
                 pass
 
