@@ -8,6 +8,7 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        ApiClient.init(this)
 
         try {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)

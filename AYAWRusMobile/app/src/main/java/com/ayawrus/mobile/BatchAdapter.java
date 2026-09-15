@@ -133,7 +133,7 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     }
 
     static class BatchViewHolder extends RecyclerView.ViewHolder {
-        TextView tvAccent;
+        View tvAccent;
         TextView tvBatchTitle;
         TextView tvBatchSub1;
         TextView tvBatchSub2;

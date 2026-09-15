@@ -68,6 +68,18 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder
         fireSelectionChanged();
     }
 
+    public void selectAll() {
+        selectedIds.clear();
+        for (ScanResult result : scanResults) {
+            if (result != null && result.getId() != null
+                    && !"QUARANTINED".equalsIgnoreCase(result.getStatus())) {
+                selectedIds.add(result.getId());
+            }
+        }
+        notifyDataSetChanged();
+        fireSelectionChanged();
+    }
+
     public void markItemQuarantined(String id) {
         if (id == null) return;
         for (int i = 0; i < scanResults.size(); i++) {

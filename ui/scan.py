@@ -1226,7 +1226,7 @@ def _ensure_api_server_started():
         def _srv_worker():
             try:
                 host = os.environ.get("SERVER_HOST", "0.0.0.0")
-                port = int(os.environ.get("SERVER_PORT", "5000"))
+                port = int(os.environ.get("SERVER_PORT", "5001"))
                 srv_mod.app.run(host=host, port=port, threaded=True, use_reloader=False, debug=False)
             except Exception as e:
                 print(f"[API Server] Failed to start: {e}")

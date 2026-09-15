@@ -42,6 +42,15 @@
                 android:textColor="#111827"
                 tools:text="0 selected" xmlns:tools="http://schemas.android.com/tools"/>
 
+            <CheckBox
+                android:id="@+id/cbSelectAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Select all"
+                android:textColor="#111827"
+                android:textSize="13sp" />
+
             <Button
                 android:id="@+id/btnQuarantineSelected"
                 android:layout_width="wrap_content"

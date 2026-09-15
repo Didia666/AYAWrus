@@ -3,8 +3,16 @@ from ui.theme import COLORS
 import threading
 import sys
 import os
-import system.notifications.telegram as tg
+import json
+import socket
+import tempfile
 import webbrowser
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+import system.notifications.telegram as tg
+from system.mobile_pairing import generate_pairing_payload, mobile_status_payload, SYSTEM_ID
+
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # try:
@@ -90,6 +98,107 @@ def save_settings():
         dpg.set_value("settings_status", "Settings saved!")
 
 
+def get_active_local_address():
+    candidates = []
+    try:
+        addrs = socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM)
+        for item in addrs:
+            ip = item[4][0]
+            if ip and ip != "127.0.0.1":
+                candidates.append(ip)
+    except Exception:
+        pass
+    try:
+        for intf in socket.if_nameindex():
+            name = intf[1]
+            if not name or name.startswith("lo"):
+                continue
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))
+                    ip = s.getsockname()[0]
+                    if ip and ip != "127.0.0.1":
+                        candidates.append(ip)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    seen = set()
+    uniq = []
+    for ip in candidates:
+        if ip not in seen:
+            seen.add(ip)
+            uniq.append(ip)
+    for ip in uniq:
+        if ip.startswith(("192.168.", "10.", "172.")):
+            return ip
+    return uniq[0] if uniq else "127.0.0.1"
+
+
+def _generate_qr_file_and_payload():
+    import qrcode
+    host = get_active_local_address()
+    port = int(os.environ.get("SERVER_PORT", "5001"))
+    api_url = f"http://127.0.0.1:{port}/api/mobile/qr?{urlencode({'host': host, 'port': port})}"
+    with urlopen(api_url, timeout=3) as response:
+        api_payload = json.loads(response.read().decode("utf-8"))
+    payload = json.loads(api_payload["qr_payload"])
+    payload["apk_url"] = f"http://{host}:{port}/mobile/download"
+    setup_url = f"http://{host}:{port}/mobile/setup"
+    qr_value = f"{setup_url}?{urlencode({'pairing_token': payload['pairing_token'], 'port': payload['port'], 'system_id': payload['system_id']})}"
+    qr_file = os.path.join(tempfile.gettempdir(), f"ayawrus_mobile_pair_{os.getpid()}.png")
+    qr = qrcode.QRCode(version=2, box_size=6, border=2)
+    qr.add_data(qr_value)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
+    img.save(qr_file)
+    return qr_file, payload
+
+
+def regenerate_mobile_qr():
+    try:
+        qr_file, payload = _generate_qr_file_and_payload()
+
+        if dpg.does_item_exist("mobile_qr_modal"):
+            dpg.delete_item("mobile_qr_modal")
+        if dpg.does_item_exist("mobile_qr_image"):
+            dpg.delete_item("mobile_qr_image")
+        if dpg.does_item_exist("mobile_qr_texture"):
+            dpg.delete_item("mobile_qr_texture")
+
+        width, height, channels, data = dpg.load_image(qr_file)
+        if not dpg.does_item_exist("mobile_qr_texture_registry"):
+            dpg.add_texture_registry(tag="mobile_qr_texture_registry")
+        dpg.add_static_texture(width, height, data, parent="mobile_qr_texture_registry", tag="mobile_qr_texture")
+
+        dpg.add_image("mobile_qr_texture", parent="mobile_qr_parent", tag="mobile_qr_image", width=150, height=150)
+
+        if dpg.does_item_exist("mobile_qr_status"):
+            dpg.set_value("mobile_qr_status", f"Status: Mobile Connection Available\nSystem Name: {socket.gethostname()}\nLocal Address: {payload['host']}:{payload['port']}\nSystem ID: {SYSTEM_ID}")
+        if dpg.does_item_exist("mobile_qr_expiry"):
+            dpg.set_value("mobile_qr_expiry", f"Pairing code expires in: {payload['expires_at']}")
+        return payload
+    except Exception as exc:
+        if dpg.does_item_exist("mobile_qr_status"):
+            dpg.set_value("mobile_qr_status", f"QR generation unavailable: {exc}")
+        return None
+
+
+def show_qr_modal():
+    if not dpg.does_item_exist("mobile_qr_modal"):
+        with dpg.window(label="AYAWrus Mobile Pairing QR", tag="mobile_qr_modal", width=420, height=420, modal=True):
+            dpg.add_text("Scan this QR code with AYAWrus Mobile", color=COLORS["text_primary"])
+            dpg.add_spacer(height=10)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=90)
+                dpg.add_image("mobile_qr_texture", width=220, height=220)
+            dpg.add_spacer(height=10)
+            dpg.add_text("System: AYAWrus", color=COLORS["text_secondary"])
+            dpg.add_button(label="Close", width=100, height=34, callback=lambda: dpg.hide_item("mobile_qr_modal"))
+    dpg.show_item("mobile_qr_modal")
+    dpg.focus_item("mobile_qr_modal")
+
+
 def show_instruction_modal():
     """Show instruction modal for AI API setup"""
     modal_tag = "ai_api_instruction_modal"
@@ -161,32 +270,56 @@ def show_instruction_modal():
 
 def build_settings(parent, fonts, icons):
     dpg.add_spacer(height=20, parent=parent)
-    
+
     with dpg.group(horizontal=True, parent=parent):
         dpg.add_spacer(width=24)
         with dpg.group():
             dpg.add_text("Settings", tag="settings_page_title")
             dpg.bind_item_font("settings_page_title", fonts["heading"])
-            dpg.add_text("Configure AI API settings", color=COLORS["text_secondary"])
+            dpg.add_text("Configure AI API settings and mobile pairing", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
-            
-            # AI API Settings
+
+            with dpg.child_window(width=-1, height=420, border=False):
+                dpg.add_text("AYAWrus Settings", color=COLORS["text_primary"])
+                dpg.add_spacing(count=8)
+                status = mobile_status_payload()
+                connection_status = "Status: Mobile Connection Available" if status.get("connected_devices", 0) >= 0 else "Status: Mobile Connection Available"
+                dpg.add_text(connection_status, color=COLORS["accent_blue"])
+                dpg.add_text(f"System Name: {socket.gethostname()}", color=COLORS["text_primary"])
+                local_address = get_active_local_address()
+                dpg.add_text(f"Local Address: {local_address}:5000", color=COLORS["text_primary"])
+                dpg.add_text(f"System ID: {SYSTEM_ID}", color=COLORS["text_secondary"])
+                dpg.add_text("Pair Mobile Device", color=COLORS["text_primary"])
+                dpg.add_spacer(height=8)
+                with dpg.group(tag="mobile_qr_parent"):
+                    pass
+                dpg.add_spacer(height=6)
+                dpg.add_button(label="View QR Code", width=150, height=36, callback=show_qr_modal)
+                dpg.add_spacer(height=10)
+                dpg.add_button(label="Generate New QR", width=180, height=36, callback=regenerate_mobile_qr)
+                dpg.add_spacer(height=10)
+                dpg.add_text("Pairing code expires in: 05:00", tag="mobile_qr_expiry", color=COLORS["text_secondary"])
+                dpg.add_spacer(height=10)
+                dpg.add_text("", tag="mobile_qr_status", color=COLORS["text_secondary"])
+
+            dpg.add_spacer(height=20)
+
             with dpg.child_window(width=-1, height=-1, border=False):
                 dpg.add_text("AI API Settings", color=COLORS["text_primary"])
                 dpg.add_spacer(height=5)
-                
+
                 with dpg.group():
                     dpg.add_text("API URL:", color=COLORS["text_secondary"])
                     dpg.add_input_text(tag="ai_api_url", width=-1, hint="e.g. https://openrouter.ai/api/v1/chat/completions")
-                
+
                 dpg.add_spacer(height=10)
-                
+
                 with dpg.group():
                     dpg.add_text("API Key:", color=COLORS["text_secondary"])
                     dpg.add_input_text(tag="ai_api_key", width=-1, password=True, hint="Enter your OpenRouter or compatible API key")
-                
+
                 dpg.add_spacer(height=10)
-                
+
                 with dpg.group():
                     dpg.add_text("AI Model:", color=COLORS["text_secondary"])
                     dpg.add_combo(
@@ -199,9 +332,9 @@ def build_settings(parent, fonts, icons):
                             show=(dpg.get_value("ai_model_combo") == "custom")
                         )
                     )
-                
+
                 dpg.add_spacer(height=5)
-                
+
                 with dpg.group(tag="ai_model_custom_group"):
                     dpg.add_input_text(
                         tag="ai_model_custom",
@@ -209,23 +342,21 @@ def build_settings(parent, fonts, icons):
                         hint="Enter custom model name (e.g. 'openai/gpt-4')",
                         show=False
                     )
-                
+
                 dpg.add_spacer(height=15)
-                
-                # Buttons below AI API Settings
+
                 with dpg.group(horizontal=True):
                     dpg.add_button(label="Instruction", width=150, height=36, callback=show_instruction_modal)
                     dpg.add_button(label="Save Settings", width=150, height=36, callback=save_settings)
-                
+
                 dpg.add_spacer(height=10)
                 dpg.add_text("", tag="settings_status", color=COLORS["text_secondary"])
-    
-    # Apply theme to buttons
+
     with dpg.theme() as btn_theme:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button, COLORS["accent_blue"])
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (76, 150, 246))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (46, 120, 236))
-    
-    # Bind theme to all buttons we created (we need to find them, but alternatively just refresh settings on build)
+
     refresh_settings()
+    regenerate_mobile_qr()
