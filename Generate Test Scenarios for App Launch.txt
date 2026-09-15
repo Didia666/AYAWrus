@@ -1,0 +1,732 @@
+# Generate Test Scenarios for App Launch
+
+> **Workspace:** d:\SUMMER\18_07_26\AYAWrus Latest
+
+---
+
+**User**
+
+per Functional Requirement will have different table that have test Case ID, test Scenarios, test Steps, Expected Result, Actual Result, Status, Remarks
+
+example test name: App Launch & Theme 
+test case ID 01-01 ...
+think of a test Scenarios per TC-01 to TC-13
+
+
+
+**Assistant**
+
+Let me explore the mobile codebase to understand the actual implementation details, so I can write accurate and realistic test scenarios for each TC-01 through TC-13.
+
+Let me also check the backend server code to understand the API endpoints and malware-safe transport mechanism for TC-13.
+
+Now I have a complete understanding of the mobile codebase and backend API. I'll create comprehensive test scenarios for each TC-01 through TC-13, following the same table format as your Onboarding example. Each test is based on the actual implementation in the codebase.
+
+---
+
+## AYAWRUS MOBILE APPLICATION — TEST CASES TC-01 to TC-13
+
+---
+
+### TC-01 — Test Name: **App Launch & Theme**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-01 Application Initialization & Setup: App forces light theme, applies white background, creates notification channel, requests notification permission, and loads DashboardFragment on first launch. | | | | |
+| **Precondition** | AYAWRus Mobile APK is installed on the Android device/emulator. Desktop server is reachable (optional for TC-01). | | | | |
+| **Postcondition** | App is running on Dashboard screen with correct light theme applied; no crash occurred. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-01-01 | App launches without crash | Tap the AYAWRus icon on the device home screen | Application process starts; white screen appears; no ANR or crash dialog | | |
+| TC-01-02 | Light theme (MODE_NIGHT_NO) is enforced | After launch, observe the overall app color scheme (toolbar, background, text) | App is in light mode regardless of system dark-mode setting; no dark backgrounds | | |
+| TC-01-03 | White background is applied to decor view | Inspect window background immediately after splash | Window content background is solid white (#FFFFFFFF); no black screen | | |
+| TC-01-04 | Notification channel "malware_alerts" is created on Android O+ | Go to System Settings → Apps → AYAWRus → Notifications | A channel named "Malware Threat Alerts" exists with Importance=High, vibration enabled | | |
+| TC-01-05 | POST_NOTIFICATIONS permission dialog appears (Android 13+) | On first launch on Android TIRAMISU+ | System permission prompt "Allow AYAWRus to send notifications?" is displayed | | |
+| TC-01-06 | DashboardFragment loads as default screen | After app finishes initializing, observe the screen | Toolbar title reads "Dashboard"; status banner, last-scan card, and count cards are visible | | |
+| TC-01-07 | Crash recovery fallback works (defensive) | Simulate an inflation error (e.g., via faulty layout), then launch | App catches exception, re-inflates fallback view with orange "Dashboard Recovered" banner | | |
+
+---
+
+### TC-02 — Test Name: **Drawer Nav & Tab Switching**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-02 Navigation System: Navigation drawer with 3 destinations (Dashboard, History, Remote Quarantine), toolbar drawer toggle, fragment transaction replacement, drawer auto-close on selection. | | | | |
+| **Precondition** | App is launched and Dashboard is visible. | | | | |
+| **Postcondition** | User can switch between all three fragments without data loss or crashes. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-02-01 | Drawer opens via hamburger icon | Tap the toolbar hamburger (≡) icon | Left navigation drawer slides open; three menu items are listed | | |
+| TC-02-02 | Drawer opens via swipe gesture | With Dashboard visible, swipe finger from left edge toward center | Same as TC-02-01 | | |
+| TC-02-03 | "Dashboard" nav item works | Open drawer → tap "Dashboard" (if not active) | Drawer closes; toolbar title = "Dashboard"; DashboardFragment displayed | | |
+| TC-02-04 | "History" nav item works | Open drawer → tap "History" | Drawer closes; toolbar title = "History"; HistoryFragment displayed with RecyclerView | | |
+| TC-02-05 | "Remote Quarantine" nav item works | Open drawer → tap "Remote Quarantine" | Drawer closes; toolbar title = "Remote Quarantine"; QuarantineFragment displayed | | |
+| TC-02-06 | Drawer auto-closes after selection | Open drawer → tap any nav item | Drawer is programmatically closed after the fragment transaction commits | | |
+| TC-02-07 | Rapid sequential nav switching is stable | Quickly alternate: History → Quarantine → Dashboard → History (4 taps in < 2 sec) | No crash; no fragment overlap; final screen matches last selected item | | |
+
+---
+
+### TC-03 — Test Name: **Verdict Badge Colors & Counts**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-03 Threat Detection and Classification: Verdict badges render with standardized colors; Dashboard correctly tallies Clean vs. non-Clean counts. | | | | |
+| **Precondition** | API returns a mixed batch of ScanResults (Clean, Suspicious, Malicious). App is on Dashboard or History. | | | | |
+| **Postcondition** | All verdict badges are color-coded correctly; dashboard counts match the data. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-03-01 | "Clean" verdict badge → Green | Navigate to History; tap a card that has verdict="Clean" (or view list) | Badge background = #FF4CAF50 (Material Green 500) | | |
+| TC-03-02 | "Suspicious" verdict badge → Amber/Yellow | View a card with verdict="Suspicious" | Badge background = #FFFFC107 (Material Amber 500) | | |
+| TC-03-03 | "Malicious" verdict badge → Red | View a card with verdict="Malicious" | Badge background = #FFF44336 (Material Red 500) | | |
+| TC-03-04 | Unknown/null verdict badge → Gray | Inject a record with verdict=null or verdict="Unknown" into dataset | Badge background = #FF9E9E9E (Material Gray 500) | | |
+| TC-03-05 | Dashboard threat count excludes Clean verdicts | Provide API data: 5 Clean + 2 Suspicious + 1 Malicious | tvThreatCount = "3", tvCleanCount = "5" | | |
+| TC-03-06 | Case-insensitive verdict matching | Provide verdicts in mixed case: "clean", "MALICIOUS", "suspicious" | Counts and badge colors still match correctly (equalsIgnoreCase used) | | |
+| TC-03-07 | Empty dataset counts show zeros | API returns `[]` | Both tvCleanCount and tvThreatCount display "0" | | |
+
+---
+
+### TC-04 — Test Name: **Dashboard Banners & Summary Stats**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-04 Dashboard Monitoring: Top status banner reflects overall state (All Clear / Threats Detected / Awaiting / Refreshing); Last Scan card and count cards populated from API data. | | | | |
+| **Precondition** | App is launched; user is on Dashboard screen. | | | | |
+| **Postcondition** | Banner states cycle correctly as data loads; all stats reflect the API response. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-04-01 | "Refreshing…" banner shown during API call | Immediately after entering Dashboard (or pull refresh via onResume) | Banner text = "Refreshing…", background = Blue (#FF2196F3) | | |
+| TC-04-02 | "All Clear" banner shown (all Clean) | API returns 5 Clean / 0 threats | Banner = "All Clear", background = Green (#FF4CAF50) | | |
+| TC-04-03 | "Threats Detected" banner shown (≥1 threat) | API returns ≥1 Malicious or Suspicious record | Banner = "Threats Detected", background = Red (#FFF44336) | | |
+| TC-04-04 | "Awaiting Scan Data" banner + empty-state toasts | API returns `[]` (empty list, HTTP 200) | Banner = "Awaiting Scan Data" (Gray #FF607D8B); Toast: "No scan history on desktop yet. Run a scan first." | | |
+| TC-04-05 | Last Scan card displays latest record's filename | API returns records sorted DESC by timestamp; first record has fileName="invoice.docm" | tvLastScanFile = "invoice.docm" | | |
+| TC-04-06 | Last Scan card displays Verdict • Date line | Same data: verdict="Malicious", dateScanned="2026-09-02" | tvLastScanDetails = "Malicious • 2026-09-02" | | |
+| TC-04-07 | API failure gracefully falls back to MockData + toast | Disconnect WiFi / shut down desktop server; open Dashboard | Toast "Cannot reach desktop server:… Showing demo."; demo banner/counts rendered | | |
+
+---
+
+### TC-05 — Test Name: **History 15-day Window & Empty State**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-05 Scan History Management: GET `/api/history?days=15` is called; records older than 15 days (by `timestamp`) are filtered out client-side; `tvEmptyState` shows when no records; `onResume()` triggers refresh. | | | | |
+| **Precondition** | Desktop server is running with a SQLite DB containing records of various ages. App is on Dashboard. | | | | |
+| **Postcondition** | History list is correctly filtered and empty state is handled. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-05-01 | API query parameter `days=15` is sent | Capture outgoing HTTP request when History loads | Request URL contains `?days=15` | | |
+| TC-05-02 | Client-side 15-day filter excludes old MockData | Force MockData fallback (offline); ensure some mock records have timestamp > 15 days old | Only records with timestamp within last 15 days appear in RecyclerView | | |
+| TC-05-03 | Empty state shows when API returns `[]` | Clear all scan history on desktop; open History | tvEmptyState (text "No scan history yet" / similar) → VISIBLE; RecyclerView → GONE | | |
+| TC-05-04 | RecyclerView shown when data is present | Populate desktop DB with at least 1 record; open History | tvEmptyState → GONE; RecyclerView → VISIBLE with rows | | |
+| TC-05-05 | Records are sorted by timestamp DESC | Provide 3 records with known timestamps (old → mid → new) | Topmost list item = newest timestamp; bottom = oldest | | |
+| TC-05-06 | `onResume()` re-fetches history | Navigate: History → Dashboard → (wait 5 sec) → back to History via drawer | Logcat shows `onResume: refreshing history`; fresh data is loaded | | |
+| TC-05-07 | API HTTP error → MockData fallback + explanatory toast | Return HTTP 500 from `/api/history` | Toast: "API error — showing demo history. Check desktop server."; mock data renders | | |
+
+---
+
+### TC-06 — Test Name: **Detail Sheet + Quarantine CTA**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-06 Scan Detail & Remediation: Tapping a History card opens a Material BottomSheet with full fields (fileName, verdict, threatLevel, dateScanned) + a conditional Quarantine CTA button (visible only for Malicious/Suspicious + status≠QUARANTINED). | | | | |
+| **Precondition** | History screen is populated with records covering all verdict/status combinations. | | | | |
+| **Postcondition** | BottomSheet always opens; quarantine button visibility logic is correct; POST succeeds. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-06-01 | Tapping any History card opens BottomSheet | Tap any card in History list | `ScanDetailBottomSheet` slides up from bottom; animates in | | |
+| TC-06-02 | All 4 detail fields correctly populated | Tap a card with known values (fileName="a.docm", verdict=Malicious, tl=95, date=2026-09-01) | tvDetailFileName="a.docm", tvDetailVerdict="Malicious", tvDetailThreatLevel="95", tvDetailDate="2026-09-01" | | |
+| TC-06-03 | Quarantine button shown for Malicious + ACTIVE | Tap Malicious card with status="ACTIVE" | btnQuarantine → VISIBLE, label="Quarantine" | | |
+| TC-06-04 | Quarantine button shown for Suspicious + ACTIVE | Tap Suspicious card with status="ACTIVE" | btnQuarantine → VISIBLE | | |
+| TC-06-05 | Quarantine button HIDDEN for Clean verdict | Tap a Clean card (any status) | btnQuarantine → GONE | | |
+| TC-06-06 | Quarantine button HIDDEN when status=QUARANTINED | Tap Malicious card that was already quarantined | btnQuarantine → GONE (even though verdict is threat) | | |
+| TC-06-07 | Inline quarantine CTA succeeds | In the sheet, tap "Quarantine" → observe | Button disables, shows "Processing..."; on HTTP 200 → Toast "File quarantined successfully" + button vanishes; on failure → re-enables + error toast | | |
+
+---
+
+### TC-07 — Test Name: **SSE/FCM Alert Popup**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-07 Real-Time Alert System: Dual delivery — (A) FCM push via `malware_alerts` topic, and (B) local HTTP poll every 6000 ms to `/api/alerts/latest`. New alerts (ts > lastAlertTimestamp) trigger a high-priority local notification (BigText, auto-cancel, default sound). | | | | |
+| **Precondition** | App is in foreground or background; notification permission granted. Either desktop FCM is configured OR `/api/alerts/latest` returns new data. | | | | |
+| **Postcondition** | Malware/suspicious alerts appear as Android notifications and click through to MainActivity. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-07-01 | Alert poll loop fires every ~6s | Attach Logcat filter `AYAWrusMain`; observe for 20 seconds | `[poll] Trying …` lines appear every ~6000 ms | | |
+| TC-07-02 | Poll endpoint fallback chain works | Stop desktop server on 192.168.100.16; run on emulator with desktop on 10.0.2.2 | Poll tries BASE_URL → 10.0.2.2 → 127.0.0.1 in order; at least one succeeds | | |
+| TC-07-03 | New alert → local notification shown | Use `POST /api/scan/notify` with threatLevel=90; then poll fires | Status bar notification appears: title="Malware Detected!", body contains filename + threat level | | |
+| TC-07-04 | First-poll catch-up does NOT notify (prevents spam) | Fresh app install → first poll encounters an alert already present on server | `FIRST-POLL CAUGHT UP` logged; NO notification is raised for it | | |
+| TC-07-05 | Same-or-older timestamp alert is deduplicated | Poll fires twice with alert having identical ts | Only 1 notification appears on first new ts; second one is silently skipped | | |
+| TC-07-06 | FCM push via topic subscription produces notification | Desktop backend sends FCM v1/legacy push to `/topics/malware_alerts` | Same notification as TC-07-03 appears, independent of poll timing | | |
+| TC-07-07 | Tapping notification opens the app | Tap the system notification | MainActivity opens with FLAG_ACTIVITY_CLEAR_TOP; no crash | | |
+
+---
+
+### TC-08 — Test Name: **History + Register + Quarantine APIs**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-08 Backend API Integration: Retrofit service exposes 3 endpoints: `GET /api/history?days=N` → `List<ScanResult>`, `POST /api/quarantine/{id}` → `Void`, `POST /api/register-device` (body: `{token, device_name}`) → `Void`. All go through `ApiClient.BASE_URL` + Gson converter. | | | | |
+| **Precondition** | Desktop server running at `BASE_URL:5000`; valid data in DB. | | | | |
+| **Postcondition** | All 3 endpoints round-trip correctly with proper HTTP semantics. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-08-01 | GET /api/history?days=15 returns JSON array | Capture HTTP request/response on Dashboard or History open | Response 200; body = JSON array; each object has keys: id, fileName, verdict, threatLevel, dateScanned, timestamp, status | | |
+| TC-08-02 | `days` param bounds-clamped server-side (1–365) | Send crafted request: `/api/history?days=0` and `/api/history?days=9999` | Server clamps to days=1 and days=365 respectively; no 500 error | | |
+| TC-08-03 | POST /api/quarantine/{id} (valid id) succeeds | Choose known ACTIVE scan_id from DB; issue POST | Response 200; JSON body.status = "QUARANTINED"; DB row status updated to QUARANTINED | | |
+| TC-08-04 | POST /api/quarantine/{id} (invalid id) → 404 | POST with made-up id = "deadbeef12345678" | Response 404; JSON.error = "Scan result not found" | | |
+| TC-08-05 | POST /api/quarantine/{id} (empty id) → 400 | POST with id="" | Response 400; JSON.error = "Missing scan ID" | | |
+| TC-08-06 | POST /api/register-device succeeds | Let app do its FCM token register flow (or curl it manually with sample token) | HTTP 200/204; server receives `{token, device_name}` payload | | |
+| TC-08-07 | CORS preflight (OPTIONS) passes from WebView/mixed origin | Issue `OPTIONS /api/history` from a browser-like context | Response 200 with proper `Access-Control-Allow-Origin: *` | | |
+
+---
+
+### TC-09 — Test Name: **FCM Token + Device Registration**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-09 Device Registration & Push: On app launch, `FirebaseMessaging.token` is fetched (best-effort, errors swallowed), auto-subscribed to topic `malware_alerts`, then token + `Build.MODEL` as device_name are POSTed to `/api/register-device`. AyawrusFcmService re-subscribes on its own onCreate for redundancy. | | | | |
+| **Precondition** | Device has Google Play Services; app has POST_NOTIFICATIONS permission; network available. | | | | |
+| **Postcondition** | FCM token acquired and registered server-side; topic subscription confirmed. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-09-01 | Topic subscribe succeeds on MainActivity init | Launch app; filter Logcat `AYAWrusMain` and tag `Firebase` | Log line: "Firebase: subscribed to 'malware_alerts' topic" (or graceful failure log) | | |
+| TC-09-02 | FCM token is fetched with length > 0 | Same Logcat session | Line: "Firebase: FCM token acquired (len=…)" with len ≈ 100+ chars | | |
+| TC-09-03 | Device registration payload contains token + device_name | Intercept the `/api/register-device` POST body | `body.token` = valid FCM token string; `body.device_name` = Build.MODEL (e.g. "Pixel 6") | | |
+| TC-09-04 | AyawrusFcmService.onCreate re-subscribes to topic | Force cold start of app process while app is killed | Logcat AYAWrus-FCM: "✅ Subscribed to malware_alerts topic" | | |
+| TC-09-05 | Firebase failure does NOT crash app launch | Unplug internet + mock/block Firebase SDK at runtime; launch app | App still fully launches (Dashboard shown); errors logged as W/non-fatal | | |
+| TC-09-06 | New FCM token via onNewToken is logged (non-fatal) | Simulate token rotation via Firebase console/debug API | Logcat "FCM Token: …" appears; no crash | | |
+| TC-09-07 | Device registration server-side 4xx/5xx handled gracefully | Return HTTP 500 from `/api/register-device` | Logcat "Firebase: backend register returned 500" — no app crash | | |
+
+---
+
+### TC-10 — Test Name: **List Render + QUARANTINED Badge**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-10 Data Model / Scan Result: `ScanResult` data class with 7 typed fields; RecyclerView renders each row using `item_scan_card.xml`; "QUARANTINED" text badge overlays the card when `status=QUARANTINED`; card click routes to either BottomSheet (History mode) or toggles checkbox (Quarantine mode). | | | | |
+| **Precondition** | Dataset contains records across statuses ACTIVE and QUARANTINED. RecyclerView is loaded (History or Quarantine screen). | | | | |
+| **Postcondition** | All rows render correctly; QUARANTINED badge visibility is binary-perfect. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-10-01 | ScanResult model: all 7 fields are typed correctly | Inspect deserialized objects after API call | id=String, fileName=String, verdict=String, threatLevel=int, dateScanned=String, timestamp=long, status=String — no null-pointer when all are populated | | |
+| TC-10-02 | RecyclerView renders all rows without recycling glitch | Feed 50 records; scroll up/down rapidly | No blank rows, no mixed-up badge colors, no checkbox state bleeding | | |
+| TC-10-03 | QUARANTINED badge → VISIBLE when status=QUARANTINED | Locate a quarantined record in History list | Top-corner "QUARANTINED" banner/tvQuarantinedBadge is rendered | | |
+| TC-10-04 | QUARANTINED badge → GONE when status=ACTIVE | Locate an active (non-quarantined) record | Badge is not present (no empty space reserved either) | | |
+| TC-10-05 | History-mode card click → opens BottomSheet | In History screen, tap any card | ScanDetailBottomSheet appears with that card's data | | |
+| TC-10-06 | Quarantine-mode card click → toggles checkbox (not BottomSheet) | In Remote Quarantine screen, tap row body (not just checkbox) | Checkbox toggles state; no BottomSheet shown | | |
+| TC-10-07 | Quarantine mode: already-quarantined rows have DISABLED checkbox | In Quarantine list, find a row whose status = QUARANTINED | Its checkbox is alpha-dimmed (~0.4) and non-clickable | | |
+
+---
+
+### TC-11 — Test Name: **onResume Re-poll + SSE Auto-Refresh**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-11 Mobile Dashboard Synchronization: All 3 fragments (`DashboardFragment`, `HistoryFragment`, `QuarantineFragment`) call their `refresh()` inside `onResume()`. Independently, `MainActivity.alertPollRunnable` triggers `refreshCurrentFragmentUi()` every 5th poll (~30 s) and immediately whenever a NEW alert arrives. | | | | |
+| **Precondition** | App is running and settled on Dashboard; desktop server has live data being updated. | | | | |
+| **Postcondition** | All three synchronization mechanisms fire without conflict. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-11-01 | Dashboard.onResume triggers refresh() | Navigate Dashboard → (switch to any other app for 3 s) → return to AYAWRus | Logcat: "onResume: refreshing dashboard" immediately followed by "refresh: API loaded …" | | |
+| TC-11-02 | History.onResume triggers refresh() | Same as TC-11-01 but focused on History screen | Logcat: "onResume: refreshing history" + fetchHistory fires | | |
+| TC-11-03 | Quarantine.onResume triggers refresh() | Same as TC-11-01 but focused on Quarantine screen | Logcat: "onResume: refreshing quarantine list" + fetchThreats fires | | |
+| TC-11-04 | Periodic UI refresh fires every ~30 seconds (5 × 6 s polls) | Leave app untouched on Dashboard; observe Logcat for ~35 s | At least once: "[UI-refresh] DashboardFragment.refresh() called" triggered by "PERIODIC" reason | | |
+| TC-11-05 | New-alert triggers immediate UI refresh | While on Dashboard, inject a new alert via `POST /api/scan/notify` | Next poll logs "NEW ALERT NOTIFIED" → runOnUiThread → refreshCurrentFragmentUi() → all 3 potential refresh() calls invoked for their attached fragments | | |
+| TC-11-06 | refreshCurrentFragmentUi skips detached fragments | Open only History (Dashboard is not added); then trigger periodic refresh | Only HistoryFragment.refresh() called; no NPE from calling refresh on detached fragments | | |
+| TC-11-07 | refresh() before view-created is guarded (no crash) | Call refresh() programmatically before onCreateView completes (race condition simulation) | Logcat W: "refresh() called before view was created — ignoring"; no NullPointerException | | |
+
+---
+
+### TC-12 — Test Name: **Remote Quarantine Flow (select → POST → status)**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-12 Remote Quarantine: QuarantineFragment shows only `(Malicious ∨ Suspicious) ∧ status≠QUARANTINED`. User multi-selects via checkboxes; `tvSelectionCount` shows "N selected / T threats"; btnQuarantine enabled only when N>0 and not in-flight; on submit, N parallel `POST /api/quarantine/{id}` calls execute; on completion, toast "N file(s) quarantined on desktop. F failed."; each quarantined item's badge updates live. | | | | |
+| **Precondition** | Desktop DB has at least 3 active threats (mix of Malicious/Suspicious). Server is reachable. | | | | |
+| **Postcondition** | Batch multi-select quarantine completes end-to-end; DB reflects new QUARANTINED statuses; mobile UI stays consistent. | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-12-01 | Quarantine list filters: only Malicious/Suspicious + ACTIVE shown | Populate DB with: 2 Clean, 3 Malicious(ACTIVE), 1 Suspicious(ACTIVE), 1 Malicious(QUARANTINED) | RV shows exactly 4 items (3+1); Clean and QUARANTINED ones excluded | | |
+| TC-12-02 | Empty state message for "no active threats" | Quarantine all existing threats on desktop → open Quarantine tab | tvEmptyState VISIBLE ("No active threats available…"); RV GONE | | |
+| TC-12-03 | Selection counter updates live | In a 4-threat list: tap 1st checkbox; tap 2nd checkbox; uncheck 1st | Counter transitions: 1/4 → 2/4 → 1/4 | | |
+| TC-12-04 | Button enabled/disabled correctly | 0 selected → 1 selected → 0 selected | btnQuarantine: disabled (alpha 0.5, label "Quarantine Selected") → enabled ("Quarantine 1") → disabled again | | |
+| TC-12-05 | Button label changes during in-flight operation | Select 2 threats → tap button | While responses pending: label = "Quarantining…"; button disabled | | |
+| TC-12-06 | Parallel batch quarantine succeeds | Select 3 threats → submit; intercept 3 POSTs to valid ids | All 3 POSTs return 200; toast "3 file(s) quarantined on desktop"; each row shows QUARANTINED badge, checkbox auto-cleared | | |
+| TC-12-07 | Partial failure is reported accurately | Select 3 threats: mock 1 success, 2 failures (HTTP 500/network) | Toast: "1 file(s) quarantined on desktop. 2 failed."; UI shows 1 QUARANTINED, 2 still selectable | | |
+
+---
+
+### TC-13 — Test Name: **No File-Bytes Transfer Audit**
+
+| | | | | | |
+|---|---|---|---|---|---|
+| **System Requirements** | FR-13 Malware-Safe Transport: Mobile client NEVER receives actual malware file bytes, raw absolute file paths, or executable content from the desktop. All communication is metadata-only: unique `scan_id` resolves to `file_path` ONLY on the server via SQLite lookup (never in JSON response). `row_to_scan_result()` deliberately omits `file_path`. Registration/alerts contain no file-system data. | | | | |
+| **Precondition** | Desktop server is up. Packet capture / proxy (e.g. Charles/mitmproxy) is configured between Android device and desktop. | | | | |
+| **Postcondition** | Every HTTP response body and every FCM payload is verified to contain only metadata (no file paths beyond basename, no file content bytes, no base64 blobs). | | | | |
+| | | | | | |
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status / Remarks** |
+| TC-13-01 | GET /api/history response omits `file_path` field | Capture full response JSON of `/api/history?days=15` | Objects have `fileName` (basename only, e.g. "macro.xlsm") but NO `file_path` key (no "C:\Users\..." or "/home/...") | | |
+| TC-13-02 | GET /api/history response contains no `details`/`file_bytes` keys | Same capture | No `details`, `content`, `base64`, `raw`, or `bytes` keys exist in any record | | |
+| TC-13-03 | POST /api/quarantine/{id} uses only scan_id (no path in body) | Capture the POST that quarantines a file | URL contains only the 16-hex-char scan_id path param; POST body is EMPTY (no JSON, no form fields, no multipart, no file bytes) | | |
+| TC-13-04 | Server resolves file_path DB-side (mobile never sees it) | On the desktop, log the DB SELECT executed during POST /api/quarantine | Server performs `SELECT file_path FROM scan_results WHERE id = ?` and uses THAT local value to call `quarantine_file()`; never relies on mobile-supplied path | | |
+| TC-13-05 | FCM notification payload has filename only (no paths) | Capture FCM push data via Logcat + Firebase debug view | Notification title/body contain only `fileName` (basename) and `threatLevel`; no absolute path strings | | |
+| TC-13-06 | `/api/alerts/latest` payload is metadata-only | Capture GET `/api/alerts/latest` response JSON alert object | Alert keys are fileName, threatLevel, title, body, timestamp — no file_path, no content blobs | | |
+| TC-13-07 | `/api/register-device` payload is device-metadata-only | Capture the FCM registration POST | Body = `{token, device_name}` only — no file-system identifiers, no scan data, no file content | | |
+
+---
+
+Each test scenario above directly references the implementation logic in your codebase:
+
+- **MainActivity navigation, polling, FCM, theming** → [MainActivity.kt](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt)
+- **Dashboard banner/count logic** → [DashboardFragment.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/DashboardFragment.java)
+- **History 15-day filter + empty state** → [HistoryFragment.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/HistoryFragment.java)
+- **Verdict colors, QUARANTINED badge, click behaviors** → [ScanAdapter.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanAdapter.java)
+- **BottomSheet + inline quarantine CTA** → [ScanDetailBottomSheet.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanDetailBottomSheet.java)
+- **Remote Quarantine batch flow** → [QuarantineFragment.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/QuarantineFragment.java)
+- **API surface (3 endpoints)** → [MalwareApiService.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MalwareApiService.java)
+- **Data model (ScanResult 7 fields)** → [ScanResult.java](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanResult.java)
+- **row_to_scan_result + quarantine_by_id server-side (path isolation)** → [server.py](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L461-L470)
+
+---
+
+**User**
+
+okay thats good but i want to make a revised function requirements, instead of Application Initialization & Setup 
+Navigation System 
+Threat Detection and Classification 
+Dashboard Monitoring
+Scan History Management 
+Scan Detail & Remediation 
+Real-Time Alert System 
+Backend API Integration 
+Device Registration & Push Notifications 
+Data Model / Scan Result Management 
+Mobile Dashboard Synchronization
+Remote Quarantine
+Malware-Safe Transport
+
+use this instead:
+FR	Mobile Component	What it covers
+FR-01	Mobile Application & Navigation	Initialization, theme, navigation, dashboard/history
+FR-02	Security Dashboard	Current status, latest scan, clean/threat counts, recent records
+FR-03	Scan History & Details	History, scan details, confidence score, verdict, quarantine
+FR-04	Malware Alert & Notification	New-threat detection, FCM, local notifications, duplicate prevention
+FR-05	Backend Synchronization	API communication, refreshing, synchronization, offline behavior
+FR-06	Device Registration	FCM token and device registration
+
+**Assistant**
+
+Perfect — you've consolidated the 13 FRs into 6 cleaner, higher-level groupings. I'll now remap all the test scenarios (TC-01 through TC-13, and their sub-cases) against the NEW 6-FR structure, keeping the same test-case table format you requested.
+
+---
+
+## REVISED: FUNCTIONAL REQUIREMENTS → TEST CASES MAPPING
+
+### FR Reference Table (New Structure)
+
+| FR | Mobile Component | What it covers |
+|---|---|---|
+| **FR-01** | Mobile Application & Navigation | Initialization, theme, navigation, dashboard/history |
+| **FR-02** | Security Dashboard | Current status, latest scan, clean/threat counts, recent records |
+| **FR-03** | Scan History & Details | History, scan details, confidence score, verdict, quarantine |
+| **FR-04** | Malware Alert & Notification | New-threat detection, FCM, local notifications, duplicate prevention |
+| **FR-05** | Backend Synchronization | API communication, refreshing, synchronization, offline behavior |
+| **FR-06** | Device Registration | FCM token and device registration |
+
+---
+
+---
+
+## TC-01 — Test Name: **App Init, Theme & Navigation** (FR-01)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-01 Mobile Application & Navigation** — App initialization, light-theme enforcement, window background, drawer layout with 3 destinations (Dashboard / History / Remote Quarantine), toolbar toggle, fragment transaction replacement, drawer auto-close. |
+| **Precondition** | AYAWRus Mobile APK is installed. No prior session active. |
+| **Postcondition** | App is stable, fully themed light, and all 3 navigation destinations are reachable without crash. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-01-01** | App launches without crash or ANR | Tap AYAWRus icon on device home screen | Process starts; white window appears; no "App isn't responding" dialog, no exception stack | | | |
+| **TC-01-02** | Light theme MODE_NIGHT_NO enforced regardless of system setting | Set system to Dark Mode → launch app | App stays light: toolbar/text/background are light palette; no dark (black) surfaces | | | |
+| **TC-01-03** | White background applied to decor/content/window | Immediately after launch inspect root background color | `window.decorView` / `android.R.id.content` / `window.setBackgroundDrawableResource` all resolve to solid white `#FFFFFFFF` | | | |
+| **TC-01-04** | Notification channel "malware_alerts" created (Android O+) | Settings → Apps → AYAWRus → Notifications | Channel "Malware Threat Alerts" exists; Importance = HIGH; vibration + lights enabled | | | |
+| **TC-01-05** | POST_NOTIFICATIONS permission requested (Android 13+) | First launch on Android TIRAMISU (API 33+) | System dialog "Allow AYAWRus to send notifications?" is displayed | | | |
+| **TC-01-06** | Dashboard loads as default screen (savedInstanceState == null) | Cold launch the app | Toolbar title = "Dashboard"; DashboardFragment committed to `R.id.fragmentContainer` | | | |
+| **TC-01-07** | Drawer opens via hamburger (≡) icon | Tap toolbar navigation icon | Left DrawerLayout slides open; 3 menu items listed | | | |
+| **TC-01-08** | Drawer opens via left-edge swipe | Dashboard visible; swipe from left edge to center | Same as TC-01-07 | | | |
+| **TC-01-09** | Drawer → Dashboard nav item works | Open drawer → tap Dashboard | Drawer closes; toolbar "Dashboard"; DashboardFragment displayed | | | |
+| **TC-01-10** | Drawer → History nav item works | Open drawer → tap History | Drawer closes; toolbar "History"; HistoryFragment + RecyclerView shown | | | |
+| **TC-01-11** | Drawer → Remote Quarantine nav item works | Open drawer → tap Remote Quarantine | Drawer closes; toolbar "Remote Quarantine"; QuarantineFragment shown | | | |
+| **TC-01-12** | Drawer auto-closes after any selection | Open drawer → tap any nav item | DrawerLayout.closeDrawers() executed; drawer fully shut before new fragment paints | | | |
+| **TC-01-13** | Rapid navigation switching is crash-free | Sequence: History → Quarantine → Dashboard → History (4 taps in < 2 s) | No crash, no fragment overlap, final screen matches last tap | | | |
+| **TC-01-14** | Defensive crash recovery fallback works | Artificially break Dashboard inflation (faulty layout scenario) → launch | Caught by try/catch; fallback view inflates; orange banner "Dashboard Recovered" shown | | | |
+
+> Code References: [MainActivity.kt onCreate (lines 67-135)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L67-L135), [setupDrawerAndFragments (lines 144-231)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L144-L231)
+
+---
+
+---
+
+## TC-02 — Test Name: **Security Dashboard Status & Counts** (FR-02)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-02 Security Dashboard** — Top status banner reflects overall state (Refreshing / All Clear / Threats Detected / Awaiting Scan Data) with standardized background colors; Last Scan card shows filename + verdict·date; clean/threat counts derived from API data; threat counts exclude Clean verdicts. |
+| **Precondition** | Desktop server is controllable (can return empty / all-clean / mixed / offline scenarios). App is on Dashboard screen. |
+| **Postcondition** | Banner states cycle correctly and all numeric counts match the API response exactly. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-02-01** | "Refreshing…" blue banner shown during pending API call | Enter Dashboard; capture UI immediately before onResponse arrives | `tvStatusBanner` text = "Refreshing…"; background = Blue `#FF2196F3` | | | |
+| **TC-02-02** | "All Clear" green banner shown when all verdicts = Clean | Mock API response: 5 × verdict="Clean" | Banner text = "All Clear"; background = Green `#FF4CAF50` | | | |
+| **TC-02-03** | "Threats Detected" red banner shown when ≥1 threat exists | Mock: 3 Clean + 2 Suspicious + 1 Malicious | Banner = "Threats Detected"; background = Red `#FFF44336` | | | |
+| **TC-02-04** | "Awaiting Scan Data" gray banner + long toast when API returns `[]` (HTTP 200 empty list) | Desktop has no scan records; open Dashboard | Banner text = "Awaiting Scan Data"; background = Gray `#FF607D8B`; Toast "No scan history on desktop yet. Run a scan first." (LENGTH_LONG) | | | |
+| **TC-02-05** | Latest-scan filename card reflects first (newest) record | API returns data sorted DESC; index-0 fileName="invoice_q3.docm" | `tvLastScanFile` = "invoice_q3.docm" exactly | | | |
+| **TC-02-06** | Latest-scan detail line: "Verdict • DateScanned" | Same index-0: verdict="Malicious", dateScanned="2026-09-02" | `tvLastScanDetails` = "Malicious • 2026-09-02" | | | |
+| **TC-02-07** | Clean count tallies only verdict.equalsIgnoreCase("Clean") | Data: 4×"Clean", 1×"clean", 1×"Suspicious", 1×"MALICIOUS" | `tvCleanCount` = "5" | | | |
+| **TC-02-08** | Threat count = total − clean_count (tallies Malicious + Suspicious together) | Same data as TC-02-07 | `tvThreatCount` = "2" | | | |
+| **TC-02-09** | Empty list → both counts = "0" | API returns `[]` | `tvCleanCount` = "0"; `tvThreatCount` = "0" | | | |
+| **TC-02-10** | Graceful offline fallback: demo data + "Cannot reach desktop server" toast | Turn off WiFi / kill desktop server; open Dashboard | Toast "Cannot reach desktop server: … Showing demo."; MockData dashboard values render; no crash | | | |
+
+> Code References: [DashboardFragment.refresh/applyData/applyAwaitingData (lines 76-163)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/DashboardFragment.java#L76-L163)
+
+---
+
+---
+
+## TC-03 — Test Name: **Scan History, Details & Verdict Rendering** (FR-03)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-03 Scan History & Details** — History list filtered to last 15 days by `timestamp`; RecyclerView renders `ScanResult` rows with colored verdict badges (Clean=green, Suspicious=amber, Malicious=red, Unknown=gray), QUARANTINED status overlay badge, case-insensitive verdict matching; card click opens BottomSheet with full 4-field detail + threat level score (confidence) + conditional quarantine CTA (visible only for threat verdict ∧ status ≠ QUARANTINED). |
+| **Precondition** | Desktop DB contains records of varying ages, verdicts, and statuses (ACTIVE / QUARANTINED). App is on History screen. |
+| **Postcondition** | List rendering, badge colors, detail sheet, confidence-score field, and inline quarantine CTA all behave per spec. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-03-01** | GET `/api/history?days=15` is issued on History load | Proxy the outgoing HTTP request | URL query string contains `days=15` | | | |
+| **TC-03-02** | Client-side 15-day timestamp filter excludes older records (MockData fallback) | Force offline mode; MockData has entries: 1 new, 1 at 16 days old, 1 at 30 days old | Only the <15-day record appears in RV; 2 older ones filtered out | | | |
+| **TC-03-03** | Empty state View shown when dataset is `[]` | Delete all scan history on desktop; open History | `tvEmptyState.setVisibility(VISIBLE)`; `rvScanHistory.setVisibility(GONE)` | | | |
+| **TC-03-04** | RecyclerView shown when dataset non-empty | Populate ≥1 record on desktop; open History | tvEmptyState → GONE; rvScanHistory → VISIBLE with rows | | | |
+| **TC-03-05** | Records sorted by timestamp DESC (newest at top) | Feed 3 known-timestamp records sorted old→mid→new into DB | RV top item = newest; bottom = oldest | | | |
+| **TC-03-06** | Clean verdict badge renders Green `#FF4CAF50` | Locate a Clean row in list | tvVerdict background = Material Green 500 | | | |
+| **TC-03-07** | Suspicious verdict badge renders Amber `#FFFFC107` | Locate a Suspicious row | tvVerdict background = Material Amber 500 | | | |
+| **TC-03-08** | Malicious verdict badge renders Red `#FFF44336` | Locate a Malicious row | tvVerdict background = Material Red 500 | | | |
+| **TC-03-09** | Unknown/null verdict badge renders Gray `#FF9E9E9E` | Inject a row with verdict=null or verdict="Weird" | tvVerdict background = Material Gray 500 | | | |
+| **TC-03-10** | Case-insensitive verdict color matching | Feed verdicts: "clean", "SUSPICIOUS", "malicious" | Colors still match TC-03-06 / 07 / 08 correctly (uses equalsIgnoreCase or uppercase switch equiv.) | | | |
+| **TC-03-11** | QUARANTINED badge overlay VISIBLE when status == "QUARANTINED" | Select a record whose status = QUARANTINED | `tvQuarantinedBadge.setVisibility(VISIBLE)` on that row | | | |
+| **TC-03-12** | QUARANTINED badge overlay GONE when status == "ACTIVE" | Select an ACTIVE record | Badge gone; no blank space reserved | | | |
+| **TC-03-13** | History card click opens BottomSheet | Tap any History row | `ScanDetailBottomSheet` slides up; no crash | | | |
+| **TC-03-14** | BottomSheet 4 detail fields match the tapped row | Tap row: fileName="a.docm", verdict=Malicious, threatLevel=95, date="2026-09-01" | tvDetailFileName="a.docm"; tvDetailVerdict="Malicious"; tvDetailThreatLevel="95"; tvDetailDate="2026-09-01" | | | |
+| **TC-03-15** | Confidence/threat-level score is integer 0–100 display | Tap multiple rows with known threat levels | `tvDetailThreatLevel` always renders as integer string (no decimals, no blank) | | | |
+| **TC-03-16** | BottomSheet verdict badge coloring matches the card | Same row as TC-03-14 | tvDetailVerdict background = Red (consistent with RV row color logic) | | | |
+| **TC-03-17** | Quarantine CTA button VISIBLE → Malicious + ACTIVE | Tap a Malicious row whose status = ACTIVE | `btnQuarantine.setVisibility(VISIBLE)`; label = "Quarantine" | | | |
+| **TC-03-18** | Quarantine CTA button VISIBLE → Suspicious + ACTIVE | Tap a Suspicious + ACTIVE row | Same as TC-03-17 | | | |
+| **TC-03-19** | Quarantine CTA button HIDDEN → Clean verdict (any status) | Tap a Clean row | btnQuarantine.setVisibility(GONE) | | | |
+| **TC-03-20** | Quarantine CTA button HIDDEN → status = QUARANTINED (even if threat verdict) | Tap a Malicious row already quarantined | btnQuarantine.setVisibility(GONE) | | | |
+| **TC-03-21** | Inline sheet quarantine: success path | In sheet of Malicious+ACTIVE: tap "Quarantine"; mock server HTTP 200 | Button → disabled + "Processing…"; then Toast "File quarantined successfully"; btnQuarantine → GONE | | | |
+| **TC-03-22** | Inline sheet quarantine: failure path (HTTP 500) | Same tap; mock server HTTP 500 | Toast "Failed to quarantine file"; button re-enabled; label restored to "Quarantine" | | | |
+| **TC-03-23** | Inline sheet quarantine: network failure | Same tap; disconnect network | Toast "Error: <exception message>"; button re-enabled | | | |
+
+> Code References: [HistoryFragment (lines 1-132)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/HistoryFragment.java), [ScanAdapter onBindViewHolder (lines 109-175)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanAdapter.java#L109-L175), [ScanDetailBottomSheet (lines 1-127)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanDetailBottomSheet.java)
+
+---
+
+---
+
+## TC-04 — Test Name: **Malware Alert & Notification System** (FR-04)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-04 Malware Alert & Notification** — Dual delivery: (A) local HTTP poll loop every 6000 ms to `/api/alerts/latest` with URL-fallback chain; (B) FCM push via topic subscription. New alerts identified by `timestamp > lastAlertTimestamp` → deduplicated; first-poll "catch up" never fires a notification (spam-prevention); notification renders as high-priority BigText with auto-cancel + default sound; tapping it opens MainActivity CLEAR_TOP. FCM supports both notification-payload and data-payload fallback paths in AyawrusFcmService. |
+| **Precondition** | Notification permission granted; desktop server either returns alert data via `/api/alerts/latest` or is configured to send FCM pushes. |
+| **Postcondition** | New threats produce exactly-one notification per alert; duplicates suppressed; tapping notification navigates into the app. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-04-01** | Alert poll interval = every ~6000 ms | Filter Logcat `AYAWrusMain`; observe for ≥ 18 s | `[poll] Trying …` lines appear ~every 6 s (± tolerance); 3+ polls captured | | | |
+| **TC-04-02** | Poll URL fallback chain order: BASE_URL → 10.0.2.2 → 127.0.0.1 | Kill desktop on BASE_URL; run server on emulator-host IP 10.0.2.2:5000; observe logs | Logs show 1st URL fails; 2nd (10.0.2.2) succeeds; 3rd never reached (early break) | | | |
+| **TC-04-03** | Poll success on ANY URL sets `anySuccess = true` (no misleading ALL-failed warning) | Either BASE_URL or 10.0.2.2 responds HTTP 200 | Logcat does NOT emit "ALL urls failed" line | | | |
+| **TC-04-04** | New alert triggers local notification | POST `/api/scan/notify` with threatLevel=90 → wait for next poll | Status-bar notification appears: title="Malware Detected!"; body contains basename + "threat level of 90" | | | |
+| **TC-04-05** | Suspicious-level alert (threatLevel=55) triggers alternate messaging | POST with threatLevel=55 | Notification title = "Suspicious File Found!"; body worded "Suspicious file … was detected with a threat level of 55." | | | |
+| **TC-04-06** | First-poll catch-up SUPPRESSES notification (no spam) | Pre-populate `/api/alerts/latest` with an alert; then cold-start app | Logcat "FIRST-POLL CAUGHT UP: …"; NO notification raised | | | |
+| **TC-04-07** | Same-timestamp alert deduplicated | Fire same alert twice with identical `timestamp` via two consecutive polls | Only 1 notification after first poll; second poll logs "No new alert" and nothing shown | | | |
+| **TC-04-08** | Older timestamp (ts ≤ lastAlertTimestamp) deduplicated | Inject alert ts=1000 → it fires; inject alert ts=999 | Second alert silently ignored; no notification | | | |
+| **TC-04-09** | Local notification uses BigText + HIGH priority + auto-cancel + default sound | Inspect active notification via system shade or dumpsys notification | Style = BigText; priority = PRIORITY_MAX / IMPORTANCE_HIGH; sound = system default; flag AUTO_CANCEL on | | | |
+| **TC-04-10** | Tapping notification re-opens MainActivity CLEAR_TOP | Tap the notification; app was in background | MainActivity launched with FLAG_ACTIVITY_CLEAR_TOP; no duplicate activities stacked | | | |
+| **TC-04-11** | AyawrusFcmService: notification-payload path works | Send an FCM message via topic "malware_alerts" with only `notification.title/body` | Notification shown exactly matching title/body | | | |
+| **TC-04-12** | AyawrusFcmService: data-payload fallback path works (no notification payload) | Send FCM with only `data.title / data.body` (no `notification` object) | App still shows notification (data payload branch executed) | | | |
+| **TC-04-13** | Empty-server state handled (alert=null) without exception | Make `/api/alerts/latest` return `{"alert":null}` | Logcat "No alerts queued on server yet"; no NPE; lastAlertTimestamp safely initialized to 1L on first empty hit | | | |
+
+> Code References: [MainActivity pollLatestAlert/showLocalNotification (lines 302-411)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L302-L411), [AyawrusFcmService onMessageReceived/showNotification (lines 33-93)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/AyawrusFcmService.kt#L33-L93)
+
+---
+
+---
+
+## TC-05 — Test Name: **Backend Sync, Refresh, Offline & Malware-Safe Transport** (FR-05)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-05 Backend Synchronization** — Retrofit API integration (GET history, POST quarantine-by-id, POST register-device); `onResume()` refresh on all 3 fragments; periodic refresh every N polls (~30 s); immediate refresh on new alert; offline/HTTP-error → MockData fallback with explanatory toasts; **Malware-Safe Transport invariant**: NO file_path, NO raw file bytes, NO base64 blobs traverse the mobile API channel — only metadata + opaque scan_id; quarantine resolves file_path server-side via SQLite only. |
+| **Precondition** | Desktop server controllable (can simulate HTTP codes, empty responses, offline, populated DB with records including real file_path values). MitM proxy active to audit traffic. |
+| **Postcondition** | All sync paths work; no malware-related bytes or absolute paths ever appear in mobile-bound JSON/FCM. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-05-01** | Retrofit endpoint: GET `/api/history?days=N` returns `List<ScanResult>` via Gson | Dashboard/History load; capture response | HTTP 200; Content-Type application/json; array length ≥ 0; each element deserializes into `ScanResult` fields without exception | | | |
+| **TC-05-02** | Retrofit endpoint: POST `/api/quarantine/{scan_id}` → empty success 200 | Issue quarantine from sheet or batch list; intercept POST | URL path ends with `/api/quarantine/<16-hex-chars>`; body empty (no JSON); response 200 on success | | | |
+| **TC-05-03** | Retrofit endpoint: POST `/api/register-device` JSON body | Capture registration POST | body = `{token: String, device_name: String}`; matches `DeviceRegistration` class fields | | | |
+| **TC-05-04** | Server clamps `days` param 1–365 | Craft URLs `/api/history?days=0` and `/api/history?days=99999` | Server returns data clamped to 1 day and 365 days respectively; HTTP 200 | | | |
+| **TC-05-05** | DashboardFragment.onRefresh(): HTTP error (non-2xx) → MockData fallback + toast | Return HTTP 500 from history | Toast "API error — showing demo dashboard."; MockData values shown | | | |
+| **TC-05-06** | DashboardFragment.onRefresh(): network failure → MockData fallback + toast | Disconnect WiFi mid-call | Toast "Cannot reach desktop server: <msg>. Showing demo."; MockData shown | | | |
+| **TC-05-07** | HistoryFragment empty-list (HTTP 200 `[]`) → shows Awaiting state (NOT mock data) | API returns 200 + `[]` on history | Toast "No scan history on desktop yet…"; NO MockData; empty state view shown | | | |
+| **TC-05-08** | Dashboard.onResume → refresh() triggered | Dashboard → other app → return 3s later | Logcat "onResume: refreshing dashboard"; API GET fired anew | | | |
+| **TC-05-09** | History.onResume → refresh() triggered | Same transition pattern, focused on History | Logcat "onResume: refreshing history"; fetchHistory called | | | |
+| **TC-05-10** | Quarantine.onResume → refresh() triggered | Same for Quarantine tab | Logcat "onResume: refreshing quarantine list"; fetchThreats called | | | |
+| **TC-05-11** | Periodic UI refresh every 5th poll (~30 s) | Leave app untouched on Dashboard for ~35 s | Logcat `[poll] scheduling UI refresh. reason=PERIODIC(#…)` then `[UI-refresh] DashboardFragment.refresh() called` | | | |
+| **TC-05-12** | New-alert triggers IMMEDIATE refreshCurrentFragmentUi | Inject a brand-new alert that fires notification; attached fragments refresh | Logcat reason="NEW_ALERT" → all currently-attached fragments' refresh() invoked | | | |
+| **TC-05-13** | refreshCurrentFragmentUi guards against detached fragments (no NPE) | App on History only (Dashboard not added); trigger periodic refresh | Only HistoryFragment.refresh() executed; no call to Dashboard (safe isAdded check) | | | |
+| **TC-05-14** | refresh() guard before onCreateView: "refresh() called before view was created — ignoring" | Race-condition test: call refresh() reference before view inflation | Logcat warning; no NullPointerException thrown | | | |
+| **TC-05-15** | **MALWARE-SAFE**: history JSON omits `file_path` key | Capture `/api/history` response object-per-object | NO key named `file_path`, `original_path`, `path`, `fullPath`, etc. anywhere. Only `fileName` (basename) present | | | |
+| **TC-05-16** | **MALWARE-SAFE**: history JSON contains no `details`/raw-content/blob keys | Same capture | NO keys `details`, `content`, `bytes`, `base64`, `raw`, `blob` in responses | | | |
+| **TC-05-17** | **MALWARE-SAFE**: quarantine POST body is EMPTY (scan_id only in URL) | Capture POST /api/quarantine/{id} | Body length = 0 (no file path / no content transmitted from mobile) | | | |
+| **TC-05-18** | **MALWARE-SAFE**: server resolves file_path server-side only | Add desktop-side log to `quarantine_by_id` endpoint | Server runs `SELECT file_path FROM scan_results WHERE id = ?` locally; never reads mobile-supplied path | | | |
+| **TC-05-19** | **MALWARE-SAFE**: `/api/alerts/latest` payload is metadata-only | Capture GET `/api/alerts/latest` | Alert object keys = {fileName, threatLevel, title, body, timestamp} only — no paths | | | |
+| **TC-05-20** | **MALWARE-SAFE**: FCM push payload is metadata-only | Capture FCM data via debug | Title/body include basename only — never an absolute filesystem path; no blob fields | | | |
+
+> Code References: [MalwareApiService interface (lines 1-31)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MalwareApiService.java), [server row_to_scan_result + quarantine_by_id (lines 461-613)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L461-L613), [MainActivity refreshCurrentFragmentUi (lines 247-267)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L247-L267)
+
+---
+
+---
+
+## TC-06 — Test Name: **Device Registration & Remote Quarantine** (FR-06 + cross-cutting Remote Quarantine flow)
+
+| | |
+|---|---|
+| **Functional Requirement** | **FR-06 Device Registration** — FCM token fetched best-effort, topic `malware_alerts` auto-subscribed (both MainActivity init AND AyawrusFcmService.onCreate), token + `Build.MODEL` sent to `/api/register-device`; all failures swallowed non-fatally. **Remote Quarantine** (grouped here as the primary registration-using remediation UX): QuarantineFragment filters threats (Malicious/Suspicious ∧ ACTIVE); multi-select via checkboxes; live selection counter; CTA button state machine; batch-parallel quarantine POSTs; success/fail aggregation toast; QUARANTINED badge live update on successful rows. |
+| **Precondition** | Device has GPS + Play Services available (for FCM); desktop DB has ≥ 3 active threats; server is reachable and writable. |
+| **Postcondition** | FCM subscribe + token + register chain completes without crashing app; batch multi-select quarantine end-to-end succeeds, DB status flips, UI stays consistent. |
+
+| **Test Case ID** | **Test Scenario** | **Test Steps** | **Expected Result** | **Actual Result** | **Status** | **Remarks** |
+|---|---|---|---|---|---|---|
+| **TC-06-01** | MainActivity.subscribeToTopic("malware_alerts") → success logged | Cold launch; filter Logcat `AYAWrusMain` | "Firebase: subscribed to 'malware_alerts' topic" line appears | | | |
+| **TC-06-02** | Firebase token fetched with realistic length | Same session | "Firebase: FCM token acquired (len=NNN)" — NNN typically 100+ chars | | | |
+| **TC-06-03** | `/api/register-device` POST payload = { token=<FCM token>, device_name=<Build.MODEL> } | Intercept the POST | JSON body matches schema exactly; device_name equals the device's consumer marketing model string (e.g. "SM-G991B" / "Pixel 6") | | | |
+| **TC-06-04** | AyawrusFcmService.onCreate independently re-subscribes to topic for redundancy | Force app-process kill then cold start; filter Logcat tag=AYAWrus-FCM | "✅ Subscribed to malware_alerts topic" emitted from AyawrusFcmService.onCreate | | | |
+| **TC-06-05** | Firebase/FCM failure does NOT crash app launch | Block internet + block Firebase SDK; attempt launch | App cold-launches fully (Dashboard visible); all Firebase exceptions logged as W/ non-fatal; no RuntimeException | | | |
+| **TC-06-06** | Server-side register-device 4xx/5xx does NOT propagate crash | Return HTTP 500 from `/api/register-device` | Logcat "Firebase: backend register returned 500" only; UI unaffected | | | |
+| **TC-06-07** | Token rotation via AyawrusFcmService.onNewToken logs safely | Simulate Firebase onNewToken callback with a fresh token | Logcat "FCM Token: …" prints; no exception thrown | | | |
+| **TC-06-08** | **Remote Quarantine**: list filters correctly (only Malicious/Suspicious AND ACTIVE shown) | Desktop DB state: 2 Clean(ACTIVE) + 3 Malicious(ACTIVE) + 1 Suspicious(ACTIVE) + 1 Malicious(QUARANTINED) | RV displays exactly 4 items (3 + 1); Clean rows and the QUARANTINED Malicious row are excluded | | | |
+| **TC-06-09** | **Remote Quarantine**: empty state for zero active threats | Quarantine all active threats on desktop → open Quarantine tab | tvEmptyState.setVisibility(VISIBLE); rvThreats.setVisibility(GONE); helpful "No active threats" copy shown | | | |
+| **TC-06-10** | Selecting checkbox increments counter (live) | On a 4-threat list: check 1st → check 2nd → uncheck 1st | tvSelectionCount transitions "1 selected / 4 threats" → "2 selected / 4 threats" → "1 selected / 4 threats" | | | |
+| **TC-06-11** | Tapping row BODY (not checkbox) toggles selection in Quarantine mode | In Quarantine screen, tap whitespace/text area of a row (not the CheckBox widget) | CheckBox toggles; counter updates (same as explicit checkbox tap) | | | |
+| **TC-06-12** | CTA button disabled when 0 selected; label = "Quarantine Selected" | Fresh Quarantine screen, nothing selected | btnQuarantineSelected.setEnabled(false); alpha ~0.5; label as specified | | | |
+| **TC-06-13** | CTA button enabled when N>0 selected; label = "Quarantine N" | Select any 3 items | Enabled=true, alpha=1.0, label = "Quarantine 3" | | | |
+| **TC-06-14** | In-flight state: label = "Quarantining…", button disabled | Submit batch; intercept responses before they return | Button disabled; label updated; no double-tap re-submit possible | | | |
+| **TC-06-15** | Batch all-success: 3 rows → all HTTP 200 | Select 3; submit; all 3 return 200 | Toast: "3 file(s) quarantined on desktop"; each of 3 rows shows QUARANTINED badge overlay; their checkboxes auto-removed from selection set | | | |
+| **TC-06-16** | Batch partial-failure aggregate report | Select 3: mock 2 success + 1 HTTP 500 | Toast: "2 file(s) quarantined on desktop. 1 failed."; 2 badges turn QUARANTINED; 1 remains ACTIVE and still selectable | | | |
+| **TC-06-17** | Quarantine request uses unique scan_id per item only (no filename/path roundtrip) | Capture each of 3 POSTs in a batch | POST URLs unique per scan_id; bodies empty; no repeated/conflicting ids | | | |
+| **TC-06-18** | markItemQuarantined() + adapter UI update live (no full-screen flicker) | After one success from a batch | Single-item notifyItemChanged(i) executed; QUARANTINED badge appears on that row only without full RV re-layout | | | |
+| **TC-06-19** | Already-quarantined rows have disabled checkbox (alpha=0.4) | In Quarantine list, ensure at least one row enters status=QUARANTINED via batch | That row's CheckBox.setEnabled(false); alpha ~0.4; onCheckChanged listener short-circuits via `selectableForThisItem` guard | | | |
+| **TC-06-20** | Empty selection → submit attempt rejected with short Toast | Nothing checked; tap CTA anyway (if made clickable manually) | Toast "Select at least one threat first" (SHORT); no POSTs made | | | |
+
+> Code References: [MainActivity registerDeviceTokenAndSubscribeTopic (lines 413-459)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L413-L459), [AyawrusFcmService (lines 1-103)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/AyawrusFcmService.kt), [QuarantineFragment (lines 1-222)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/QuarantineFragment.java), [ScanAdapter selection + markItemQuarantined (lines 51-99)](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanAdapter.java#L51-L99)
+
+---
+
+### Summary Mapping (New FR → TC)
+
+| New FR | Component | TC document | Sub-test count |
+|---|---|---|---|
+| **FR-01** | Mobile Application & Navigation | TC-01 (App Init, Theme & Navigation) | 14 scenarios |
+| **FR-02** | Security Dashboard | TC-02 (Security Dashboard Status & Counts) | 10 scenarios |
+| **FR-03** | Scan History & Details | TC-03 (Scan History, Details & Verdict Rendering) | 23 scenarios |
+| **FR-04** | Malware Alert & Notification | TC-04 (Malware Alert & Notification System) | 13 scenarios |
+| **FR-05** | Backend Synchronization + Malware-Safe Transport | TC-05 (Backend Sync, Refresh, Offline & Malware-Safe Transport) | 20 scenarios |
+| **FR-06** | Device Registration + Remote Quarantine | TC-06 (Device Registration & Remote Quarantine) | 20 scenarios |
+| **Total** | | **6 TCs** | **100 sub-scenarios** |
+
+---
+
+**User**
+
+can you also revise my functional requirements
+for 
+Mobile Application & Navigation
+Security Dashboard
+Scan History & Details
+Malware Alert & Notification
+Backend Synchronization
+Device Registration
+
+
+**Assistant**
+
+Absolutely. I'll rewrite the Functional Requirements document for your **AYAWrus Mobile Application Module** using the 6 consolidated components. Each requirement is written in formal software-engineering language ("The system shall…") and directly grounded in the actual implementation behavior of your codebase.
+
+---
+
+# C.1 Module Functional Requirements
+
+## AYAWrus Mobile Application Module
+
+| No. | Components | Functional Requirements |
+|---|---|---|
+| **FR-01** | **Mobile Application & Navigation** | • The system shall initialize the AYAWrus mobile application upon launch without crashing, applying a defensive crash-recovery fallback for layout inflation errors.<br><br>• The system shall force **Light Mode (MODE_NIGHT_NO)** regardless of the system-wide dark-mode preference, and shall render the entire window, content view, and decor view background as solid white.<br><br>• The system shall automatically create a dedicated **"Malware Threat Alerts"** notification channel on Android 8.0 (Oreo) and above, configured with HIGH importance, vibration support, and LED notification lights.<br><br>• The system shall request the **POST_NOTIFICATIONS** runtime permission on Android 13 (Tiramisu) and above before alert delivery is attempted.<br><br>• The system shall provide a structured **navigation drawer** (accessible via the toolbar hamburger icon or a left-edge swipe gesture) containing three destinations: Dashboard, History, and Remote Quarantine.<br><br>• The system shall replace the active fragment inside the main content container via a `FragmentTransaction` whenever a navigation item is selected, and shall automatically close the drawer immediately after selection.<br><br>• The system shall load the **Dashboard** fragment as the default screen on a cold launch (i.e., when `savedInstanceState == null`).<br><br>• The system shall dynamically update the **toolbar title** to match the active fragment ("Dashboard", "History", or "Remote Quarantine") after every navigation event. |
+| **FR-02** | **Security Dashboard** | • The system shall render a **top status banner** whose text and background color reflect the current state of the malware detection system.<br><br>• The system shall display the banner state **"Refreshing…"** (blue background) whenever a fresh API call is in progress.<br><br>• The system shall display the banner state **"All Clear"** (green background) when every scan record returned has the verdict "Clean".<br><br>• The system shall display the banner state **"Threats Detected"** (red background) when at least one record has a verdict of "Malicious" or "Suspicious".<br><br>• The system shall display the banner state **"Awaiting Scan Data"** (gray background) alongside a long-duration explanatory toast when the desktop server successfully returns an empty history list.<br><br>• The system shall render a **Latest Scan summary card** populated from the most-recent (first, timestamp-descending) scan record, including the file name, classification verdict, and date scanned.<br><br>• The system shall render **two numeric count cards** — one for the total number of **Clean** verdicts and one for the total number of **Threats** (Malicious + Suspicious) — computed case-insensitively from the dataset.<br><br>• The system shall display counts of **"0"** for both counters when the dataset is empty, and shall never raise a null-pointer exception on empty input. |
+| **FR-03** | **Scan History & Details** | • The system shall retrieve scan-history records by issuing a **GET `/api/history?days=15`** request to the desktop backend, and shall accept any response with 1 to 365 days as the clamped server-side window.<br><br>• The system shall render history records inside a **RecyclerView** using a vertical LinearLayoutManager, sorted by timestamp descending so the newest entry appears at the top.<br><br>• The system shall, when running against offline MockData fallback, **filter out any record older than 15 days** by comparing its `timestamp` field against the current wall-clock time.<br><br>• The system shall render an **empty-state text view** (and hide the RecyclerView) when the history dataset is empty, and shall do the converse when at least one record exists.<br><br>• The system shall color-code a **verdict badge** on every list row using a standardized palette: **Clean → Green**, **Suspicious → Amber/Yellow**, **Malicious → Red**, and **Unknown/Null → Gray**, matching case-insensitively.<br><br>• The system shall overlay a **"QUARANTINED"** status badge on any row whose `status` field equals "QUARANTINED", and shall hide the badge for rows whose status is "ACTIVE" or null.<br><br>• The system shall, upon tapping a History row, open a **Material Bottom-Sheet Dialog** that displays the file name, verdict, **confidence/threat-level score (0–100 integer)**, and date scanned of the selected record.<br><br>• The system shall make the bottom-sheet **Quarantine Call-To-Action button visible if and only if** the record's verdict is "Malicious" or "Suspicious" **and** its status is **not** "QUARANTINED".<br><br>• The system shall, when the inline Quarantine button is pressed, issue a quarantine request and update the button text to "Processing…" until a response is received; on success the button shall be hidden and a success toast shown, on failure the button shall be re-enabled and an error toast shown. |
+| **FR-04** | **Malware Alert & Notification** | • The system shall operate a **background alert-polling loop** that issues a GET request to `/api/alerts/latest` on a fixed 6000-millisecond interval, and shall attempt three fallback URLs in order (the configured LAN IP, the Android-emulator host alias `10.0.2.2`, and `127.0.0.1`) until one succeeds.<br><br>• The system shall render each new-threat alert as a **high-priority local Android notification** using BigText expanded style, the system default notification sound, the auto-cancel flag, and an alert-icon drawable.<br><br>• The system shall title notifications **"Malware Detected!"** when the threat level is 70 or higher, and **"Suspicious File Found!"** otherwise, with a body message that incorporates the file basename and integer threat-level score.<br><br>• The system shall, on the very first poll after a cold launch, **suppress any notification** even if a queued alert exists (catch-up anti-spam rule), recording the timestamp to establish a baseline.<br><br>• The system shall perform **timestamp-based duplicate prevention** so that any alert whose timestamp is less than or equal to the most-recently-shown alert's timestamp is silently discarded rather than re-shown.<br><br>• The system shall deliver alerts over **Firebase Cloud Messaging (FCM)** in addition to local polling, auto-subscribing the device to the FCM topic `malware_alerts`.<br><br>• The system shall render an incoming FCM message whether the payload arrives via the **notification** object (FCM-UI path) or the **data** dictionary (fallback path when notification object is absent).<br><br>• The system shall open the **MainActivity with `FLAG_ACTIVITY_CLEAR_TOP`** when the user taps any threat notification, preventing duplicate stacked activities. |
+| **FR-05** | **Backend Synchronization** | • The system shall communicate with the AYAWrus desktop backend over HTTP using a **Retrofit + Gson** stack targeting the configured `BASE_URL`.<br><br>• The system shall expose three integration endpoints: **GET `/api/history?days=N` → `List<ScanResult>`**, **POST `/api/quarantine/{id}` → `Void`**, and **POST `/api/register-device` → `Void`**.<br><br>• The system shall enable **Cross-Origin Resource Sharing (CORS)** on all `/api/*` desktop routes so direct mixed-origin requests (from WebView or proxied contexts) do not fail preflight checks.<br><br>• The system shall issue a fresh backend fetch from the **`onResume()`** lifecycle callback of the DashboardFragment, HistoryFragment, and QuarantineFragment so that returning to any screen always shows the latest data.<br><br>• The system shall additionally trigger a **periodic UI refresh every Nth poll** (equivalent to approximately every 30 seconds) and an **immediate UI refresh** whenever the alert loop detects a genuinely new threat notification, calling refresh on whichever fragments are currently attached to the Activity.<br><br>• The system shall guard every `refresh()` call against invocation before view inflation so that no NullPointerException occurs during race conditions or fragment-transition overlap.<br><br>• The system shall handle **offline or degraded-backend conditions gracefully**: on HTTP errors (non-2xx) or transport-layer failures, the Dashboard and History screens shall render local MockData and shall show a distinct, descriptive toast identifying the failure mode (API error versus unreachable server).<br><br>• The system shall enforce a **Malware-Safe Transport invariant** under which **NO malware file bytes, NO raw absolute file paths, and NO base64-encoded content blobs** are ever transmitted to or from the mobile client — only file basenames, verdicts, scores, timestamps, and opaque 16-hex-character scan identifiers cross the boundary. The quarantine endpoint shall resolve a scan ID to its real file path using a server-private SQLite lookup only. |
+| **FR-06** | **Device Registration** | • The system shall obtain a **Firebase Cloud Messaging (FCM) registration token** on every application launch on a best-effort basis, swallowing any SDK or network failure so that the main application start path never crashes.<br><br>• The system shall **subscribe to the FCM topic `malware_alerts`** from two independent entry points — the MainActivity initialization path and the `AyawrusFcmService.onCreate()` callback — so topic membership is resilient to service restarts.<br><br>• The system shall, upon successfully acquiring an FCM token, issue a **POST `/api/register-device`** request whose JSON body contains exactly two fields: **`token`** (the FCM device token string) and **`device_name`** (the consumer marketing model name of the device, obtained from `Build.MODEL`).<br><br>• The system shall re-log any token-rotation event received via `FirebaseMessagingService.onNewToken()` so downstream debugging is possible without crashing.<br><br>• The system shall display a **Remote Quarantine management screen** that lists every scan record whose verdict is **"Malicious" or "Suspicious" AND whose status is not "QUARANTINED"**, filtering out Clean records and already-quarantined threats.<br><br>• The system shall support **multi-select checkboxes** on each quarantine-eligible row (including toggling via a tap anywhere on the row body), while rendering already-quarantined rows with a disabled and alpha-dimmed checkbox.<br><br>• The system shall render a **live selection counter** ("N selected / T threats") and a submit button whose label ("Quarantine Selected", "Quarantine N", or "Quarantining…") and whose enabled/disabled-and-dimmed state is a pure function of selection count and in-flight status.<br><br>• The system shall, on submit, fire **parallel quarantine POST requests — one per selected scan ID** — and shall aggregate responses into a single summary toast ("N file(s) quarantined on desktop. F failed."). Rows whose requests succeeded shall show the "QUARANTINED" badge immediately via a targeted item-changed update, removing them from the selection set without a full-screen flicker. |
+
+---
+
+### Mapping to the code that satisfies each FR (for audit traceability)
+
+| FR | Primary code locations |
+|---|---|
+| FR-01 (App & Nav) | [MainActivity.kt onCreate + setupDrawerAndFragments](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L67-L231) |
+| FR-02 (Dashboard) | [DashboardFragment refresh/applyData/applyAwaitingData](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/DashboardFragment.java#L76-L163) |
+| FR-03 (History & Details) | [HistoryFragment](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/HistoryFragment.java), [ScanAdapter onBindViewHolder](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanAdapter.java#L109-L175), [ScanDetailBottomSheet](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanDetailBottomSheet.java) |
+| FR-04 (Alerts & Notifications) | [MainActivity pollLatestAlert/showLocalNotification](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L302-L327), [AyawrusFcmService](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/AyawrusFcmService.kt) |
+| FR-05 (Backend Sync & Safe Transport) | [MalwareApiService interface](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MalwareApiService.java), [MainActivity refreshCurrentFragmentUi](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L247-L267), [server.py row_to_scan_result + quarantine_by_id](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L461-L613) |
+| FR-06 (Device Registration + Remote Quarantine) | [MainActivity registerDeviceTokenAndSubscribeTopic](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L413-L459), [QuarantineFragment](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/QuarantineFragment.java), [ScanAdapter markItemQuarantined](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/ScanAdapter.java#L71-L83) |
+
+---
+
+**User**
+
+can you help me where exactly my fcm key located?
+
+**Assistant**
+
+Found all three FCM key locations. Let me read them to show you the exact state of each.
+
+Here's the **complete map** of every FCM-related key/credential location in your project — both **desktop (send)** and **mobile (receive)** sides:
+
+---
+
+## 🔑 FCM Credentials — Full Location Map
+
+### 🖥️ DESKTOP SIDE (sends FCM pushes → mobile)
+
+Your code supports **two independent FCM send paths**. You only need **one** working (HTTP v1 is recommended by Google); both are configured here:
+
+---
+
+#### ① **HTTP v1 (RECOMMENDED) — Service Account JSON**
+This is the modern, officially-recommended FCM send method. It uses two settings in [config.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/config.json):
+
+| Setting | Where | Current value |
+|---|---|---|
+| **firebase_project_id** | [config.json line 7](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/config.json#L7-L7) | `"diane-3e2b8"` (✅ already filled in) |
+| **firebase_service_account** (path to JSON key file) | [config.json line 8](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/config.json#L8-L8) | `"firebase_service_account.json"` → resolves to the actual key file at: |
+
+**👉 THE ACTUAL FCM PRIVATE KEY FILE (HTTP v1):**
+> **[firebase_service_account.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/firebase_service_account.json)**
+>
+> Inside this JSON file you will find:
+> - `"project_id"` — must match `diane-3e2b8`
+> - `"private_key"` — the RSA private key (-----BEGIN PRIVATE KEY----- … -----END PRIVATE KEY-----)
+> - `"client_email"` — the service account email address
+>
+> ⚠️ This file is `.gitignore`d at [.gitignore line 28](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/.gitignore#L28-L28), so it won't be committed — that's the right thing for a private key.
+
+The resolution chain in server.py is (whichever is found first wins):
+
+1. `FIREBASE_SERVICE_ACCOUNT` **environment variable** → absolute path
+2. `config.json → firebase_service_account` → relative or absolute path (your current setup)
+
+Server code: [get_fcm_service_account_path](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L110-L120), [_load_service_account_info](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L130-L142), [_fcm_v1_token_via_google_auth](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L145-L172)
+
+---
+
+#### ② **FCM LEGACY API — Server Key (deprecated alternative)**
+Older HTTP endpoint; requires a single long string key. This is **NOT a file** — it's a plain string environment variable:
+
+| Setting | Where | Current value |
+|---|---|---|
+| **`FCM_SERVER_KEY`** env var | Read in [server.py line 36](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L36-L36) | `""` (EMPTY in your project — not set) |
+
+To use the legacy path, set it as a Windows environment variable before launching:
+```
+set FCM_SERVER_KEY=AAAAXXXXX...your_legacy_server_key_here
+```
+Used at [_send_fcm_legacy line 320-355](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L320-L355) (Authorization header `key=<FCM_SERVER_KEY>`).
+
+---
+
+#### ③ **Environment-variable override for HTTP v1 project ID**
+[server.py line 104](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py#L104-L104) also accepts:
+- `FIREBASE_PROJECT_ID` — overrides the one in config.json (currently unused)
+
+---
+
+### 📱 MOBILE SIDE (receives FCM pushes)
+
+The Android app needs the Firebase **project configuration / google-services.json** so the FCM SDK knows *which project to connect to* for topic subscription and token issuance.
+
+| File | Location |
+|---|---|
+| **google-services.json** (mobile app config — NOT a secret, but project-specific) | **[AYAWRusMobile/app/google-services.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/google-services.json)** |
+
+Inside this JSON are:
+- `project_info.project_id` → `diane-3e2b8`
+- `client[0].client_info.mobilesdk_app_id` → `1:...:android:...`
+- `client[0].api_key.current_key` → the **Android client API key** (used by the mobile SDK only, not for sending pushes)
+- `client[0].oauth_client` → client IDs
+
+This file is consumed by the Gradle `com.google.gms.google-services` plugin to auto-configure the mobile `FirebaseApp` at runtime (so you don't hardcode anything in Kotlin/Java). The mobile code just calls `FirebaseMessaging.getInstance()` and everything wires up from this file.
+
+Mobile subscribe/token code: [MainActivity registerDeviceTokenAndSubscribeTopic](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/MainActivity.kt#L413-L459), [AyawrusFcmService](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/AyawrusFcmService.kt)
+
+---
+
+### 📋 Quick Checklist (current state of your setup)
+
+| Item | Location | Status |
+|---|---|---|
+| ✅ Firebase Project ID (HTTP v1) | `system/config.json → firebase_project_id` | **Set** = `diane-3e2b8` |
+| 🔑 Service Account RSA Key (HTTP v1 send) | `system/firebase_service_account.json` | **Exists** (open it to verify `private_key` field is populated) |
+| 📎 Service Account relative path | `system/config.json → firebase_service_account` | **Set** = `firebase_service_account.json` |
+| 📱 Mobile google-services.json | `AYAWRusMobile/app/google-services.json` | **Exists** (used by Gradle plugin) |
+| ⚠️ FCM Legacy Server Key | `%FCM_SERVER_KEY%` env var | **Empty** (not needed — HTTP v1 is active) |
+| ⚠️ `FIREBASE_PROJECT_ID` env override | env | **Not set** (falls back to config.json — fine) |
+| ⚠️ `FIREBASE_SERVICE_ACCOUNT` env override | env | **Not set** (falls back to config.json — fine) |
+
+---
+
+### 🔗 How the flow lines up:
+1. Desktop loads `firebase_project_id` + `firebase_service_account.json` from [config.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/config.json) via [server.py](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/api/server.py)
+2. Desktop swaps the service-account key for a short-lived Google OAuth2 access token → hits `https://fcm.googleapis.com/v1/projects/diane-3e2b8/messages:send` with topic `malware_alerts`
+3. Mobile's FCM SDK (configured via [google-services.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/google-services.json)) is auto-subscribed to topic `malware_alerts` → [AyawrusFcmService.onMessageReceived](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/AYAWRusMobile/app/src/main/java/com/ayawrus/mobile/AyawrusFcmService.kt#L33-L53) fires → shows local notification.
+
+**If FCM isn't working for you right now**, the #1 thing to open and verify is [firebase_service_account.json](file:///d:/SUMMER/18_07_26/AYAWrus%20Latest/system/firebase_service_account.json) — confirm it has a valid non-empty `private_key` block and a `client_email` ending in `@diane-3e2b8.iam.gserviceaccount.com`.
+
+---
+
+**User**
+
+hello, in the protection history, instead of seeing all of the files that scan, can you make scan batches? like the protection history will only see the batches instead of like every single file scanned. when you click the batch it will now show you all the file scanned in that batch.
+
+**Assistant**
+
+Now I'll implement the batch feature end-to-end. Starting with the core batch module, DB schema updates, and the JSON log integration:
+
+Now let me add ScanBatch, BatchFilesResponse data models, API endpoints, the BatchAdapter (rows), BatchDetailBottomSheet (files per batch), and update HistoryFragment to use them.
+
+---
+
+**User**
+
+can you continue it?
+
+**Assistant**
+
+Error: Your requests have exceeded the quota.
+
+---
+
