@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +33,7 @@ public class QuarantineFragment extends Fragment {
     private RecyclerView rvThreats;
     private TextView tvEmptyState;
     private TextView tvSelectionCount;
+    private CheckBox cbSelectAll;
     private Button btnQuarantineSelected;
     private volatile boolean quarantineInProgress = false;
 
@@ -46,6 +48,7 @@ public class QuarantineFragment extends Fragment {
 
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
         tvSelectionCount = view.findViewById(R.id.tvSelectionCount);
+        cbSelectAll = view.findViewById(R.id.cbSelectAll);
         btnQuarantineSelected = view.findViewById(R.id.btnQuarantineSelected);
 
         adapter = new ScanAdapter(threats, true, (selected, total) -> {
@@ -53,6 +56,13 @@ public class QuarantineFragment extends Fragment {
         });
         rvThreats.setAdapter(adapter);
 
+        cbSelectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                adapter.selectAll();
+            } else {
+                adapter.clearSelection();
+            }
+        });
         btnQuarantineSelected.setOnClickListener(v -> quarantineSelected());
         updateSelectionUi(0, threats.size());
         refresh();
@@ -127,6 +137,17 @@ public class QuarantineFragment extends Fragment {
     private void updateSelectionUi(int selected, int total) {
         if (tvSelectionCount == null || btnQuarantineSelected == null) return;
         tvSelectionCount.setText(selected + " selected / " + total + " threats");
+        if (cbSelectAll != null) {
+            cbSelectAll.setOnCheckedChangeListener(null);
+            cbSelectAll.setChecked(total > 0 && selected == total);
+            cbSelectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    adapter.selectAll();
+                } else {
+                    adapter.clearSelection();
+                }
+            });
+        }
         boolean enabled = !quarantineInProgress && selected > 0;
         btnQuarantineSelected.setEnabled(enabled);
         btnQuarantineSelected.setAlpha(enabled ? 1.0f : 0.5f);
