@@ -5,11 +5,28 @@ import uuid
 import sqlite3
 import hashlib
 import time
+import socket
 import requests
 import threading
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_file
 from flask_cors import CORS
+
+from system.mobile_pairing import (
+    generate_pairing_payload,
+    validate_pairing_token,
+    consume_pairing_token,
+    create_mobile_session,
+    get_session_for_token,
+    refresh_session,
+    revoke_session,
+    revoke_all_sessions,
+    list_active_sessions,
+    mobile_status_payload,
+    qr_payload,
+    SESSION_TTL_SECONDS,
+    SYSTEM_ID,
+)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -36,7 +53,7 @@ DB_FILE = os.path.join(BASE_DIR, "scan_results.db")
 FCM_SERVER_KEY = os.environ.get("FCM_SERVER_KEY", "")
 FCM_LEGACY_SEND_URL = "https://fcm.googleapis.com/fcm/send"
 SERVER_HOST = os.environ.get("SERVER_HOST", "0.0.0.0")
-SERVER_PORT = int(os.environ.get("SERVER_PORT", "5000"))
+SERVER_PORT = int(os.environ.get("SERVER_PORT", "5001"))
 
 FCM_SCOPES = ["https://www.googleapis.com/auth/firebase.messaging"]
 FCM_TOKEN_URI = "https://oauth2.googleapis.com/token"
@@ -71,6 +88,57 @@ def _broadcast_alert(alert):
                 _alert_bus_subscribers.remove(q)
             except Exception:
                 pass
+
+
+def _get_active_local_ip():
+    candidates = []
+    try:
+        addrs = socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM)
+        for item in addrs:
+            ip = item[4][0]
+            if ip and ip != "127.0.0.1":
+                candidates.append(ip)
+    except Exception:
+        pass
+    try:
+        for intf in socket.if_nameindex():
+            name = intf[1]
+            if not name or name.startswith("lo"):
+                continue
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.connect(("8.8.8.8", 80))
+                    ip = s.getsockname()[0]
+                    if ip and ip != "127.0.0.1":
+                        candidates.append(ip)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    seen = set()
+    ordered = []
+    for ip in candidates:
+        if ip not in seen:
+            seen.add(ip)
+            ordered.append(ip)
+    for ip in ordered:
+        if ip.startswith(("192.168.", "10.", "172.")):
+            return ip
+    return ordered[0] if ordered else "127.0.0.1"
+
+
+def _require_mobile_session(f):
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header or not auth_header.lower().startswith("bearer "):
+            return jsonify({"success": False, "error": "Unauthorized", "message": "Missing or invalid mobile session token"}), 401
+        token = auth_header.split(" ", 1)[1].strip()
+        session = get_session_for_token(token)
+        if not session:
+            return jsonify({"success": False, "error": "Session expired", "message": "AYAWrus session expired or was revoked"}), 401
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return wrapper
 
 
 def _subscribe_alert_bus():
@@ -729,6 +797,114 @@ def health_check():
     return jsonify({"status": "ok", "timestamp": int(datetime.now().timestamp() * 1000)})
 
 
+def _mobile_apk_path():
+    return os.path.abspath(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "AYAWRusMobile", "app", "build", "outputs", "apk", "debug", "app-debug.apk"
+    ))
+
+
+@app.route("/mobile/download", methods=["GET"])
+def download_mobile_apk():
+    apk_path = _mobile_apk_path()
+    if not os.path.isfile(apk_path):
+        return jsonify({"success": False, "message": "AYAWrus Mobile APK has not been built yet"}), 404
+    return send_file(apk_path, as_attachment=True, download_name="AYAWrus-Mobile.apk", mimetype="application/vnd.android.package-archive")
+
+
+@app.route("/mobile/setup", methods=["GET"])
+@app.route("/api/mobile/setup", methods=["GET"])
+def mobile_setup_page():
+    token = request.args.get("pairing_token", "")
+    port = request.args.get("port", SERVER_PORT)
+    system_id = request.args.get("system_id", SYSTEM_ID)
+    if not token:
+        return "Missing pairing token", 400
+    return f"""<!doctype html>
+<html><head><meta name=viewport content='width=device-width,initial-scale=1'><title>AYAWrus Mobile</title></head>
+<body><h1>AYAWrus Mobile</h1><p>System: {system_id}</p><p>Server: {request.host.split(':')[0]}:{port}</p>
+<p><a href='/mobile/download'>Download AYAWrus Mobile APK</a></p>
+<p>After installing, open AYAWrus Mobile and scan this QR code again to pair.</p></body></html>""", 200
+
+
+@app.route("/api/mobile/pair", methods=["POST"])
+def pair_mobile_device():
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        token = (payload.get("pairing_token") or "").strip()
+        device_name = (payload.get("device_name") or "AYAWrus Mobile").strip() or "AYAWrus Mobile"
+        device_id = (payload.get("device_id") or uuid.uuid4().hex).strip() or uuid.uuid4().hex
+
+        if not token:
+            return jsonify({"success": False, "error": "Invalid pairing code", "message": "Missing pairing token"}), 400
+
+        valid = validate_pairing_token(token)
+        if not valid:
+            return jsonify({"success": False, "error": "Invalid pairing code", "message": "Pairing code expired, already used, or invalid"}), 401
+
+        consumed = consume_pairing_token(token)
+        if not consumed:
+            return jsonify({"success": False, "error": "Pairing code already used", "message": "This QR code has already been consumed"}), 409
+
+        session = create_mobile_session(device_name=device_name, device_id=device_id)
+        if not session:
+            return jsonify({"success": False, "error": "Unable to create session", "message": "AYAWrus rejected the connection"}), 500
+
+        return jsonify({
+            "success": True,
+            "system_id": session["system_id"],
+            "access_token": session["access_token"],
+            "expires_in": int(SESSION_TTL_SECONDS),
+            "message": "Mobile session created",
+        }), 200
+    except Exception as exc:
+        return jsonify({"success": False, "error": "Server error", "message": str(exc)}), 500
+
+
+@app.route("/api/mobile/status", methods=["GET"])
+def mobile_status():
+    return jsonify(mobile_status_payload()), 200
+
+
+@app.route("/api/mobile/session/refresh", methods=["POST"])
+@_require_mobile_session
+def refresh_mobile_session():
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.split(" ", 1)[1].strip() if auth_header.lower().startswith("bearer ") else ""
+    session = refresh_session(token)
+    if not session:
+        return jsonify({"success": False, "error": "Session expired", "message": "AYAWrus session expired or was revoked"}), 401
+    return jsonify({
+        "success": True,
+        "system_id": session["system_id"],
+        "access_token": session["access_token"],
+        "expires_in": int(SESSION_TTL_SECONDS),
+        "message": "Session refreshed",
+    }), 200
+
+
+@app.route("/api/mobile/disconnect", methods=["POST"])
+@_require_mobile_session
+def disconnect_mobile_session():
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.split(" ", 1)[1].strip() if auth_header.lower().startswith("bearer ") else ""
+    if token:
+        revoke_session(token)
+    return jsonify({"success": True, "message": "Mobile session revoked"}), 200
+
+
+@app.route("/api/mobile/qr", methods=["GET"])
+def mobile_qr_payload_endpoint():
+    host = request.args.get("host") or _get_active_local_ip()
+    port = request.args.get("port", SERVER_PORT)
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        port = SERVER_PORT
+    payload = qr_payload(host=host, port=port)
+    return jsonify({"qr_payload": payload, "system_id": SYSTEM_ID, "host": host, "port": port}), 200
+
+
 @app.route("/api/history", methods=["GET"])
 def get_history():
     try:
@@ -766,6 +942,7 @@ def get_history():
 
 
 @app.route("/api/quarantine/<scan_id>", methods=["POST"])
+@_require_mobile_session
 def quarantine_by_id(scan_id):
     if not scan_id or not scan_id.strip():
         return jsonify({"error": "Missing scan ID"}), 400
@@ -932,6 +1109,10 @@ def run_server():
     print(f"    GET  /api/batches?days=N&limit=N")
     print(f"    GET  /api/batches/{{id}}/files")
     print(f"    GET  /api/history?days=N")
+    print(f"    POST /api/mobile/pair")
+    print(f"    GET  /api/mobile/status")
+    print(f"    POST /api/mobile/session/refresh")
+    print(f"    POST /api/mobile/disconnect")
     print(f"    POST /api/quarantine/{{id}}")
     print(f"    POST /api/scan/notify")
     print(f"    GET  /api/alerts/latest")

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#FFFFFF">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect to AYAWrus"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#111827"
+        android:gravity="center"
+        android:layout_marginTop="40dp" />
+
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan the QR code from the AYAWrus laptop."
+        android:textSize="16sp"
+        android:textColor="#374151"
+        android:gravity="center"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/btnConnectToAyawrus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan QR Code"
+        android:backgroundTint="#6A1B9A"
+        android:textColor="#FFFFFF"
+        android:textAllCaps="false"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>
