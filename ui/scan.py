@@ -7,7 +7,7 @@ import os
 import traceback
 from ui.activity_feed import _rebuild_activity_feed, _rebuild_activity_feed_from_data
 from ui.dashboard import refresh_dashboard_stats, animate_number
-from ui.history import _rebuild_history, _rebuild_history_from_data
+from ui.history import _rebuild_history
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _api_server_started = False
@@ -188,12 +188,8 @@ def _quarantine_selected(sender, app_data):
 
         def _after_history():
             try:
-                entries = []
-                if BACKEND_AVAILABLE:
-                    raw = hl.load_log(limit=50)
-                    entries = list(reversed(raw))
                 with dpg.mutex():
-                    _rebuild_history_from_data(entries)
+                    _rebuild_history()
             except Exception as e:
                 print(f"Quarantine post history rebuild error: {e}")
             threading.Timer(0.20, _after_activity).start()
@@ -518,19 +514,10 @@ def _schedule_post_scan_ui_updates():
     """
 
     def _preload_history_then_render():
-        entries = []
-        try:
-            if BACKEND_AVAILABLE:
-                raw = hl.load_log(limit=50)
-                entries = list(reversed(raw))
-        except Exception as e:
-            print(f"Post-scan history preload error: {e}")
-            entries = []
-
         def _render():
             try:
                 with dpg.mutex():
-                    _rebuild_history_from_data(entries)
+                    _rebuild_history()
             except Exception as e:
                 print(f"Post-scan history render error: {e}")
             threading.Timer(0.22, _preload_activity_then_render).start()
@@ -859,12 +846,10 @@ def _update_scan_progress():
             duration = time.time() - start_time
 
             if BACKEND_AVAILABLE:
-                def _flush_async():
-                    try:
-                        flush_log_buffer()
-                    except Exception:
-                        pass
-                threading.Thread(target=_flush_async, daemon=True).start()
+                try:
+                    flush_log_buffer()
+                except Exception as flush_error:
+                    print(f"Post-scan history flush error: {flush_error}")
 
             completion_text = f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found."
             elapsed_text = f"Elapsed: {duration:.1f}s"
@@ -928,12 +913,10 @@ def _update_scan_progress():
         SCAN_IN_PROGRESS = False
 
         if BACKEND_AVAILABLE:
-            def _flush_err_async():
-                try:
-                    flush_log_buffer()
-                except Exception:
-                    pass
-            threading.Thread(target=_flush_err_async, daemon=True).start()
+            try:
+                flush_log_buffer(status="FAILED")
+            except Exception as flush_error:
+                print(f"Failed-scan history flush error: {flush_error}")
 
         err_text = f"{type(e).__name__}: {e}"
 

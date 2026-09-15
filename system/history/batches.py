@@ -58,7 +58,10 @@ def is_batch_active() -> bool:
 def begin_batch(scan_type: str = "custom", target: str = "") -> Dict[str, Any]:
     global _current_batch
     if _current_batch is not None:
-        return _current_batch
+        try:
+            end_batch(status="COMPLETED")
+        except Exception:
+            _current_batch = None
     now = datetime.now()
     batch_id = "B" + uuid.uuid4().hex[:15].upper()
     batch: Dict[str, Any] = {
@@ -128,6 +131,10 @@ def end_batch(status: str = "COMPLETED") -> Optional[Dict[str, Any]]:
 
 def list_batches(limit: int = 50) -> List[Dict[str, Any]]:
     batches = _load_batches()
+    if _current_batch is not None:
+        cid = _current_batch.get("id")
+        if cid and not any(b.get("id") == cid for b in batches):
+            batches = [_current_batch] + batches
     if limit and limit > 0:
         return batches[: int(limit)]
     return batches
