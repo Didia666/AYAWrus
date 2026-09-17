@@ -25,7 +25,7 @@ ICON_BADGE_SIZE = 40
 DATE_COLUMN_WIDTH = 210
 GLOBAL_ICONS = None
 
-_DETAIL_ROW_HEIGHT = 68
+_DETAIL_ROW_HEIGHT = 84
 _DETAIL_ROW_GAP = 8
 
 _BATCH_ROW_MAP = {}
@@ -292,7 +292,11 @@ def _detail_file_row(entry, index, icons):
             with dpg.group():
                 file_path = entry.get("file_path") or entry.get("fileName") or "Unknown"
                 dpg.add_spacer(height=4)
-                dpg.add_text(f"{result_u}: {os.path.basename(file_path)}", color=COLORS["text_primary"])
+                dpg.add_text(
+                    f"{result_u}: {os.path.basename(file_path)}",
+                    color=COLORS["text_primary"],
+                    wrap=ROW_WIDTH - 110,
+                )
                 details = str(file_path)
                 prob = entry.get("probability")
                 if prob is None:
@@ -314,7 +318,11 @@ def _detail_file_row(entry, index, icons):
                 extra = entry.get("details") or entry.get("detail") or ""
                 if extra:
                     details += f"   | {_truncate_target(str(extra), 100)}"
-                dpg.add_text(_truncate_target(details, 160), color=COLORS["text_secondary"])
+                dpg.add_text(
+                    _truncate_target(details, 240),
+                    color=COLORS["text_secondary"],
+                    wrap=ROW_WIDTH - 110,
+                )
 
 
 def _group_entries_by_batch(entries):
@@ -494,7 +502,11 @@ def _render_batch_detail(batch, icons):
             started_line += f"   ·   Duration:  {elapsed}"
             dpg.add_text(started_line, color=COLORS["text_secondary"])
         if target:
-            dpg.add_text(f"Target:  {_truncate_target(target, 180)}", color=COLORS["text_secondary"])
+            dpg.add_text(
+                f"Target:  {_truncate_target(target, 220)}",
+                color=COLORS["text_secondary"],
+                wrap=ROW_WIDTH - 24,
+            )
 
         dpg.add_spacer(height=10)
         with dpg.group(horizontal=True):
