@@ -409,8 +409,8 @@ def _build_threat_rows_chunk(start_idx):
                     checked = threat["file_path"] in SELECTED_QUARANTINE_ITEMS
                     dpg.add_checkbox(default_value=checked, callback=_toggle_select_item, user_data=threat["file_path"])
                     dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
-                    dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"])
-                    dpg.add_text(threat["file_path"], color=COLORS["text_secondary"])
+                    dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"], wrap=190)
+                    dpg.add_text(threat["file_path"], color=COLORS["text_secondary"], wrap=340)
                     prob = threat.get("probability")
                     if prob is not None:
                         try:
@@ -419,6 +419,16 @@ def _build_threat_rows_chunk(start_idx):
                             dpg.add_text("-", color=COLORS["text_secondary"])
                     else:
                         dpg.add_text("-", color=COLORS["text_secondary"])
+
+                    behavior_prob = threat.get("behavior_confidence")
+                    if behavior_prob is not None:
+                        try:
+                            dpg.add_text(f"{float(behavior_prob):.1%}", color=COLORS["accent_orange"])
+                        except:
+                            dpg.add_text("-", color=COLORS["text_secondary"])
+                    else:
+                        dpg.add_text("-", color=COLORS["text_secondary"])
+
                     type_color = COLORS["accent_red"] if threat["result"] == "MALICIOUS" else COLORS["accent_orange"]
                     dpg.add_text(threat["result"], color=type_color)
     except Exception as e:
@@ -448,11 +458,12 @@ def _rebuild_threats_table():
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=200, parent="threats_table")
         dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=350, parent="threats_table")
         dpg.add_table_column(label="Confidence", width_stretch=False, init_width_or_weight=100, parent="threats_table")
+        dpg.add_table_column(label="Behavior", width_stretch=False, init_width_or_weight=100, parent="threats_table")
         dpg.add_table_column(label="Type", width_stretch=False, init_width_or_weight=100, parent="threats_table")
 
         if not DETECTED_THREATS:
             with dpg.table_row(parent="threats_table"):
-                for _ in range(6):
+                for _ in range(7):
                     if _ == 0:
                         dpg.add_text("No threats detected", color=COLORS["text_secondary"])
                     else:
@@ -480,11 +491,12 @@ def _rebuild_threats_table_blocking():
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=200, parent="threats_table")
         dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=350, parent="threats_table")
         dpg.add_table_column(label="Confidence", width_stretch=False, init_width_or_weight=100, parent="threats_table")
+        dpg.add_table_column(label="Behavior", width_stretch=False, init_width_or_weight=100, parent="threats_table")
         dpg.add_table_column(label="Type", width_stretch=False, init_width_or_weight=100, parent="threats_table")
 
         if not DETECTED_THREATS:
             with dpg.table_row(parent="threats_table"):
-                for _ in range(6):
+                for _ in range(7):
                     if _ == 0:
                         dpg.add_text("No threats detected", color=COLORS["text_secondary"])
                     else:
@@ -495,8 +507,8 @@ def _rebuild_threats_table_blocking():
                     checked = threat["file_path"] in SELECTED_QUARANTINE_ITEMS
                     dpg.add_checkbox(default_value=checked, callback=_toggle_select_item, user_data=threat["file_path"])
                     dpg.add_button(label="Explain", width=70, height=24, callback=_open_xai_panel, user_data=threat)
-                    dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"])
-                    dpg.add_text(threat["file_path"], color=COLORS["text_secondary"])
+                    dpg.add_text(os.path.basename(threat["file_path"]), color=COLORS["text_primary"], wrap=190)
+                    dpg.add_text(threat["file_path"], color=COLORS["text_secondary"], wrap=340)
                     prob = threat.get("probability")
                     if prob is not None:
                         try:
@@ -505,6 +517,16 @@ def _rebuild_threats_table_blocking():
                             dpg.add_text("-", color=COLORS["text_secondary"])
                     else:
                         dpg.add_text("-", color=COLORS["text_secondary"])
+
+                    behavior_prob = threat.get("behavior_confidence")
+                    if behavior_prob is not None:
+                        try:
+                            dpg.add_text(f"{float(behavior_prob):.1%}", color=COLORS["accent_orange"])
+                        except:
+                            dpg.add_text("-", color=COLORS["text_secondary"])
+                    else:
+                        dpg.add_text("-", color=COLORS["text_secondary"])
+
                     type_color = COLORS["accent_red"] if threat["result"] == "MALICIOUS" else COLORS["accent_orange"]
                     dpg.add_text(threat["result"], color=type_color)
 

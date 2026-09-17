@@ -6,7 +6,12 @@ from system.security.exclusions import is_excluded
 from system.security.allowed import allow_threat
 from system.scanner.extractor import get_extractor
 from system.history.logs import add_log_entry
-from system.model_load import model, selected_feature_indices, expected_input_dim
+from system.model_load import (
+    model,
+    selected_feature_indices,
+    expected_input_dim,
+    score_behavior_probability,
+)
 from system.quarantines.quarantine import quarantine_file
 from system.utils.utility import categorize_threat
 from system.notifications import send_telegram_notification, enqueue_threat_notification
@@ -114,13 +119,24 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         except Exception as e:
             add_log_entry(file_path, result="ERROR", details=f"Prediction failed: {e}")
             return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
-        
+
+        behavior_probability = 0.0
+        behavior_result = "NOT_EVALUATED"
+        if prediction == 1:
+            try:
+                behavior_probability = score_behavior_probability(X)
+                behavior_result = "BEHAVIORAL_ANOMALY" if behavior_probability >= 0.5 else "BEHAVIORAL_NORMAL"
+            except Exception as e:
+                print(f"Behavior model evaluation failed for {file_path}: {e}")
+                behavior_probability = 0.0
+                behavior_result = "BEHAVIOR_ERROR"
+
         category = categorize_threat(prob)
 
         # Generate XAI explanation asynchronously (without blocking scan)
         result_str = "MALICIOUS" if prediction == 1 else "CLEAN"
         xai_report = None
-        
+
         # We'll store xai_report later if needed, but for now, run analysis in background
         if result_str == "MALICIOUS":
             def _run_xai():
@@ -134,7 +150,8 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
         if prediction == 1:
             DETECTED_MALWARE.append(file_path)
-            add_log_entry(file_path, result="MALICIOUS", probability=prob, details=f"Category: {category}")
+            details = f"Category: {category}; behavior_probability={behavior_probability:.3f}; behavior_result={behavior_result}"
+            add_log_entry(file_path, result="MALICIOUS", probability=prob, details=details)
 
             try:
                 enqueue_threat_notification(file_path, "MALICIOUS", prob, category)
@@ -146,10 +163,27 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     quarantine_file(file_path)
                 else:
                     allow_threat(file_path, category, "MALICIOUS")
-            return {"result": "MALICIOUS", "probability": prob, "file_path": file_path, "category": category, "xai_report": xai_report}
+            return {
+                "result": "MALICIOUS",
+                "probability": prob,
+                "file_path": file_path,
+                "category": category,
+                "behavior_probability": behavior_probability,
+                "behavior_confidence": behavior_probability,
+                "behavior_result": behavior_result,
+                "xai_report": xai_report,
+            }
         else:
             # Clean results don't need file_bytes or features
-            return {"result": "CLEAN", "probability": prob, "file_path": file_path, "xai_report": xai_report}
+            return {
+                "result": "CLEAN",
+                "probability": prob,
+                "file_path": file_path,
+                "behavior_probability": behavior_probability,
+                "behavior_confidence": behavior_probability,
+                "behavior_result": behavior_result,
+                "xai_report": xai_report,
+            }
     except Exception as e:
         print(f"Unexpected error scanning {file_path}: {e}")
         return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
