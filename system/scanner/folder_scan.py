@@ -12,7 +12,12 @@ from system.security.allowed import allow_threat
 from system.scanner.file_scan import scan_text
 from system.scanner.workers import *
 from system.history.logs import add_log_entry
-from system.model_load import model, selected_feature_indices, expected_input_dim
+from system.model_load import (
+    model,
+    selected_feature_indices,
+    expected_input_dim,
+    score_behavior_probability,
+)
 from system.quarantines import quarantine_file
 from system.notifications import send_telegram_notification
 from system.utils import categorize_threat
@@ -157,10 +162,25 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
             result_str = "MALICIOUS" if pred == 1 else "CLEAN"
 
             if pred == 1:
-                DETECTED_MALWARE.append(f)
-                add_log_entry(f, result="MALICIOUS", probability=prob, details=f"Category: {category}")
+                behavior_probability = 0.0
+                behavior_result = "NOT_EVALUATED"
+                try:
+                    behavior_probability = score_behavior_probability(features)
+                    behavior_result = "BEHAVIORAL_ANOMALY" if behavior_probability >= 0.5 else "BEHAVIORAL_NORMAL"
+                except Exception as e:
+                    print(f"Behavior model evaluation failed for {f}: {e}")
+                    behavior_probability = 0.0
+                    behavior_result = "BEHAVIOR_ERROR"
 
-                def _post_process_malware(file_path=f, file_prob=prob, file_category=category, file_features=features, file_result=result_str):
+                DETECTED_MALWARE.append(f)
+                add_log_entry(
+                    f,
+                    result="MALICIOUS",
+                    probability=prob,
+                    details=f"Category: {category}; behavior_probability={behavior_probability:.3f}; behavior_result={behavior_result}"
+                )
+
+                def _post_process_malware(file_path=f, file_prob=prob, file_category=category, file_features=features, file_result=result_str, behavior_prob=behavior_probability, behavior_state=behavior_result):
                     try:
                         with open(file_path, "rb") as file:
                             file_bytes = file.read()
@@ -171,14 +191,22 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                             print(f"XAI failed: {e}")
                         message = (
                             f"[!] Malware Detected!\nFile: {os.path.basename(file_path)}\n"
-                            f"Path: {file_path}\nProbability: {file_prob:.2%}\nSeverity: {file_category}"
+                            f"Path: {file_path}\nProbability: {file_prob:.2%}\nSeverity: {file_category}\nBehavior probability: {behavior_prob:.2%}\nBehavior state: {behavior_state}"
                         )
                         send_telegram_notification(message)
                         if file_prob >= 0.90:
                             quarantine_file(file_path)
                         else:
                             allow_threat(file_path, file_category, "MALICIOUS")
-                        print({"result": "MALICIOUS", "probability": file_prob, "file_path": file_path, "category": file_category})
+                        print({
+                            "result": "MALICIOUS",
+                            "probability": file_prob,
+                            "file_path": file_path,
+                            "category": file_category,
+                            "behavior_probability": behavior_prob,
+                            "behavior_confidence": behavior_prob,
+                            "behavior_result": behavior_state,
+                        })
                         if xai_report:
                             display_xai_explanation(xai_report)
                     except Exception as e:
