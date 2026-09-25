@@ -1,5 +1,7 @@
 package com.ayawrus.mobile;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -121,6 +123,11 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder
     @Override
     public void onBindViewHolder(@NonNull ScanViewHolder holder, int position) {
         ScanResult result = scanResults.get(position);
+        if (result == null) {
+            holder.itemView.setOnClickListener(null);
+            holder.itemView.setEnabled(false);
+            return;
+        }
 
         holder.tvFileName.setText(result.getFileName());
         holder.tvVerdict.setText(result.getVerdict());
@@ -179,11 +186,32 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder
             holder.cbSelect.setVisibility(View.GONE);
             holder.cbSelect.setOnCheckedChangeListener(null);
             holder.itemView.setOnClickListener(v -> {
-                FragmentActivity activity = (FragmentActivity) v.getContext();
-                ScanDetailBottomSheet sheet = ScanDetailBottomSheet.newInstance(result);
-                sheet.show(activity.getSupportFragmentManager(), "ScanDetail");
+                try {
+                    Context context = v.getContext();
+                    FragmentActivity activity = unwrapActivity(context);
+                    if (activity == null || result == null) {
+                        return;
+                    }
+                    ScanDetailBottomSheet sheet = ScanDetailBottomSheet.newInstance(result);
+                    if (sheet != null && activity.getSupportFragmentManager() != null) {
+                        sheet.show(activity.getSupportFragmentManager(), "ScanDetail");
+                    }
+                } catch (Throwable t) {
+                    android.util.Log.e("AYAWrusScanAdapter", "File row tap crashed", t);
+                }
             });
         }
+    }
+
+    private FragmentActivity unwrapActivity(Context context) {
+        Context current = context;
+        while (current instanceof ContextWrapper) {
+            if (current instanceof FragmentActivity) {
+                return (FragmentActivity) current;
+            }
+            current = ((ContextWrapper) current).getBaseContext();
+        }
+        return current instanceof FragmentActivity ? (FragmentActivity) current : null;
     }
 
     @Override
