@@ -28,16 +28,25 @@ public class ScanDetailBottomSheet extends BottomSheetDialogFragment {
 
     // Call this to create the bottom sheet with a ScanResult's data
     public static ScanDetailBottomSheet newInstance(ScanResult result) {
-        ScanDetailBottomSheet sheet = new ScanDetailBottomSheet();
-        Bundle args = new Bundle();
-        args.putString(ARG_ID, result.getId());
-        args.putString(ARG_FILE_NAME, result.getFileName());
-        args.putString(ARG_VERDICT, result.getVerdict());
-        args.putInt(ARG_THREAT_LEVEL, result.getThreatLevel());
-        args.putString(ARG_DATE_SCANNED, result.getDateScanned());
-        args.putString(ARG_STATUS, result.getStatus());
-        sheet.setArguments(args);
-        return sheet;
+        try {
+            ScanDetailBottomSheet sheet = new ScanDetailBottomSheet();
+            Bundle args = new Bundle();
+            if (result == null) {
+                sheet.setArguments(args);
+                return sheet;
+            }
+            args.putString(ARG_ID, result.getId());
+            args.putString(ARG_FILE_NAME, result.getFileName());
+            args.putString(ARG_VERDICT, result.getVerdict());
+            args.putInt(ARG_THREAT_LEVEL, result.getThreatLevel());
+            args.putString(ARG_DATE_SCANNED, result.getDateScanned());
+            args.putString(ARG_STATUS, result.getStatus());
+            sheet.setArguments(args);
+            return sheet;
+        } catch (Throwable t) {
+            android.util.Log.e("AYAWrusScanDetail", "Could not build detail args", t);
+            return new ScanDetailBottomSheet();
+        }
     }
 
     @Nullable
@@ -59,33 +68,39 @@ public class ScanDetailBottomSheet extends BottomSheetDialogFragment {
         TextView tvThreatLevel = view.findViewById(R.id.tvDetailThreatLevel);
         TextView tvDate = view.findViewById(R.id.tvDetailDate);
 
-        String fileName = args.getString(ARG_FILE_NAME);
+        String fileName = args.getString(ARG_FILE_NAME, "");
         String verdict = args.getString(ARG_VERDICT);
-        int threatLevel = args.getInt(ARG_THREAT_LEVEL);
-        String dateScanned = args.getString(ARG_DATE_SCANNED);
+        int threatLevel = args.getInt(ARG_THREAT_LEVEL, 0);
+        String dateScanned = args.getString(ARG_DATE_SCANNED, "");
+        String normalizedVerdict = verdict == null ? "" : verdict.trim();
 
-        tvFileName.setText(fileName);
-        tvVerdict.setText(verdict);
+        tvFileName.setText(fileName == null ? "" : fileName);
+        tvVerdict.setText(normalizedVerdict.isEmpty() ? "Unknown" : normalizedVerdict);
         tvThreatLevel.setText(String.valueOf(threatLevel));
-        tvDate.setText(dateScanned);
+        tvDate.setText(dateScanned == null ? "" : dateScanned);
 
         Button btnQuarantine = view.findViewById(R.id.btnQuarantine);
-        String id = args.getString(ARG_ID);
-        String status = args.getString(ARG_STATUS);
+        String id = args.getString(ARG_ID, "");
+        String status = args.getString(ARG_STATUS, "");
 
         // Show button only if malicious/suspicious and not already quarantined
-        if (("Malicious".equals(verdict) || "Suspicious".equals(verdict)) && !"QUARANTINED".equals(status)) {
-            btnQuarantine.setVisibility(View.VISIBLE);
-        } else {
+        if (("Malicious".equals(normalizedVerdict) || "Suspicious".equals(normalizedVerdict))
+                && !"QUARANTINED".equalsIgnoreCase(status)) {
+            if (btnQuarantine != null) {
+                btnQuarantine.setVisibility(View.VISIBLE);
+            }
+        } else if (btnQuarantine != null) {
             btnQuarantine.setVisibility(View.GONE);
         }
 
-        btnQuarantine.setOnClickListener(v -> {
-            quarantineFile(id, btnQuarantine);
-        });
+        if (btnQuarantine != null) {
+            btnQuarantine.setOnClickListener(v -> {
+                quarantineFile(id, btnQuarantine);
+            });
+        }
 
         // Color the verdict badge to match the card
-        switch (verdict) {
+        switch (normalizedVerdict) {
             case "Clean":
                 tvVerdict.setBackgroundColor(0xFF4CAF50);
                 break;
@@ -94,6 +109,9 @@ public class ScanDetailBottomSheet extends BottomSheetDialogFragment {
                 break;
             case "Malicious":
                 tvVerdict.setBackgroundColor(0xFFF44336);
+                break;
+            default:
+                tvVerdict.setBackgroundColor(0xFF9E9E9E);
                 break;
         }
     }
