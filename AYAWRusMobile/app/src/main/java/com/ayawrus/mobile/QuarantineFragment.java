@@ -31,6 +31,7 @@ public class QuarantineFragment extends Fragment {
     private ScanAdapter adapter;
     private List<ScanResult> threats = new ArrayList<>();
     private RecyclerView rvThreats;
+    private boolean entrancePlayed = false;
     private TextView tvEmptyState;
     private TextView tvSelectionCount;
     private CheckBox cbSelectAll;
@@ -130,6 +131,10 @@ public class QuarantineFragment extends Fragment {
             threats.addAll(filtered);
         }
         adapter.setData(threats);
+        if (!entrancePlayed && !threats.isEmpty()) {
+            entrancePlayed = true;
+            UiMotion.playListEntrance(rvThreats);
+        }
         updateEmptyState();
         updateSelectionUi(adapter.getSelectedCount(), threats.size());
     }

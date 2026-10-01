@@ -23,6 +23,11 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
     private List<ScanBatch> batches;
     private final OnBatchClickListener clickListener;
 
+    private static final int ACCENT_QUICK = 0xFF38BDF8;
+    private static final int ACCENT_FULL = 0xFF818CF8;
+    private static final int ACCENT_CUSTOM = 0xFFFBBF24;
+    private static final int ACCENT_DEFAULT = 0xFF38BDF8;
+
     public BatchAdapter(List<ScanBatch> batches, OnBatchClickListener listener) {
         this.batches = batches != null ? batches : new ArrayList<>();
         this.clickListener = listener;
@@ -78,29 +83,26 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         if (status.isEmpty()) status = b.hasThreats() ? "COMPLETED" : "COMPLETED";
         h.tvBatchStatus.setText(status);
 
-        int statusColor;
+        int statusTone;
         if ("RUNNING".equals(status)) {
-            statusColor = 0xFF2196F3;
+            statusTone = UiStyle.TONE_INFO;
         } else if ("FAILED".equals(status) || "CANCELLED".equals(status)) {
-            statusColor = 0xFFF44336;
+            statusTone = UiStyle.TONE_THREAT;
         } else if (b.hasThreats()) {
-            statusColor = 0xFFF44336;
+            statusTone = UiStyle.TONE_THREAT;
         } else {
-            statusColor = 0xFF4CAF50;
+            statusTone = UiStyle.TONE_CLEAN;
         }
-        h.tvBatchStatus.setTextColor(Color.WHITE);
-        h.tvBatchStatus.setBackgroundColor(statusColor);
+        UiStyle.applyTone(h.tvBatchStatus, statusTone);
 
         if (b.getThreatCount() > 0) {
             h.tvThreatPill.setText(String.format(Locale.US, "⚠ %d threat%s",
                     b.getThreatCount(), b.getThreatCount() == 1 ? "" : "s"));
-            h.tvThreatPill.setTextColor(Color.WHITE);
-            h.tvThreatPill.setBackgroundColor(0xFFF44336);
+            UiStyle.applyTone(h.tvThreatPill, UiStyle.TONE_THREAT);
             h.tvThreatPill.setVisibility(View.VISIBLE);
         } else {
             h.tvThreatPill.setText("✓ All clear");
-            h.tvThreatPill.setTextColor(Color.WHITE);
-            h.tvThreatPill.setBackgroundColor(0xFF4CAF50);
+            UiStyle.applyTone(h.tvThreatPill, UiStyle.TONE_CLEAN);
             h.tvThreatPill.setVisibility(View.VISIBLE);
         }
 
@@ -112,13 +114,13 @@ public class BatchAdapter extends RecyclerView.Adapter<BatchAdapter.BatchViewHol
         int accent;
         switch (st) {
             case "quick": case "fast":
-                accent = 0xFF2196F3; break;
+                accent = ACCENT_QUICK; break;
             case "full": case "regular": case "system":
-                accent = 0xFF6200EA; break;
+                accent = ACCENT_FULL; break;
             case "custom":
-                accent = 0xFFFF9800; break;
+                accent = ACCENT_CUSTOM; break;
             default:
-                accent = 0xFF2196F3;
+                accent = ACCENT_DEFAULT;
         }
         h.tvAccent.setBackgroundColor(accent);
 
