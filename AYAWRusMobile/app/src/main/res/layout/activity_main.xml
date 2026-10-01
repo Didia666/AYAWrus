@@ -5,43 +5,54 @@
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
     tools:context=".MainActivity">
 
     <!-- Main screen content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="#FFFFFF">
+        android:fitsSystemWindows="true"
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#6A1B9A"
-            app:titleTextColor="#FFFFFF"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+            android:background="@color/transparent"
+            android:theme="@style/ThemeOverlay.AYAWrus.Toolbar"
+            app:titleTextAppearance="@style/TextAppearance.AYAWrus.ToolbarTitle" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_divider_height"
+            android:background="@color/stroke_card" />
 
         <FrameLayout
             android:id="@+id/fragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="#FFFFFF" />
+            android:layout_weight="1" />
 
     </LinearLayout>
 
     <!-- Sidebar -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/nav_drawer_width"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="#FFFFFF"
-        app:itemTextColor="#111827"
-        app:itemIconTint="#6A1B9A"
-        app:itemBackground="@color/white"
+        android:background="@drawable/bg_drawer"
+        app:headerLayout="@layout/nav_header"
+        app:itemHorizontalPadding="@dimen/nav_item_horizontal_padding"
+        app:itemIconPadding="@dimen/nav_item_icon_padding"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemShapeFillColor="@color/nav_item_fill"
+        app:itemShapeInsetBottom="@dimen/nav_item_shape_inset_vertical"
+        app:itemShapeInsetEnd="@dimen/nav_item_shape_inset_horizontal"
+        app:itemShapeInsetStart="@dimen/nav_item_shape_inset_horizontal"
+        app:itemShapeInsetTop="@dimen/nav_item_shape_inset_vertical"
+        app:itemTextAppearance="@style/TextAppearance.AYAWrus.NavItem"
+        app:itemTextColor="@color/nav_item_color"
         app:menu="@menu/drawer_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -12,16 +13,17 @@
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
-        android:background="#D1D5DB" />
+        android:background="@drawable/bg_drag_handle" />
 
     <TextView
         android:id="@+id/tvBatchDetailTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
-        android:textSize="20sp"
+        android:fontFamily="@font/jetbrains_mono"
+        android:textColor="@color/text_primary"
+        android:textSize="19sp"
         android:textStyle="bold"
-        android:textColor="#000000"
         tools:text="Quick Scan — 128 files" />
 
     <TextView
@@ -29,8 +31,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:textSize="13sp"
-        android:textColor="#6B7280"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
         tools:text="Started 2026-09-03 14:12   ·   Duration 1m 02s   ·   COMPLETED" />
 
     <TextView
@@ -38,19 +40,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:textSize="13sp"
+        android:fontFamily="@font/jetbrains_mono"
+        android:textColor="@color/accent"
+        android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="#111827"
         android:visibility="gone"
-        tools:visibility="visible"
-        tools:text="Clean 118 · Malicious 7 · Suspicious 3" />
+        tools:text="Clean 118 · Malicious 7 · Suspicious 3"
+        tools:visibility="visible" />
 
     <LinearLayout
         android:id="@+id/batchDetailLoadingWrap"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:paddingVertical="22dp"
         android:visibility="gone">
 
@@ -58,8 +61,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Loading files…"
-            android:textSize="14sp"
-            android:textColor="#6B7280" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <TextView
@@ -68,12 +71,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:padding="16dp"
-        android:textSize="14sp"
         android:textAlignment="center"
-        android:textColor="#9CA3AF"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
         android:visibility="gone"
-        tools:visibility="visible"
-        tools:text="No files in this batch." />
+        tools:text="No files in this batch."
+        tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvBatchFiles"
@@ -85,14 +88,18 @@
         tools:itemCount="4"
         tools:listitem="@layout/item_scan_card" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnBatchClose"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/button_height"
         android:layout_marginTop="16dp"
+        android:fontFamily="@font/jetbrains_mono"
         android:text="Close"
         android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#111827" />
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:cornerRadius="@dimen/button_corner_radius"
+        app:strokeColor="@color/stroke_card" />
 
 </LinearLayout>

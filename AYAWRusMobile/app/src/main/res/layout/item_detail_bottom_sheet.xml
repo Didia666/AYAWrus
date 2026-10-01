@@ -1,26 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:paddingHorizontal="24dp"
+    android:paddingBottom="28dp">
 
-    <!-- Little drag handle indicator -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:background="#CCCCCC" />
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_drag_handle" />
 
     <TextView
         android:id="@+id/tvDetailFileName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="22dp"
+        android:fontFamily="@font/jetbrains_mono"
+        android:textColor="@color/text_primary"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="#000000"
         tools:text="resume.pdf" />
 
     <TextView
@@ -28,56 +31,76 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="6dp"
-        android:textSize="13sp"
+        android:background="@drawable/bg_pill_clean"
+        android:fontFamily="@font/jetbrains_mono"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="5dp"
+        android:textColor="@color/status_clean"
+        android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="#4CAF50"
         tools:text="Clean" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Threat Level"
-        android:textSize="13sp"
-        android:textColor="#888888" />
-
-    <TextView
-        android:id="@+id/tvDetailThreatLevel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="#000000"
-        tools:text="92" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Date Scanned"
-        android:textSize="13sp"
-        android:textColor="#888888" />
-
-    <TextView
-        android:id="@+id/tvDetailDate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="#000000"
-        tools:text="2026-08-13" />
-
-    <Button
-        android:id="@+id/btnQuarantine"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="22dp"
+        android:background="@drawable/bg_card"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="THREAT LEVEL"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
+
+        <TextView
+            android:id="@+id/tvDetailThreatLevel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/jetbrains_mono"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="92" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="DATE SCANNED"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
+
+        <TextView
+            android:id="@+id/tvDetailDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            tools:text="2026-08-13" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnQuarantine"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/jetbrains_mono"
         android:text="Quarantine"
         android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#F44336"
+        android:textColor="@color/on_accent"
+        android:textStyle="bold"
         android:visibility="gone"
+        app:backgroundTint="@color/status_threat"
+        app:cornerRadius="@dimen/button_corner_radius"
         tools:visibility="visible" />
 
 </LinearLayout>

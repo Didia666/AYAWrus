@@ -25,6 +25,7 @@ public class DashboardFragment extends Fragment {
     private TextView tvLastScanDetails;
     private TextView tvCleanCount;
     private TextView tvThreatCount;
+    private View viewThreatGlow;
 
     @Nullable
     @Override
@@ -39,6 +40,7 @@ public class DashboardFragment extends Fragment {
             tvLastScanDetails = view.findViewById(R.id.tvLastScanDetails);
             tvCleanCount = view.findViewById(R.id.tvCleanCount);
             tvThreatCount = view.findViewById(R.id.tvThreatCount);
+            viewThreatGlow = view.findViewById(R.id.viewThreatGlow);
 
             if (tvStatusBanner == null || tvLastScanFile == null || tvLastScanDetails == null
                 || tvCleanCount == null || tvThreatCount == null) {
@@ -56,7 +58,7 @@ public class DashboardFragment extends Fragment {
                 TextView banner = fallback.findViewById(R.id.tvStatusBanner);
                 if (banner != null) {
                     banner.setText("Dashboard Recovered");
-                    banner.setBackgroundColor(0xFFFF9800);
+                    banner.setBackgroundResource(R.drawable.bg_hero_warning);
                 }
                 return fallback;
             } catch (Throwable t2) {
@@ -64,6 +66,12 @@ public class DashboardFragment extends Fragment {
                 return new View(requireContext());
             }
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        UiMotion.stopPulse(viewThreatGlow);
     }
 
     @Override
@@ -79,7 +87,7 @@ public class DashboardFragment extends Fragment {
             return;
         }
         tvStatusBanner.setText("Refreshing…");
-        tvStatusBanner.setBackgroundColor(0xFF2196F3);
+        tvStatusBanner.setBackgroundResource(R.drawable.bg_hero_info);
 
         ApiClient.getService().getHistory(15).enqueue(new Callback<List<ScanResult>>() {
             @Override
@@ -115,11 +123,13 @@ public class DashboardFragment extends Fragment {
 
     private void applyAwaitingData() {
         tvStatusBanner.setText("Awaiting Scan Data");
-        tvStatusBanner.setBackgroundColor(0xFF607D8B);
+        tvStatusBanner.setBackgroundResource(R.drawable.bg_hero_neutral);
         tvLastScanFile.setText("No recent scans");
         tvLastScanDetails.setText("Run a scan on the desktop to see live data here");
-        tvCleanCount.setText("0");
-        tvThreatCount.setText("0");
+        UiMotion.animateCount(tvCleanCount, 0);
+        UiMotion.animateCount(tvThreatCount, 0);
+        UiMotion.fadeIn(tvStatusBanner);
+        UiMotion.stopPulse(viewThreatGlow);
     }
 
     private void applyData(List<ScanResult> results) {
@@ -148,15 +158,22 @@ public class DashboardFragment extends Fragment {
                 + (lastScan.getDateScanned() == null ? "" : lastScan.getDateScanned());
             tvLastScanDetails.setText(details);
         }
-        tvCleanCount.setText(String.valueOf(cleanCount));
-        tvThreatCount.setText(String.valueOf(threatCount));
+        UiMotion.animateCount(tvCleanCount, cleanCount);
+        UiMotion.animateCount(tvThreatCount, threatCount);
 
         if (threatCount > 0) {
             tvStatusBanner.setText("Threats Detected");
-            tvStatusBanner.setBackgroundColor(0xFFF44336);
+            tvStatusBanner.setBackgroundResource(R.drawable.bg_hero_threat);
         } else {
             tvStatusBanner.setText("All Clear");
-            tvStatusBanner.setBackgroundColor(0xFF4CAF50);
+            tvStatusBanner.setBackgroundResource(R.drawable.bg_hero_clean);
+        }
+
+        UiMotion.fadeIn(tvStatusBanner);
+        if (threatCount > 0) {
+            UiMotion.startPulse(viewThreatGlow);
+        } else {
+            UiMotion.stopPulse(viewThreatGlow);
         }
 
         Log.i("AYAWrusDash", "applyData: clean=" + cleanCount + " threats=" + threatCount);

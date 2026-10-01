@@ -79,9 +79,7 @@ class MainActivity : AppCompatActivity() {
         try {
             setContentView(R.layout.activity_main)
             try {
-                window.setBackgroundDrawableResource(android.R.color.white)
-                findViewById<android.view.View>(android.R.id.content)?.setBackgroundColor(0xFFFFFFFF.toInt())
-                window.decorView.setBackgroundColor(0xFFFFFFFF.toInt())
+                window.setBackgroundDrawableResource(R.drawable.bg_app_gradient)
             } catch (t: Throwable) {
                 Log.w("AYAWrusMain", "[onCreate] decor/screen background override skipped (non-fatal): ${t.message}")
             }
@@ -198,6 +196,7 @@ class MainActivity : AppCompatActivity() {
                 selectedFragment?.let {
                     try {
                         supportFragmentManager.beginTransaction()
+                            .setCustomAnimations(R.anim.frag_enter, R.anim.frag_exit)
                             .replace(R.id.fragmentContainer, it)
                             .commit()
                     } catch (t: Throwable) {

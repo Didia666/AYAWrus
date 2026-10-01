@@ -139,20 +139,8 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder
             holder.tvQuarantinedBadge.setVisibility(View.GONE);
         }
 
-        switch (result.getVerdict() == null ? "" : result.getVerdict()) {
-            case "Clean":
-                holder.tvVerdict.setBackgroundColor(0xFF4CAF50);
-                break;
-            case "Suspicious":
-                holder.tvVerdict.setBackgroundColor(0xFFFFC107);
-                break;
-            case "Malicious":
-                holder.tvVerdict.setBackgroundColor(0xFFF44336);
-                break;
-            default:
-                holder.tvVerdict.setBackgroundColor(0xFF9E9E9E);
-                break;
-        }
+        UiStyle.applyTone(holder.tvVerdict, UiStyle.toneForVerdict(result.getVerdict()));
+
 
         if (selectable) {
             holder.cbSelect.setVisibility(View.VISIBLE);

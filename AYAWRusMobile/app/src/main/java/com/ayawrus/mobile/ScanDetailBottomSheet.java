@@ -100,20 +100,8 @@ public class ScanDetailBottomSheet extends BottomSheetDialogFragment {
         }
 
         // Color the verdict badge to match the card
-        switch (normalizedVerdict) {
-            case "Clean":
-                tvVerdict.setBackgroundColor(0xFF4CAF50);
-                break;
-            case "Suspicious":
-                tvVerdict.setBackgroundColor(0xFFFFC107);
-                break;
-            case "Malicious":
-                tvVerdict.setBackgroundColor(0xFFF44336);
-                break;
-            default:
-                tvVerdict.setBackgroundColor(0xFF9E9E9E);
-                break;
-        }
+        UiStyle.applyTone(tvVerdict, UiStyle.toneForVerdict(normalizedVerdict));
+        
     }
 
     private void quarantineFile(String id, Button button) {
