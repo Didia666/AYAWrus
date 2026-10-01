@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="anim_fragment_enter_ms">260</integer>
+    <integer name="anim_fragment_exit_ms">140</integer>
+    <integer name="anim_list_item_ms">380</integer>
+</resources>

@@ -29,6 +29,7 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
     private List<ScanBatch> allBatches = new ArrayList<>();
     private TextView tvEmptyState;
     private RecyclerView rvScanHistory;
+    private boolean entrancePlayed = false;
 
     @Nullable
     @Override
@@ -115,6 +116,10 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
             adapter.setData(allBatches);
         }
         updateEmptyStateVisibility();
+        if (!entrancePlayed && !allBatches.isEmpty()) {
+            entrancePlayed = true;
+            UiMotion.playListEntrance(rvScanHistory);
+        }
     }
 
     private void updateEmptyStateVisibility() {
