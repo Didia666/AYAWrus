@@ -99,6 +99,15 @@ def save_settings():
 
 
 def get_active_local_address():
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route_socket:
+            route_socket.connect(("8.8.8.8", 80))
+            route_ip = route_socket.getsockname()[0]
+            if route_ip and route_ip != "127.0.0.1":
+                return route_ip
+    except OSError:
+        pass
+
     candidates = []
     try:
         addrs = socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM)
@@ -106,21 +115,6 @@ def get_active_local_address():
             ip = item[4][0]
             if ip and ip != "127.0.0.1":
                 candidates.append(ip)
-    except Exception:
-        pass
-    try:
-        for intf in socket.if_nameindex():
-            name = intf[1]
-            if not name or name.startswith("lo"):
-                continue
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                    s.connect(("8.8.8.8", 80))
-                    ip = s.getsockname()[0]
-                    if ip and ip != "127.0.0.1":
-                        candidates.append(ip)
-            except Exception:
-                pass
     except Exception:
         pass
     seen = set()
@@ -287,7 +281,8 @@ def build_settings(parent, fonts, icons):
                 dpg.add_text(connection_status, color=COLORS["accent_blue"])
                 dpg.add_text(f"System Name: {socket.gethostname()}", color=COLORS["text_primary"])
                 local_address = get_active_local_address()
-                dpg.add_text(f"Local Address: {local_address}:5000", color=COLORS["text_primary"])
+                port = int(os.environ.get("SERVER_PORT", "5001"))
+                dpg.add_text(f"Local Address: {local_address}:{port}", color=COLORS["text_primary"])
                 dpg.add_text(f"System ID: {SYSTEM_ID}", color=COLORS["text_secondary"])
                 dpg.add_text("Pair Mobile Device", color=COLORS["text_primary"])
                 dpg.add_spacer(height=8)

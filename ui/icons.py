@@ -2,6 +2,9 @@ import dearpygui.dearpygui as dpg
 from PIL import Image
 import numpy as np
 import os
+from pathlib import Path
+import sys
+import tempfile
 
 #icons.py
 
@@ -30,6 +33,14 @@ ICON_PATHS = {
     "logo": "assets/icons/ayawrus_logo.png",
 }
 
+def _asset_path(relative_path):
+    if getattr(sys, "frozen", False):
+        resource_root = Path(sys._MEIPASS)
+    else:
+        resource_root = Path(__file__).resolve().parent.parent
+    return str(resource_root / relative_path)
+
+
 def _whiten_icon(path):
     """Converts a black/colored icon to pure white while preserving its alpha (transparency).
     This lets DPG's tint_color actually work, since tinting multiplies against pixel color —
@@ -45,7 +56,7 @@ def _whiten_icon(path):
     whitened = Image.fromarray(arr, "RGBA")
 
     # Save to a temp cache folder so we don't overwrite your original downloaded files
-    cache_dir = "assets/icons/_cache"
+    cache_dir = os.path.join(tempfile.gettempdir(), "ayawrus_icon_cache")
     os.makedirs(cache_dir, exist_ok=True)
     cached_path = os.path.join(cache_dir, os.path.basename(path))
     whitened.save(cached_path)
@@ -54,7 +65,8 @@ def _whiten_icon(path):
 def load_icons():
     textures = {}
     with dpg.texture_registry():
-        for name, path in ICON_PATHS.items():
+        for name, relative_path in ICON_PATHS.items():
+            path = _asset_path(relative_path)
             if not os.path.exists(path):
                 print(f"Warning [ui/icons.py]: icon file not found: {path}")
                 continue

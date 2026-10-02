@@ -1,3 +1,6 @@
+import threading
+
+
 class XAIExplanationEngine:
     """
     Explainable AI Engine for Malware Detection System
@@ -7,72 +10,65 @@ class XAIExplanationEngine:
     # Educational topics for "Learn Why" section
     EDUCATIONAL_TOPICS = {
         "pe_files": {
-            "title": "What are PE Files?",
+            "title": "What kind of file is this?",
             "content": """
-PE stands for Portable Executable. It's the standard file format for Windows executables (.exe),
-DLLs (.dll), and other system files. PE files contain headers, sections (like code, data, resources),
-and information about how the file should be loaded into memory. Malware often modifies PE structures
-to avoid detection or make analysis harder.
+This is the format Windows uses for programs (.exe files) and shared program files (.dll files).
+The file contains instructions and information Windows needs to run it. A file having this format
+is normal and does not by itself mean it is dangerous.
             """
         },
         "entropy": {
-            "title": "What is File Entropy?",
+            "title": "What does file randomness mean?",
             "content": """
-Entropy measures how random or disordered data is. Regular files (like text or images) have low entropy.
-Encrypted or compressed files have very high entropy (around 7.0-8.0). Malware often uses encryption
-or packing to hide its code, which increases entropy and makes detection harder.
+The randomness score estimates how predictable the bytes in a file are. A high score can happen when
+data is compressed or encrypted, and some malware does that to hide its contents. Many harmless files
+are compressed or encrypted too, so this score alone cannot tell whether a file is harmful.
             """
         },
         "imported_apis": {
-            "title": "What are Imported APIs?",
+            "title": "What are the Windows functions a program requests?",
             "content": """
-APIs (Application Programming Interfaces) are functions that programs use to interact with the operating
-system. Malware often uses suspicious APIs like CreateRemoteThread (for code injection), VirtualAlloc
-(for memory manipulation), or WinExec (for executing commands). Checking imported APIs helps identify
-potentially malicious behavior.
+Programs request named Windows functions to do things such as start another program, work with memory,
+or access the internet. Some of these requests can be worth reviewing, but legitimate programs use them
+too. A listed function is an indicator to investigate, not proof of malware.
             """
         },
         "feature_extraction": {
-            "title": "How Feature Extraction Works",
+            "title": "How does the scanner inspect a file?",
             "content": """
-Feature extraction converts a file into numerical values that a machine learning model can understand.
-For malware detection, features include things like file size, entropy, imported APIs, section information,
-and more. The EMBER dataset is a common source of these features.
+The scanner measures characteristics such as file size, byte patterns, sections, and Windows functions
+used by the program. It turns these measurements into numbers for the detection model. The details shown
+here describe the file; they do not identify exactly which measurements caused the model's decision.
             """
         },
         "random_forest": {
-            "title": "What is a Random Forest?",
+            "title": "How does the detection model decide?",
             "content": """
-Random Forest is a machine learning algorithm that uses many decision trees working together. Each tree
-makes a prediction, and the forest combines these predictions for the final result. Random Forests are
-good at detecting malware because they can handle complex patterns in data and are less prone to overfitting.
+The detection model combines many small decision rules and uses their combined result to classify a file.
+It can make mistakes, so treat a detection as a warning to review the file, not a guarantee.
             """
         },
         "confidence_score": {
-            "title": "Understanding Confidence Scores",
+            "title": "What does the confidence score mean?",
             "content": """
-The confidence score (0-100%) tells you how sure the model is of its prediction. A score of 95% means the
-model is 95% confident the file is malware. However, high confidence doesn't always mean it's actually
-malware - there can still be false positives!
+This percentage is the model's score for its malware prediction. A higher score means the model leaned
+more strongly toward that result; it is not a guarantee that the file is malicious. Safe files can still
+be flagged by mistake.
             """
         },
         "false_positives": {
-            "title": "What are False Positives?",
+            "title": "Could this warning be a mistake?",
             "content": """
-A false positive is when a safe file is incorrectly labeled as malware. No malware detector is perfect!
-That's why it's important to review detections before taking action, and why we recommend quarantine
-instead of immediate deletion.
+A false alarm happens when a harmless file is marked as a threat. No scanner is perfect. Check the file
+and its source before taking action; quarantine is safer than deleting a file straight away.
             """
         },
         "quarantine": {
-            "title": "Why Quarantine Instead of Delete?",
+            "title": "Why quarantine a file?",
             "content": """
-Quarantine moves suspicious files to a secure, isolated location instead of deleting them immediately.
-This is safer because:
-1. You can restore files if they were false positives
-2. You can analyze quarantined files later
-3. You avoid accidental data loss
-Always quarantine first, then review!
+Quarantine moves a flagged file somewhere it cannot be opened or run normally. This gives you time to
+review it and may let you restore it if it turns out to be harmless. Do not run a file while you are
+checking it.
             """
         }
     }
@@ -91,34 +87,35 @@ Always quarantine first, then review!
     def __init__(self):
         self.scan_steps = []
         self.suspicious_characteristics = []
+        self.feature_evidence = []
+        self._analysis_lock = threading.RLock()
     
     def analyze_file(self, file_path: str, file_bytes: bytes, features: list, probability: float, result: str):
         """
         Analyze a scanned file and generate a complete explanation
         """
+        with self._analysis_lock:
+            return self._analyze_file(file_path, file_bytes, features, probability, result)
+
+    def _analyze_file(self, file_path: str, file_bytes: bytes, features: list, probability: float, result: str):
         self.scan_steps = []
         self.suspicious_characteristics = []
+        self.feature_evidence = []
         
-        # Step 1: Verify file type
-        self._add_scan_step("Verifying file type...", "Checking if file is a valid PE file")
+        # Keep the scan steps understandable without requiring file-format knowledge.
+        self._add_scan_step("Checking the file type", "Checking whether this is a Windows program file.")
         
-        # Step 2: Analyze PE structure
-        self._add_scan_step("Analyzing PE structure...", "Extracting PE headers and sections")
+        self._add_scan_step("Looking at how the file is put together", "Checking the file's main parts and layout.")
         
-        # Step 3: Calculate entropy
-        self._add_scan_step("Calculating file entropy...", "Measuring randomness in file data")
+        self._add_scan_step("Checking how jumbled the file data is", "A high randomness score can happen with compressed or hidden data.")
         
-        # Step 4: Inspect imported APIs
-        self._add_scan_step("Inspecting imported APIs...", "Checking for suspicious function imports")
+        self._add_scan_step("Checking which Windows functions it uses", "Some functions can be worth a closer look, but are also used by legitimate programs.")
         
-        # Step 5: Extract features
-        self._add_scan_step("Extracting features...", "Converting file to numerical feature vector")
+        self._add_scan_step("Measuring file characteristics", "Collecting details such as size, byte patterns, and program parts.")
         
-        # Step 6: Run Random Forest model
-        self._add_scan_step("Running Random Forest model...", "Classifying file using machine learning")
+        self._add_scan_step("Comparing with known patterns", "The detection model compares these measurements with patterns it has learned.")
         
-        # Step 7: Generate final prediction
-        self._add_scan_step("Generating prediction...", "Finalizing scan results")
+        self._add_scan_step("Preparing the scan result", "Combining the model's result with the file details.")
         
         # Analyze characteristics
         self._analyze_characteristics(file_path, file_bytes, features, probability, result)
@@ -134,55 +131,188 @@ Always quarantine first, then review!
     
     def _analyze_characteristics(self, file_path: str, file_bytes: bytes, features: list, probability: float, result: str):
         """Analyze the file's characteristics and identify suspicious elements"""
-        # Calculate entropy (simple version)
+        from collections import Counter
+
         entropy = self._calculate_entropy(file_bytes)
+        self.feature_evidence.append({
+            "title": "Basic file details",
+            "description": (
+                f"Size: {len(file_bytes):,} bytes. Data randomness: {entropy:.2f} out of 8.00 "
+                f"(higher means the data is less predictable; this alone does not prove harm). "
+                f"Windows program marker: {'found' if file_bytes.startswith(b'MZ') else 'not found'}. "
+                f"First four bytes (file signature): {file_bytes[:4].hex(' ').upper() or 'none'}."
+            ),
+        })
+
+        if file_bytes:
+            byte_counts = Counter(file_bytes)
+            most_common_bytes = ", ".join(
+                f"{value:02X} ({count / len(file_bytes):.1%})"
+                for value, count in byte_counts.most_common(5)
+            )
+            self.feature_evidence.append({
+                "title": "Most common data values",
+                "description": (
+                    f"These are the five most repeated values in the file (shown in hexadecimal): "
+                    f"{most_common_bytes}. This low-level detail is mainly useful to analysts."
+                ),
+            })
+
         if entropy > 7.0:
             self.suspicious_characteristics.append({
                 "type": "high_entropy",
-                "title": "High Entropy Detected",
-                "description": f"File entropy: {entropy:.2f}. This may indicate encryption or packing commonly used by malware."
+                "title": "The file data is unusually jumbled",
+                "description": (
+                    f"Randomness score: {entropy:.2f} out of 8.00. This can happen when data is "
+                    "compressed or encrypted. It is one clue to review, not proof that the file is harmful."
+                )
             })
         
-        # Analyze PE file (if possible)
+        import pefile
+
+        pe = None
         try:
-            import pefile
             pe = pefile.PE(data=file_bytes)
-            
-            # Check section entropy
+            optional_header = pe.OPTIONAL_HEADER
+            machine_names = {
+                0x014C: "32-bit Windows (x86)",
+                0x8664: "64-bit Windows (x64)",
+                0x01C0: "32-bit ARM",
+                0xAA64: "64-bit ARM",
+            }
+            subsystem_names = {
+                1: "device/driver",
+                2: "Windows graphical app",
+                3: "Windows command-line app",
+                9: "Windows CE app",
+                10: "EFI app",
+            }
+            self.feature_evidence.append({
+                "title": "Windows program information",
+                "description": (
+                    f"Built for: {machine_names.get(pe.FILE_HEADER.Machine, f'unknown type (0x{pe.FILE_HEADER.Machine:04X})')}. "
+                    f"Number of parts: {pe.FILE_HEADER.NumberOfSections}. "
+                    f"Program type: {subsystem_names.get(optional_header.Subsystem, f'other (code {optional_header.Subsystem})')}. "
+                    f"Windows starts running it at location 0x{optional_header.AddressOfEntryPoint:X}."
+                ),
+            })
+
+            section_details = []
             high_entropy_sections = []
             for section in pe.sections:
                 section_entropy = section.get_entropy()
+                section_name = section.Name.decode("utf-8", errors="replace").strip("\x00") or "<unnamed>"
+                purpose_flags = []
+                if section.__dict__.get("IMAGE_SCN_CNT_CODE"):
+                    purpose_flags.append("contains program code")
+                if section.__dict__.get("IMAGE_SCN_CNT_INITIALIZED_DATA"):
+                    purpose_flags.append("contains stored data")
+                if section.__dict__.get("IMAGE_SCN_MEM_EXECUTE"):
+                    purpose_flags.append("can be run by the processor")
+                if section.__dict__.get("IMAGE_SCN_MEM_READ"):
+                    purpose_flags.append("can be read")
+                if section.__dict__.get("IMAGE_SCN_MEM_WRITE"):
+                    purpose_flags.append("can be changed while running")
+                section_details.append((
+                    section_entropy,
+                    f"Part {section_name}: stored size {section.SizeOfRawData:,} bytes; "
+                    f"memory size {section.Misc_VirtualSize:,} bytes; "
+                    f"randomness {section_entropy:.2f}/8.00; "
+                    f"{', '.join(purpose_flags) or 'purpose not identified'}.",
+                ))
                 if section_entropy > 7.0:
-                    high_entropy_sections.append(f"{section.Name.decode('utf-8', errors='ignore').strip()} ({section_entropy:.2f})")
+                    high_entropy_sections.append(f"{section_name} ({section_entropy:.2f})")
+            if section_details:
+                self.feature_evidence.append({
+                    "title": "Main parts of the program (most jumbled first)",
+                    "description": "; ".join(
+                        detail
+                        for _, detail in sorted(section_details, reverse=True)[:8]
+                    ),
+                })
             if high_entropy_sections:
                 self.suspicious_characteristics.append({
                     "type": "high_entropy_sections",
-                    "title": "High Entropy in Sections",
-                    "description": f"Suspicious sections with high entropy: {', '.join(high_entropy_sections)}. Packed or encrypted code often has high entropy."
+                    "title": "One or more program parts look unusually jumbled",
+                    "description": (
+                        f"Parts with high randomness: {', '.join(high_entropy_sections)}. "
+                        "Compressed or encrypted data can look this way too, so this is not proof of malware."
+                    )
                 })
             
-            # Check imported APIs
             suspicious_imports = []
+            imports_by_dll = []
+            import_count = 0
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode("utf-8", errors="replace")
+                    dll_imports = []
                     for imp in entry.imports:
+                        import_count += 1
                         if imp.name:
-                            imp_name = imp.name.decode('utf-8', errors='ignore')
+                            imp_name = imp.name.decode("utf-8", errors="replace")
+                        elif imp.ordinal is not None:
+                            imp_name = f"ordinal {imp.ordinal}"
+                        else:
+                            continue
+                        dll_imports.append(imp_name)
+                        if imp.name:
                             for suspicious_api in self.SUSPICIOUS_APIS:
                                 if suspicious_api.lower() in imp_name.lower():
                                     suspicious_imports.append(imp_name)
                                     break
+                    imports_by_dll.append((dll_name, dll_imports))
+            if imports_by_dll:
+                import_summary = [
+                    f"{dll} uses: {', '.join(names[:8]) or 'no named functions'}"
+                    for dll, names in imports_by_dll[:8]
+                ]
+                if len(imports_by_dll) > 8:
+                    import_summary.append(f"... and {len(imports_by_dll) - 8} more DLLs")
+                entry_label = "entry" if import_count == 1 else "entries"
+                self.feature_evidence.append({
+                    "title": (
+                        f"Windows components and functions this program uses "
+                        f"({len(imports_by_dll)} "
+                        f"{'DLL' if len(imports_by_dll) == 1 else 'DLLs'}, "
+                        f"{import_count} {entry_label})"
+                    ),
+                    "description": (
+                        "These are Windows components (DLLs) and named functions the program asks to use. "
+                        "The names below are shown as found in the file. Some can have legitimate uses: "
+                        + "; ".join(import_summary)
+                    ),
+                })
+            else:
+                self.feature_evidence.append({
+                    "title": "Windows components and functions this program uses",
+                    "description": "No Windows components or functions were listed in the part of the file we checked.",
+                })
             if suspicious_imports:
-                unique_imports = list(set(suspicious_imports))[:5]
+                unique_imports = list(dict.fromkeys(suspicious_imports))[:10]
                 self.suspicious_characteristics.append({
                     "type": "suspicious_imports",
-                    "title": "Suspicious API Imports",
-                    "description": f"Detected potentially malicious APIs: {', '.join(unique_imports)}. These functions are commonly used by malware for injection, process manipulation, or network activity."
+                    "title": "Some requested Windows functions deserve a closer look",
+                    "description": (
+                        f"The file requests: {', '.join(unique_imports)}. These functions can be used "
+                        "for powerful actions, but legitimate software may use them too. Their presence "
+                        "alone does not prove the file is malicious."
+                    )
                 })
             
-            pe.close()
-        except Exception as e:
-            pass
+            if suspicious_imports:
+                self.feature_evidence.append({
+                    "title": "Windows functions to review",
+                    "description": ", ".join(unique_imports),
+                })
+        except pefile.PEFormatError as exc:
+            self.feature_evidence.append({
+                "title": "Program details could not be read",
+                "description": f"We could not read the Windows program layout ({exc}).",
+            })
+        finally:
+            if pe is not None:
+                pe.close()
         
         # Check probability/confidence
         confidence = probability * 100
@@ -190,14 +320,17 @@ Always quarantine first, then review!
             risk_level = self._get_risk_level(probability)
             self.suspicious_characteristics.append({
                 "type": "malicious_prediction",
-                "title": "Malicious Prediction",
-                "description": f"Model classified this file as malicious with {confidence:.1f}% confidence (Risk Level: {risk_level})."
+                "title": "The scanner flagged this file",
+                "description": (
+                    f"The model gave this file a {confidence:.1f}% malware score "
+                    f"(risk level: {risk_level}). This is a warning, not a guarantee."
+                )
             })
         elif result == "SUSPICIOUS":
             self.suspicious_characteristics.append({
                 "type": "suspicious_prediction",
-                "title": "Suspicious Prediction",
-                "description": "File contains suspicious indicators."
+                "title": "This file has something worth checking",
+                "description": "The scan found indicators to review. They do not by themselves confirm malware."
             })
     
     def _calculate_entropy(self, data: bytes) -> float:
@@ -239,11 +372,16 @@ Always quarantine first, then review!
         explanation_parts = []
         
         if result == "MALICIOUS":
-            explanation_parts.append(f"The Random Forest model identified this file as malicious with {confidence:.1f}% confidence.")
+            explanation_parts.append(
+                f"The detection model flagged this file with a {confidence:.1f}% malware score. "
+                "This score is not a guarantee, and harmless files can sometimes be flagged."
+            )
         elif result == "SUSPICIOUS":
-            explanation_parts.append("This file contains suspicious characteristics that warrant further investigation.")
+            explanation_parts.append(
+                "This file has characteristics worth checking, but the scan has not confirmed that it is malware."
+            )
         else:
-            explanation_parts.append("The model determined this file is likely safe.")
+            explanation_parts.append("The detection model did not flag this file. No scanner can guarantee a file is safe.")
         
         for char in self.suspicious_characteristics:
             explanation_parts.append(char["description"])
@@ -260,6 +398,7 @@ Always quarantine first, then review!
             "risk_level": risk_level,
             "scan_steps": self.scan_steps,
             "suspicious_characteristics": self.suspicious_characteristics,
+            "feature_evidence": self.feature_evidence,
             "explanation": "\n\n".join(explanation_parts),
             "recommendations": recommendations,
             "educational_topics": self.EDUCATIONAL_TOPICS
