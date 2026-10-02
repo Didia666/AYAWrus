@@ -26,9 +26,11 @@ try:
     from system.xai.engine import XAIExplanationEngine
     xai_engine = XAIExplanationEngine()
     BACKEND_AVAILABLE = True
+    BACKEND_LOAD_ERROR = ""
 except Exception as e:
     print(f"Warning [ui/scan.py]: Could not load backend dependency while initializing scan UI: {e}")
     BACKEND_AVAILABLE = False
+    BACKEND_LOAD_ERROR = f"{type(e).__name__}: {e}"
 
 #scan.py
 
@@ -325,20 +327,20 @@ def _open_xai_panel(sender, app_data, user_data):
 
         if xai_report:
             # Prediction info
-            dpg.add_text("Prediction:", color=COLORS["accent_blue"])
+            dpg.add_text("Scan result:", color=COLORS["accent_blue"])
             dpg.add_text(xai_report["prediction"], color=COLORS["text_primary"])
             dpg.add_spacer(height=5)
 
-            dpg.add_text("Confidence:", color=COLORS["accent_blue"])
+            dpg.add_text("Model score (a guide, not a guarantee):", color=COLORS["accent_blue"])
             dpg.add_text(f"{xai_report['confidence']:.1f}%", color=COLORS["text_primary"])
             dpg.add_spacer(height=5)
 
-            dpg.add_text("Risk Level:", color=COLORS["accent_blue"])
+            dpg.add_text("Risk level:", color=COLORS["accent_blue"])
             dpg.add_text(xai_report["risk_level"], color=COLORS["accent_orange"])
             dpg.add_spacer(height=10)
 
             # Scan steps
-            dpg.add_text("Scan Process Simulation:", color=COLORS["accent_blue"])
+            dpg.add_text("What the scan checked:", color=COLORS["accent_blue"])
             dpg.add_separator()
             for i, step in enumerate(xai_report["scan_steps"], 1):
                 dpg.add_text(f"{i}. {step['title']}")
@@ -348,7 +350,7 @@ def _open_xai_panel(sender, app_data, user_data):
 
             # Suspicious characteristics
             if xai_report["suspicious_characteristics"]:
-                dpg.add_text("Detected Suspicious Characteristics:", color=COLORS["accent_blue"])
+                dpg.add_text("Things worth a closer look:", color=COLORS["accent_blue"])
                 dpg.add_separator()
                 for char in xai_report["suspicious_characteristics"]:
                     dpg.add_text(f"• {char['title']}")
@@ -356,22 +358,38 @@ def _open_xai_panel(sender, app_data, user_data):
                     dpg.add_spacer(height=3)
                 dpg.add_spacer(height=10)
 
+            if xai_report.get("feature_evidence"):
+                dpg.add_text(
+                    "What we found in the file (these clues do not prove it is harmful):",
+                    color=COLORS["accent_blue"],
+                )
+                dpg.add_separator()
+                for evidence in xai_report["feature_evidence"]:
+                    dpg.add_text(f"• {evidence['title']}")
+                    dpg.add_text(
+                        f"  {evidence['description']}",
+                        wrap=750,
+                        color=COLORS["text_secondary"],
+                    )
+                    dpg.add_spacer(height=3)
+                dpg.add_spacer(height=10)
+
             # Detailed explanation
-            dpg.add_text("Detailed Explanation:", color=COLORS["accent_blue"])
+            dpg.add_text("In plain language:", color=COLORS["accent_blue"])
             dpg.add_separator()
             with dpg.child_window(height=150, width=-1, border=True):
                 dpg.add_text(xai_report["explanation"], wrap=750)
             dpg.add_spacer(height=10)
 
             # Recommendations
-            dpg.add_text("Recommended Actions:", color=COLORS["accent_blue"])
+            dpg.add_text("What you can do:", color=COLORS["accent_blue"])
             dpg.add_separator()
             for rec in xai_report["recommendations"]:
                 dpg.add_text(f"→ {rec}")
             dpg.add_spacer(height=10)
 
             # Learn Why section
-            dpg.add_text("📚 Learn Why:", color=COLORS["accent_blue"])
+            dpg.add_text("📚 Learn more:", color=COLORS["accent_blue"])
             dpg.add_separator()
             with dpg.child_window(height=180, width=-1, border=True):
                 for topic_key, topic in xai_report["educational_topics"].items():
@@ -751,7 +769,10 @@ def _update_scan_progress():
             with dpg.mutex():
                 dpg.set_value("scan_ready_heading", "Scan Complete!")
                 if dpg.does_item_exist("scan_status_text"):
-                    dpg.set_value("scan_status_text", "Scan completed successfully! (Backend not loaded)")
+                    dpg.set_value(
+                        "scan_status_text",
+                        f"Backend unavailable: {BACKEND_LOAD_ERROR[:180] or 'unknown initialization error'}",
+                    )
                 if dpg.does_item_exist("scan_progress_bar"):
                     dpg.set_value("scan_progress_bar", 1.0)
         else:

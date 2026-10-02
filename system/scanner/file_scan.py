@@ -133,20 +133,21 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
         category = categorize_threat(prob)
 
-        # Generate XAI explanation asynchronously (without blocking scan)
+        # Keep the explanation with the scan result for the Explain panel.
         result_str = "MALICIOUS" if prediction == 1 else "CLEAN"
         xai_report = None
 
-        # We'll store xai_report later if needed, but for now, run analysis in background
         if result_str == "MALICIOUS":
-            def _run_xai():
-                try:
-                    # Make a copy of file_bytes in case it's garbage collected
-                    file_bytes_copy = file_bytes
-                    xai_engine.analyze_file(file_path, file_bytes_copy, features, prob, result_str)
-                except Exception as xai_error:
-                    print(f"XAI analysis failed: {xai_error}")
-            threading.Thread(target=_run_xai, daemon=True).start()
+            try:
+                xai_report = xai_engine.analyze_file(
+                    file_path,
+                    file_bytes,
+                    features,
+                    prob,
+                    result_str,
+                )
+            except Exception as xai_error:
+                print(f"XAI analysis failed for {file_path}: {xai_error}")
 
         if prediction == 1:
             DETECTED_MALWARE.append(file_path)

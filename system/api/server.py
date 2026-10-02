@@ -798,18 +798,35 @@ def health_check():
 
 
 def _mobile_apk_path():
-    return os.path.abspath(os.path.join(
+    apk_dir = os.path.abspath(os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "AYAWRusMobile", "app", "build", "outputs", "apk", "debug", "app-debug.apk"
+        "AYAWRusMobile", "app", "build", "outputs", "apk"
     ))
+    apk_paths = []
+    for current_dir, directories, filenames in os.walk(apk_dir):
+        directories[:] = [directory for directory in directories if directory.lower() != "androidtest"]
+        apk_paths.extend(
+            os.path.join(current_dir, filename)
+            for filename in filenames
+            if filename.lower().endswith(".apk") and "androidtest" not in filename.lower()
+        )
+    return max(apk_paths, key=os.path.getmtime) if apk_paths else None
 
 
 @app.route("/mobile/download", methods=["GET"])
 def download_mobile_apk():
     apk_path = _mobile_apk_path()
-    if not os.path.isfile(apk_path):
+    if not apk_path or not os.path.isfile(apk_path):
         return jsonify({"success": False, "message": "AYAWrus Mobile APK has not been built yet"}), 404
-    return send_file(apk_path, as_attachment=True, download_name="AYAWrus-Mobile.apk", mimetype="application/vnd.android.package-archive")
+    response = send_file(
+        apk_path,
+        as_attachment=True,
+        download_name="AYAWrus-Mobile.apk",
+        mimetype="application/vnd.android.package-archive",
+        max_age=0,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/mobile/setup", methods=["GET"])
