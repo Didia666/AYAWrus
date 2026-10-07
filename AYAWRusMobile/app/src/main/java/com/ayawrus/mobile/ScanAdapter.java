@@ -178,14 +178,36 @@ public class ScanAdapter extends RecyclerView.Adapter<ScanAdapter.ScanViewHolder
                     Context context = v.getContext();
                     FragmentActivity activity = unwrapActivity(context);
                     if (activity == null || result == null) {
+                        android.util.Log.w("AYAWrusScanAdapter", "File row tap: activity/result missing, skipping.");
+                        return;
+                    }
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        android.util.Log.w("AYAWrusScanAdapter", "File row tap: activity finishing/destroyed.");
                         return;
                     }
                     ScanDetailBottomSheet sheet = ScanDetailBottomSheet.newInstance(result);
-                    if (sheet != null && activity.getSupportFragmentManager() != null) {
-                        sheet.show(activity.getSupportFragmentManager(), "ScanDetail");
+                    androidx.fragment.app.FragmentManager fm = activity.getSupportFragmentManager();
+                    if (sheet != null && fm != null && !fm.isStateSaved()) {
+                        sheet.show(fm, "ScanDetail");
+                    } else if (sheet != null && fm != null) {
+                        android.util.Log.w("AYAWrusScanAdapter", "File row tap: state already saved, showing sheet allowing state loss.");
+                        try {
+                            androidx.fragment.app.FragmentTransaction ft = fm.beginTransaction();
+                            ft.add(sheet, "ScanDetail");
+                            ft.commitAllowingStateLoss();
+                        } catch (Throwable t2) {
+                            android.util.Log.e("AYAWrusScanAdapter", "Sheet commitAllowingStateLoss also failed", t2);
+                        }
                     }
                 } catch (Throwable t) {
                     android.util.Log.e("AYAWrusScanAdapter", "File row tap crashed", t);
+                    try {
+                        if (v.getContext() != null) {
+                            android.widget.Toast.makeText(v.getContext(),
+                                    "Unable to open file details right now.",
+                                    android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Throwable ignore) {}
                 }
             });
         }

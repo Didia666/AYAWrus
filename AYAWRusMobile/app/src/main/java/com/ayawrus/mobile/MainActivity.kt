@@ -42,6 +42,15 @@ class MainActivity : AppCompatActivity() {
     private var currentHistory: HistoryFragment? = null
     private var currentQuarantine: QuarantineFragment? = null
 
+    private var tvNavConnStatus: android.widget.TextView? = null
+
+    private enum class ConnState {
+        CHECKING, CONNECTED, DISCONNECTED
+    }
+
+    @Volatile
+    private var currentConnState: ConnState = ConnState.CHECKING
+
     private val alertPollRunnable = object : Runnable {
         override fun run() {
             try {
@@ -165,6 +174,42 @@ class MainActivity : AppCompatActivity() {
                 Log.w("AYAWrusMain", "[UI] drawer toggle skipped (non-fatal): ${t.message}")
             }
 
+            try {
+                val headerView = navigationView.getHeaderView(0)
+                if (headerView != null) {
+                    tvNavConnStatus = headerView.findViewById(R.id.tvNavConnStatus)
+                    updateNavConnStatus(ConnState.CHECKING)
+                    val tvConn = headerView.findViewById<android.widget.TextView>(R.id.tvNavConnection)
+                    if (tvConn != null) {
+                        val sysId = ApiClient.getSystemId()
+                        val baseUrl = ApiClient.getBaseUrl()
+                        val connLine = buildString {
+                            if (sysId.isNotBlank()) {
+                                append("System: ").append(sysId.take(10))
+                                if (sysId.length > 10) append("…")
+                            }
+                            if (baseUrl.isNotBlank() && baseUrl != "http://10.0.2.2:5000/") {
+                                if (isNotEmpty()) append("   ·   ")
+                                try {
+                                    val host = java.net.URI(baseUrl).host
+                                    if (host != null) append("Host: ").append(host)
+                                } catch (_: Throwable) {
+                                    append(baseUrl)
+                                }
+                            }
+                        }
+                        if (connLine.isNotEmpty()) {
+                            tvConn.text = connLine
+                            tvConn.visibility = android.view.View.VISIBLE
+                        } else {
+                            tvConn.visibility = android.view.View.GONE
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                Log.w("AYAWrusMain", "[UI] nav header connection info failed: ${t.message}")
+            }
+
             navigationView.setNavigationItemSelectedListener { item ->
                 var selectedFragment: Fragment? = null
                 when (item.itemId) {
@@ -191,6 +236,11 @@ class MainActivity : AppCompatActivity() {
                         currentHistory = null
                         selectedFragment = newQ
                         setTitleCompat("Remote Quarantine")
+                    }
+                    R.id.nav_logout -> {
+                        logoutAndDisconnect()
+                        try { drawerLayout.closeDrawers() } catch (_: Throwable) {}
+                        return@setNavigationItemSelectedListener true
                     }
                 }
                 selectedFragment?.let {
@@ -240,6 +290,31 @@ class MainActivity : AppCompatActivity() {
                     setTitle(titleStr)
                 } catch (_: Throwable) {}
             }
+        }
+    }
+
+    private fun updateNavConnStatus(state: ConnState) {
+        currentConnState = state
+        try {
+            val tv = tvNavConnStatus ?: return
+            runOnUiThread {
+                val (text, color) = when (state) {
+                    ConnState.CHECKING -> "● Checking…" to androidx.core.content.ContextCompat.getColor(
+                        this@MainActivity, R.color.status_info
+                    )
+                    ConnState.CONNECTED -> "● Connected" to androidx.core.content.ContextCompat.getColor(
+                        this@MainActivity, R.color.status_clean
+                    )
+                    ConnState.DISCONNECTED -> "● Disconnected" to androidx.core.content.ContextCompat.getColor(
+                        this@MainActivity, R.color.status_threat
+                    )
+                }
+                tv.text = text
+                tv.setTextColor(color)
+                tv.visibility = android.view.View.VISIBLE
+            }
+        } catch (t: Throwable) {
+            Log.w("AYAWrusMain", "[conn-status] updateNavConnStatus crashed: ${t.message}")
         }
     }
 
@@ -362,7 +437,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             } else if (ts > lastAlertTimestamp && msg.isNotEmpty()) {
                                 runOnUiThread { showLocalNotification(title, msg) }
-                                lastAlertTimestamp = ts  
+                                lastAlertTimestamp = ts
                                 triggeredNewAlert = true
                                 Log.i(
                                     "AYAWrusMain",
@@ -389,8 +464,17 @@ class MainActivity : AppCompatActivity() {
                     Log.w("AYAWrusMain", "[poll] $urlStr failed: ${e.javaClass.simpleName} -> ${e.message}")
                 }
             }
-            if (!anySuccess) {
+            if (anySuccess) {
+                if (currentConnState != ConnState.CONNECTED) {
+                    Log.i("AYAWrusMain", "[conn-status] Poll succeeded — marking Connected")
+                    updateNavConnStatus(ConnState.CONNECTED)
+                }
+            } else {
                 Log.w("AYAWrusMain", "[poll] ALL urls failed. Is the API server running on the PC? Is firewall on?")
+                if (currentConnState != ConnState.DISCONNECTED) {
+                    Log.i("AYAWrusMain", "[conn-status] All polls failed — marking Disconnected")
+                    updateNavConnStatus(ConnState.DISCONNECTED)
+                }
             }
 
             uiRefreshCounter += 1
@@ -455,6 +539,76 @@ class MainActivity : AppCompatActivity() {
         } catch (t: Throwable) {
             Log.w("AYAWrusMain", "Firebase: token fetch exception (ignored): ${t.message}")
         }
+    }
+
+    private fun logoutAndDisconnect() {
+        Log.i("AYAWrusMain", "[logout] Disconnect requested by user — clearing session and returning to pair screen.")
+        try {
+            handler.removeCallbacks(alertPollRunnable)
+        } catch (_: Throwable) {}
+
+        try {
+            val disconnectDialog = androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Disconnect from AYAWrus?")
+                .setMessage("You will need to scan a new QR code from the desktop to pair again.")
+                .setPositiveButton("Disconnect") { _, _ ->
+                    performDisconnect()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            try {
+                disconnectDialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.status_threat)
+                )
+            } catch (_: Throwable) {}
+        } catch (t: Throwable) {
+            Log.w("AYAWrusMain", "[logout] Confirm dialog crashed, disconnecting silently: ${t.message}")
+            performDisconnect()
+        }
+    }
+
+    private fun performDisconnect() {
+        val progress = android.app.ProgressDialog(this).apply {
+            setMessage("Disconnecting…")
+            setCancelable(false)
+            try { show() } catch (_: Throwable) {}
+        }
+
+        Thread {
+            var serverNotified = false
+            try {
+                val call = ApiClient.getService().disconnectSession()
+                val resp = call.execute()
+                serverNotified = resp.isSuccessful
+                Log.i("AYAWrusMain", "[logout] Server disconnect notified? success=$serverNotified code=${resp.code()}")
+            } catch (t: Throwable) {
+                Log.w("AYAWrusMain", "[logout] Server disconnect call failed (non-fatal): ${t.message}")
+            }
+
+            try {
+                ApiClient.clearAllPairing()
+                Log.i("AYAWrusMain", "[logout] Client-side pairing cleared.")
+            } catch (t: Throwable) {
+                Log.e("AYAWrusMain", "[logout] clearAllPairing crashed", t)
+            }
+
+            runOnUiThread {
+                try { progress.dismiss() } catch (_: Throwable) {}
+                android.widget.Toast.makeText(
+                    this,
+                    "Disconnected. Re-scan a QR code to pair again.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+
+                val intent = Intent(this, ConnectActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+        }.apply {
+            name = "AYAWrus-Logout"
+            isDaemon = true
+        }.start()
     }
 
     companion object {

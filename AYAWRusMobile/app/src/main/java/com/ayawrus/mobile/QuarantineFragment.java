@@ -37,6 +37,7 @@ public class QuarantineFragment extends Fragment {
     private CheckBox cbSelectAll;
     private Button btnQuarantineSelected;
     private volatile boolean quarantineInProgress = false;
+    private boolean lastFetchFailed = false;
 
     @Nullable
     @Override
@@ -85,6 +86,7 @@ public class QuarantineFragment extends Fragment {
     }
 
     private void fetchThreats() {
+        lastFetchFailed = false;
         ApiClient.getService().getHistory(15).enqueue(new Callback<List<ScanResult>>() {
             @Override
             public void onResponse(Call<List<ScanResult>> call, Response<List<ScanResult>> response) {
@@ -105,6 +107,7 @@ public class QuarantineFragment extends Fragment {
                             + " total, " + filtered.size() + " active threats");
                 } else {
                     Log.w(TAG, "fetchThreats: API HTTP " + response.code());
+                    lastFetchFailed = true;
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "API error (" + response.code() + ") — could not load threats", Toast.LENGTH_LONG).show();
                     }
@@ -115,6 +118,7 @@ public class QuarantineFragment extends Fragment {
             @Override
             public void onFailure(Call<List<ScanResult>> call, Throwable t) {
                 Log.w(TAG, "fetchThreats: network failure: " + t.getMessage());
+                lastFetchFailed = true;
                 if (getContext() != null) {
                     Toast.makeText(getContext(),
                             "Cannot reach desktop server: " + t.getMessage(),
@@ -170,6 +174,11 @@ public class QuarantineFragment extends Fragment {
         if (threats.isEmpty()) {
             tvEmptyState.setVisibility(View.VISIBLE);
             rvThreats.setVisibility(View.GONE);
+            if (lastFetchFailed) {
+                tvEmptyState.setText("Disconnected from AYAWrus desktop.\n\nTurn on your desktop or check your Wi-Fi to see active threats and quarantine them here.");
+            } else {
+                tvEmptyState.setText("No active threats.\nAll malicious and suspicious files detected on the desktop will appear here for remote quarantine.");
+            }
         } else {
             tvEmptyState.setVisibility(View.GONE);
             rvThreats.setVisibility(View.VISIBLE);

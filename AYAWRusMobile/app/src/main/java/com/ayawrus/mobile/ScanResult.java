@@ -10,6 +10,9 @@ public class ScanResult {
     private long timestamp;      // For easy filtering
     private String status;       // "ACTIVE", "QUARANTINED"
 
+    public ScanResult() {
+    }
+
     public ScanResult(String id, String fileName, String verdict, int threatLevel, String dateScanned, long timestamp, String status) {
         this.id = id;
         this.fileName = fileName;

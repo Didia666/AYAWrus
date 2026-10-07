@@ -102,23 +102,35 @@ public class DashboardFragment extends Fragment {
                         Toast.makeText(getContext(), "No scan history on desktop yet. Run a scan first.", Toast.LENGTH_LONG).show();
                     }
                 } else {
-                    Log.w("AYAWrusDash", "refresh: API HTTP error (" + response.code() + ") — showing demo fallback");
-                    applyData(MockData.getMockScanResults());
+                    Log.w("AYAWrusDash", "refresh: API HTTP error (" + response.code() + ") — showing Disconnected state");
+                    applyDisconnectedState("Server error (" + response.code() + ")");
                     if (getContext() != null) {
-                        Toast.makeText(getContext(), "API error — showing demo dashboard.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "API error — desktop may be unreachable.", Toast.LENGTH_LONG).show();
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<List<ScanResult>> call, Throwable t) {
-                Log.w("AYAWrusDash", "refresh: API call failed, using MockData fallback: " + t.getMessage());
-                applyData(MockData.getMockScanResults());
+                Log.w("AYAWrusDash", "refresh: API call failed, showing Disconnected state: " + t.getMessage());
+                applyDisconnectedState("Desktop is unreachable");
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Cannot reach desktop server: " + t.getMessage() + ". Showing demo.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Cannot reach desktop server: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    private void applyDisconnectedState(String reason) {
+        tvStatusBanner.setText("Disconnected");
+        tvStatusBanner.setBackgroundResource(R.drawable.bg_hero_neutral);
+        tvLastScanFile.setText("—");
+        String details = reason == null ? "Turn on your AYAWrus desktop to see live data" : reason + "\nTurn on your AYAWrus desktop to see live data";
+        tvLastScanDetails.setText(details);
+        UiMotion.animateCount(tvCleanCount, 0);
+        UiMotion.animateCount(tvThreatCount, 0);
+        UiMotion.fadeIn(tvStatusBanner);
+        UiMotion.stopPulse(viewThreatGlow);
     }
 
     private void applyAwaitingData() {

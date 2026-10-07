@@ -56,6 +56,17 @@ public class ApiClient {
 
     public static void clearSession() {
         getPrefs().edit().remove(KEY_ACCESS_TOKEN).remove(KEY_SYSTEM_ID).apply();
+        retrofit = null;
+    }
+
+    public static void clearAllPairing() {
+        getPrefs().edit()
+                .remove(KEY_ACCESS_TOKEN)
+                .remove(KEY_SYSTEM_ID)
+                .remove(KEY_BASE_URL)
+                .apply();
+        BASE_URL = normalizeBaseUrl(DEFAULT_BASE_URL);
+        retrofit = null;
     }
 
     public static boolean hasSession() {

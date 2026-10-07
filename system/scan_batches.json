@@ -1,5 +1,22 @@
 [
   {
+    "id": "B6330E95F1C424D9",
+    "scan_type": "quick",
+    "target": "C:\\Users\\PLPASIG\\Downloads, C:\\Users\\PLPASIG\\Desktop, C:\\Users\\PLPASIG\\AppData\\Local\\Temp, C:\\WINDOWS\\Temp",
+    "started_at_ms": 1791255693343,
+    "started_at": "2026-10-06 11:01:33",
+    "completed_at_ms": 1791255999314,
+    "completed_at": "2026-10-06 11:06:39",
+    "elapsed_ms": 305971,
+    "total_files": 2,
+    "clean_count": 0,
+    "threat_count": 2,
+    "suspicious_count": 0,
+    "malicious_count": 2,
+    "error_count": 0,
+    "status": "COMPLETED"
+  },
+  {
     "id": "B02A5D7263CCD433",
     "scan_type": "custom",
     "target": "D:\\Buckshot Roulette",

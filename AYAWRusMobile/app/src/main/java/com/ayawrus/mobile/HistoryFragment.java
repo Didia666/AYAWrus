@@ -30,6 +30,7 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
     private TextView tvEmptyState;
     private RecyclerView rvScanHistory;
     private boolean entrancePlayed = false;
+    private boolean lastFetchFailed = false;
 
     @Nullable
     @Override
@@ -66,6 +67,7 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
     }
 
     private void fetchBatches() {
+        lastFetchFailed = false;
         ApiClient.getService().getBatches(30, 100).enqueue(new Callback<List<ScanBatch>>() {
             @Override
             public void onResponse(Call<List<ScanBatch>> call, Response<List<ScanBatch>> response) {
@@ -82,12 +84,12 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
                         Log.i("AYAWrusHist", "fetchBatches: loaded " + response.body().size() + " batches from API");
                     }
                 } else {
-                    Log.w("AYAWrusHist", "fetchBatches: API error (HTTP " + response.code() + "), showing demo mock batches");
-                    List<ScanBatch> mock = MockData.getMockBatches();
-                    updateList(mock);
+                    Log.w("AYAWrusHist", "fetchBatches: API error (HTTP " + response.code() + ")");
+                    lastFetchFailed = true;
+                    updateList(new ArrayList<>());
                     if (getContext() != null) {
                         Toast.makeText(getContext(),
-                                "API error — showing demo batches. Check desktop server.",
+                                "API error — desktop may be unreachable.",
                                 Toast.LENGTH_LONG).show();
                     }
                 }
@@ -96,11 +98,11 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
             @Override
             public void onFailure(Call<List<ScanBatch>> call, Throwable t) {
                 Log.w("AYAWrusHist", "fetchBatches: API call failed: " + t.getMessage());
-                List<ScanBatch> mock = MockData.getMockBatches();
-                updateList(mock);
+                lastFetchFailed = true;
+                updateList(new ArrayList<>());
                 if (getContext() != null) {
                     Toast.makeText(getContext(),
-                            "Connection error: " + t.getMessage() + " — showing demo batches.",
+                            "Cannot reach desktop server: " + t.getMessage(),
                             Toast.LENGTH_LONG).show();
                 }
             }
@@ -127,6 +129,11 @@ public class HistoryFragment extends Fragment implements BatchAdapter.OnBatchCli
         if (allBatches.isEmpty()) {
             tvEmptyState.setVisibility(View.VISIBLE);
             rvScanHistory.setVisibility(View.GONE);
+            if (lastFetchFailed) {
+                tvEmptyState.setText("Disconnected from AYAWrus desktop.\n\nTurn on your desktop or check your Wi-Fi to see scan history here.");
+            } else {
+                tvEmptyState.setText("No scan batches yet.\nRun a scan on the AYAWrus desktop to see your history here.");
+            }
         } else {
             tvEmptyState.setVisibility(View.GONE);
             rvScanHistory.setVisibility(View.VISIBLE);
