@@ -40,16 +40,33 @@
         android:textSize="15sp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnConnectToAyawrus"
+        android:id="@+id/btnRetryConnection"
         android:layout_width="match_parent"
         android:layout_height="@dimen/button_height"
         android:fontFamily="@font/jetbrains_mono"
-        android:text="Scan QR Code"
+        android:text="Retry Connection"
         android:textAllCaps="false"
         android:textColor="@color/on_accent"
         android:textSize="15sp"
         android:textStyle="bold"
+        android:visibility="gone"
         app:backgroundTint="@color/accent"
         app:cornerRadius="@dimen/button_corner_radius" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConnectToAyawrus"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height"
+        android:layout_marginTop="12dp"
+        android:fontFamily="@font/jetbrains_mono"
+        android:text="Scan QR Code"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/surface_card"
+        app:cornerRadius="@dimen/button_corner_radius"
+        app:strokeColor="@color/stroke_card"
+        app:strokeWidth="1dp" />
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/nav_header_height"
     android:background="@drawable/bg_nav_header"
@@ -17,11 +18,33 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tvNavSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="Mobile companion"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvNavConnStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/status_neutral"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        tools:text="● Checking…" />
+
+    <TextView
+        android:id="@+id/tvNavConnection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="11sp"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>
