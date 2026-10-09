@@ -1,6 +1,6 @@
 """
 CyberLearn Assistant - DearPyGui Version
-Bottom-RIGHT FLOATING BUTTON + chat window
+Bottom-RIGHT floating help button + docked chat panel
 Powered by OpenRouter AI API with local knowledge base fallback.
 """
 
@@ -12,6 +12,82 @@ from datetime import datetime
 from typing import List, Dict, Optional
 import dearpygui.dearpygui as dpg
 from ui.theme import COLORS
+from ui.layout import register_resize
+
+#cyberlearn_assistant_dpg.py
+
+# ---- Floating help button constants (tune here) ----
+FLOAT_BTN_SIZE = 60            # the round button
+FLOAT_WINDOW_SIZE = 84         # the invisible window holding it (button + DPG's window padding)
+FLOAT_MARGIN_RIGHT = 32        # gap from the right edge of the window
+FLOAT_MARGIN_BOTTOM = 32       # gap from the bottom edge of the window
+FLOAT_ICON_TEXTURE = "tex_help_chat"   # registered by ui/icons.py
+
+# ---- Chat panel constants (tune here) ----
+CHAT_LOCKED = True             # True = docked (no drag, re-docks on resize). False = draggable (stays where you drop it)
+CHAT_WIDTH_RATIO = 0.40        # share of the window width
+CHAT_MIN_WIDTH = 480
+CHAT_MAX_WIDTH = 700
+CHAT_MAX_HEIGHT = 820
+CHAT_MIN_HEIGHT = 520
+CHAT_MARGIN_RIGHT = 24         # gap from the right edge of the window
+CHAT_MARGIN_BOTTOM = 24        # gap from the bottom edge of the window
+CHAT_MARGIN_TOP = 24           # minimum gap from the top edge of the window
+
+CHAT_ITEM_SPACING = 8          # horizontal spacing between items (used in width math)
+CHAT_WINDOW_PAD_X = 16
+CHAT_WINDOW_PAD_Y = 14
+CHAT_CHILD_PAD_X = 12
+CHAT_CHILD_PAD_Y = 10
+CHAT_FRAME_PAD_X = 12          # inner padding of buttons / input
+CHAT_FRAME_PAD_Y = 9
+CHAT_ROUNDING = 14             # panel corners
+CHAT_BOX_ROUNDING = 10         # chat box / suggestion box corners
+CHAT_CONTROL_ROUNDING = 8      # buttons / input corners
+
+CHAT_HEADER_ICON_SIZE = 26
+CHAT_HEADER_BTN_HEIGHT = 30
+CHAT_PILL_WIDTH = 116          # the AI ONLINE / LOCAL MODE pill
+CHAT_PILL_ROUNDING = 15
+CHAT_PILL_BG_ALPHA = 40
+CHAT_PILL_BORDER_ALPHA = 160
+CHAT_CLOSE_WIDTH = 30          # the X button
+CHAT_HEADER_RIGHT_COLUMN = CHAT_PILL_WIDTH + CHAT_ITEM_SPACING + CHAT_CLOSE_WIDTH + 16
+
+CHAT_BUTTON_HEIGHT = 36        # Send / New Chat
+CHAT_SEND_WIDTH = 84
+CHAT_NEWCHAT_WIDTH = 104
+CHAT_INPUT_RESERVE = CHAT_SEND_WIDTH + CHAT_NEWCHAT_WIDTH + 2 * CHAT_ITEM_SPACING   # room kept for the two buttons
+
+CHAT_SUGGEST_HEIGHT = 150      # height of the suggestions box
+CHAT_SUGGEST_BUTTON_HEIGHT = 34
+CHAT_SUGGEST_MAX_CHARS = 56
+CHAT_SUGGEST_COUNT = 6
+CHAT_RESERVE_EXTRA = 86        # labels + footer + spacing below the chat box. Raise if the footer gets cut off, lower if there's a gap
+CHAT_RESERVE_BELOW = CHAT_SUGGEST_HEIGHT + CHAT_RESERVE_EXTRA
+
+CHAT_MESSAGE_SPACING = 10      # gap between messages
+CHAT_MAX_MESSAGES = 30         # how many messages are kept on screen
+
+# role -> (label, color name from theme.py COLORS)
+CHAT_ROLE_STYLES = {
+    "user":      ("YOU",       "accent_blue"),
+    "assistant": ("ASSISTANT", "accent_green"),
+    "system":    ("SYSTEM",    "text_secondary"),
+    "thinking":  ("ASSISTANT", "text_secondary"),
+}
+
+# Extra colors used only by the chat panel
+CHAT_COLOR_BORDER_GLOW = (56, 130, 246, 90)     # soft blue outline around the panel
+CHAT_COLOR_HINT = (100, 116, 139)               # placeholder text in the input
+CHAT_COLOR_BTN_HOVER = (76, 150, 246)
+CHAT_COLOR_BTN_ACTIVE = (46, 120, 236)
+CHAT_COLOR_SECONDARY_BTN = (45, 58, 84)
+CHAT_COLOR_SECONDARY_BTN_HOVER = (60, 76, 108)
+CHAT_COLOR_SECONDARY_BTN_ACTIVE = (38, 49, 72)
+CHAT_COLOR_CHIP = (30, 40, 62)
+CHAT_COLOR_CHIP_HOVER = (44, 58, 88)
+CHAT_COLOR_SCROLL_HOVER = (80, 96, 128)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from system.ai import OpenRouterClient, load_ai_config
@@ -114,82 +190,225 @@ class KnowledgeBase:
 _KB = None
 _AI_CLIENT: Optional[OpenRouterClient] = None
 _AI_ENABLED = False
+_FONTS = {}
+_THEMES = {}
 _CHAT_WINDOW = "cyberlearn_chat_window"
+_CHAT_CHILD = "cyberlearn_chat_child"
 _MESSAGES_CONTAINER = "cyberlearn_messages"
 _STATUS_TEXT = "cyberlearn_status"
+_SUBTITLE_TEXT = "cyberlearn_subtitle"
 _SEARCH_INPUT = "cyberlearn_search"
 _SUGGESTION_PREFIX = "cyberlearn_sug_"
 _FLOATING_BUTTON = "cyberlearn_floating_btn"
 _AI_STATUS_TEXT = "cyberlearn_ai_status"
 _NEW_CHAT_BTN = "cyberlearn_new_chat"
+_CLOSE_BTN = "cyberlearn_close_btn"
 work_lock = threading.Lock()
 _work_in_progress = False
-_messages = []
-_THINKING_PREFIX = "[🧠 Thinking...]"
+_messages = []   # list of (role, timestamp, text)
+_THINKING_PREFIX = "Thinking..."
+
+# Characters the UI font can actually draw: Basic Latin / Latin-1, and general punctuation (bullets, quotes, dashes)
+_TEXT_REPLACEMENTS = {"\u2192": "->", "\u2190": "<-", "\u2713": "", "\u200d": "", "\u200b": ""}
+
+
+def _clean_text(text):
+    """Display-only: drops emoji and other glyphs the font can't draw (they'd show up as '?')."""
+    if not text:
+        return ""
+    out = []
+    for ch in str(text):
+        if ch in _TEXT_REPLACEMENTS:
+            out.append(_TEXT_REPLACEMENTS[ch])
+            continue
+        code = ord(ch)
+        if ch in "\n\t" or code <= 0xFF or 0x2000 <= code <= 0x206F:
+            out.append(ch)
+    return "".join(out).strip()
+
+
+def _bind_font(item, key):
+    font = _FONTS.get(key) if _FONTS else None
+    if font is not None:
+        dpg.bind_item_font(item, font)
+
+
+# ---------------------------------------------------------------------------
+# Themes (built once, before the chat window is created)
+# ---------------------------------------------------------------------------
+
+def _build_pill_theme(color):
+    bg = (*color, CHAT_PILL_BG_ALPHA)
+    border = (*color, CHAT_PILL_BORDER_ALPHA)
+    with dpg.theme() as theme:
+        with dpg.theme_component(dpg.mvButton):
+            # same color for normal / hover / pressed, so the pill never reacts like a real button
+            dpg.add_theme_color(dpg.mvThemeCol_Button, bg)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, bg)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, bg)
+            dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+            dpg.add_theme_color(dpg.mvThemeCol_Border, border)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, CHAT_PILL_ROUNDING)
+    return theme
+
+
+def _build_themes():
+    if _THEMES:
+        return
+    c = COLORS
+
+    # Whole panel
+    with dpg.theme() as window_theme:
+        with dpg.theme_component(dpg.mvAll):
+            dpg.add_theme_color(dpg.mvThemeCol_WindowBg, c["bg_card"])
+            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, c["bg_main"])
+            dpg.add_theme_color(dpg.mvThemeCol_Text, c["text_primary"])
+            dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, CHAT_COLOR_HINT)
+            dpg.add_theme_color(dpg.mvThemeCol_Border, CHAT_COLOR_BORDER_GLOW)
+            dpg.add_theme_color(dpg.mvThemeCol_FrameBg, c["bg_sidebar"])
+            dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, c["bg_main"])
+            dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, c["bg_main"])
+            dpg.add_theme_color(dpg.mvThemeCol_Button, c["accent_blue"])
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, CHAT_COLOR_BTN_HOVER)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, CHAT_COLOR_BTN_ACTIVE)
+            dpg.add_theme_color(dpg.mvThemeCol_Separator, c["border"])
+            # slim scrollbars that match the design
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (0, 0, 0, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, c["border"])
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, CHAT_COLOR_SCROLL_HOVER)
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, c["accent_blue"])
+            dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, CHAT_ROUNDING)
+            dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, CHAT_BOX_ROUNDING)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, CHAT_CONTROL_ROUNDING)
+            dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 1)
+            dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 8)
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 8)
+            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, CHAT_WINDOW_PAD_X, CHAT_WINDOW_PAD_Y)
+            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, CHAT_FRAME_PAD_X, CHAT_FRAME_PAD_Y)
+            dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, CHAT_ITEM_SPACING, 6)
+        with dpg.theme_component(dpg.mvChildWindow):
+            dpg.add_theme_color(dpg.mvThemeCol_Border, c["border"])
+            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, CHAT_CHILD_PAD_X, CHAT_CHILD_PAD_Y)
+    _THEMES["window"] = window_theme
+
+    # Input box: thin outline
+    with dpg.theme() as input_theme:
+        with dpg.theme_component(dpg.mvInputText):
+            dpg.add_theme_color(dpg.mvThemeCol_Border, c["border"])
+            dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1)
+    _THEMES["input"] = input_theme
+
+    # New Chat: calmer than the blue Send button
+    with dpg.theme() as secondary_theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, CHAT_COLOR_SECONDARY_BTN)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, CHAT_COLOR_SECONDARY_BTN_HOVER)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, CHAT_COLOR_SECONDARY_BTN_ACTIVE)
+    _THEMES["secondary"] = secondary_theme
+
+    # Suggestion chips: left-aligned, outlined
+    with dpg.theme() as chip_theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, CHAT_COLOR_CHIP)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, CHAT_COLOR_CHIP_HOVER)
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, c["accent_blue"])
+            dpg.add_theme_color(dpg.mvThemeCol_Border, c["border"])
+            dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1)
+            dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.0, 0.5)
+    _THEMES["chip"] = chip_theme
+
+    # X button: red tint so it's easy to spot
+    with dpg.theme() as close_theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (*c["accent_red"], 45))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*c["accent_red"], 210))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*c["accent_red"], 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, c["text_primary"])
+            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
+    _THEMES["close"] = close_theme
+
+    _THEMES["pill_online"] = _build_pill_theme(c["accent_green"])
+    _THEMES["pill_local"] = _build_pill_theme(c["accent_orange"])
+
+
+# ---------------------------------------------------------------------------
+# Messages
+# ---------------------------------------------------------------------------
+
+def _render_message(role, timestamp, text):
+    label, color_name = CHAT_ROLE_STYLES.get(role, CHAT_ROLE_STYLES["system"])
+    body_color = COLORS["text_primary"] if role in ("user", "assistant") else COLORS["text_secondary"]
+
+    with dpg.group(horizontal=True, parent=_MESSAGES_CONTAINER):
+        role_label = dpg.add_text(label, color=COLORS[color_name])
+        _bind_font(role_label, "mono_small")
+        dpg.add_text(timestamp, color=COLORS["text_secondary"])
+    dpg.add_text(text, wrap=0, color=body_color, parent=_MESSAGES_CONTAINER)
+    dpg.add_spacer(height=CHAT_MESSAGE_SPACING, parent=_MESSAGES_CONTAINER)
 
 
 def _add_message(role, text, append_only=False):
-    """Add message to chat. If append_only=True, add without refreshing thinking msg removal."""
+    """Add a message to the chat (display only: emoji are stripped)."""
     timestamp = datetime.now().strftime("%H:%M")
-    
-    if role == "user":
-        prefix = "You"
-    elif role == "system":
-        prefix = "ℹ️"
-    elif role == "thinking":
-        prefix = "🧠 Thinking"
-    else:  # assistant
-        prefix = "🤖 Assistant"
-    
-    formatted = f"[{timestamp}] {prefix}: {text}"
-    _messages.append(formatted)
-    
-    # Keep only last 30 messages
-    while len(_messages) > 30:
+    _messages.append((role, timestamp, _clean_text(text)))
+
+    # Keep only the last N messages
+    while len(_messages) > CHAT_MAX_MESSAGES:
         _messages.pop(0)
-    
+
     _refresh_chat_display()
 
 
 def _remove_thinking_message():
     """Remove the thinking placeholder message if present."""
     global _messages
-    _messages = [m for m in _messages if _THINKING_PREFIX not in m and "🧠 Thinking" not in m]
+    _messages = [m for m in _messages if m[0] != "thinking"]
     _refresh_chat_display()
 
 
 def _refresh_chat_display():
-    """Refresh chat display with current messages."""
+    """Rebuild the message list from the current messages."""
     try:
         if dpg.does_item_exist(_MESSAGES_CONTAINER):
-            full_text = "\n\n".join(_messages)
-            dpg.set_value(_MESSAGES_CONTAINER, full_text)
+            dpg.delete_item(_MESSAGES_CONTAINER, children_only=True)
+            for role, timestamp, text in _messages:
+                _render_message(role, timestamp, text)
     except Exception:
         pass
 
 
 def _update_ai_status_display():
-    """Update the AI status badge in the UI."""
-    if not dpg.does_item_exist(_AI_STATUS_TEXT):
-        return
-    global _AI_ENABLED
-    if _AI_ENABLED:
-        model = getattr(_AI_CLIENT, 'model', 'default') if _AI_CLIENT else 'default'
-        dpg.set_value(_AI_STATUS_TEXT, f"  🤖 AI Online  •  Model: {model}  ")
-    else:
-        dpg.set_value(_AI_STATUS_TEXT, "  📚 Local Mode (no API key)  ")
+    """Update the status pill and the subtitle line."""
+    if dpg.does_item_exist(_AI_STATUS_TEXT):
+        if _AI_ENABLED:
+            dpg.set_item_label(_AI_STATUS_TEXT, "AI ONLINE")
+            dpg.bind_item_theme(_AI_STATUS_TEXT, _THEMES["pill_online"])
+        else:
+            dpg.set_item_label(_AI_STATUS_TEXT, "LOCAL MODE")
+            dpg.bind_item_theme(_AI_STATUS_TEXT, _THEMES["pill_local"])
+
+    if dpg.does_item_exist(_SUBTITLE_TEXT):
+        if _AI_ENABLED:
+            model = getattr(_AI_CLIENT, 'model', 'default') if _AI_CLIENT else 'default'
+            subtitle = f"Model: {model}  \u2022  Ask anything about cybersecurity!"
+        else:
+            subtitle = "No API key found. Answering from the local knowledge base."
+        dpg.set_value(_SUBTITLE_TEXT, _clean_text(subtitle))
 
 
 def _set_status(text):
     """Safely set status text."""
     if dpg.does_item_exist(_STATUS_TEXT):
-        dpg.set_value(_STATUS_TEXT, text)
+        dpg.set_value(_STATUS_TEXT, _clean_text(text))
 
 
 def _fallback_kb_search(query: str, show_error: bool = False, error_msg: str = None):
     """Fallback to local knowledge base when AI unavailable."""
     if show_error and error_msg:
-        _add_message("system", f"⚠️ {error_msg}\nFalling back to local knowledge base...")
+        _add_message("system", f"AI unavailable: {error_msg}\nFalling back to local knowledge base...")
     
     if _KB is None:
         _add_message("system", "Local knowledge base not loaded. Please check your KB file path.")
@@ -201,9 +420,9 @@ def _fallback_kb_search(query: str, show_error: bool = False, error_msg: str = N
         _add_message("assistant", topic["answer"])
         related = _KB.get_related_topics(topic["id"], limit=3)
         if related:
-            related_text = "📌 Related topics:\n"
+            related_text = "Related topics:\n"
             for rel in related:
-                related_text += f"• {rel['question']}\n"
+                related_text += f"\u2022 {rel['question']}\n"
             _add_message("system", related_text)
         _set_status("Ready (local KB)")
     else:
@@ -222,9 +441,9 @@ def _on_ai_response_callback(success: bool, content: Optional[str], error: Optio
                 if _KB is not None:
                     results = _KB.search(original_query, limit=3)
                     if results and len(results) > 1:
-                        related_text = "📌 Related topics:\n"
+                        related_text = "Related topics:\n"
                         for rel in results[1:4]:
-                            related_text += f"• {rel['question']}\n"
+                            related_text += f"\u2022 {rel['question']}\n"
                         _add_message("system", related_text)
                 _set_status("AI response received")
             else:
@@ -332,7 +551,7 @@ def _on_new_chat_click():
     if _AI_CLIENT is not None:
         _AI_CLIENT.reset()
     
-    _add_message("system", "🔄 New conversation started!\n\nWhat would you like to learn about?")
+    _add_message("system", "New conversation started!\n\nWhat would you like to learn about?")
     _set_status("Ready")
 
 
@@ -366,8 +585,156 @@ def _ensure_ai_initialized():
     return _AI_CLIENT
 
 
+# ---------------------------------------------------------------------------
+# Chat panel: layout, open / close, build
+# ---------------------------------------------------------------------------
+
+def _layout_chat_window(force_pos=False):
+    """Sizes the panel from the viewport and docks it bottom-right."""
+    if not dpg.does_item_exist(_CHAT_WINDOW):
+        return
+    vw = dpg.get_viewport_client_width()
+    vh = dpg.get_viewport_client_height()
+
+    w = max(CHAT_MIN_WIDTH, min(CHAT_MAX_WIDTH, int(vw * CHAT_WIDTH_RATIO)))
+    h = max(CHAT_MIN_HEIGHT, min(CHAT_MAX_HEIGHT, vh - CHAT_MARGIN_TOP - CHAT_MARGIN_BOTTOM))
+    dpg.configure_item(_CHAT_WINDOW, width=w, height=h)
+
+    # When unlocked (draggable) we only re-dock on open, so a resize doesn't yank it back
+    if CHAT_LOCKED or force_pos:
+        dpg.configure_item(_CHAT_WINDOW, pos=(vw - w - CHAT_MARGIN_RIGHT, vh - h - CHAT_MARGIN_BOTTOM))
+
+
+def _on_chat_resize(content_w=None, content_h=None):
+    _layout_chat_window()
+
+
+def _close_cyberlearn():
+    """Hide the chat and bring the help button back."""
+    if dpg.does_item_exist(_CHAT_WINDOW):
+        dpg.configure_item(_CHAT_WINDOW, show=False)
+    if dpg.does_item_exist(_FLOATING_BUTTON):
+        dpg.configure_item(_FLOATING_BUTTON, show=True)
+
+
+def _build_chat_window():
+    _build_themes()
+
+    with dpg.window(tag=_CHAT_WINDOW, no_title_bar=True, no_resize=True, no_collapse=True,
+                    no_scrollbar=True, no_move=CHAT_LOCKED,
+                    width=CHAT_MIN_WIDTH, height=CHAT_MIN_HEIGHT, pos=(0, 0)):
+        dpg.bind_item_theme(_CHAT_WINDOW, _THEMES["window"])
+
+        # ---- Header: icon + title on the left, status pill + X on the right ----
+        with dpg.table(header_row=False):
+            dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
+            dpg.add_table_column(width_fixed=True, init_width_or_weight=CHAT_HEADER_RIGHT_COLUMN)
+            with dpg.table_row():
+                with dpg.group():
+                    dpg.add_spacer(height=2)
+                    with dpg.group(horizontal=True):
+                        if dpg.does_item_exist(FLOAT_ICON_TEXTURE):
+                            dpg.add_image(FLOAT_ICON_TEXTURE, width=CHAT_HEADER_ICON_SIZE,
+                                          height=CHAT_HEADER_ICON_SIZE, tint_color=COLORS["accent_blue"])
+                        title = dpg.add_text("CyberLearn Assistant", color=COLORS["text_primary"])
+                        _bind_font(title, "subheading")
+                with dpg.group(horizontal=True):
+                    pill = dpg.add_button(label="", tag=_AI_STATUS_TEXT,
+                                          width=CHAT_PILL_WIDTH, height=CHAT_HEADER_BTN_HEIGHT)
+                    _bind_font(pill, "mono_small")
+                    close_btn = dpg.add_button(label="X", tag=_CLOSE_BTN, width=CHAT_CLOSE_WIDTH,
+                                               height=CHAT_HEADER_BTN_HEIGHT, callback=_close_cyberlearn)
+                    _bind_font(close_btn, "subheading")
+                    dpg.bind_item_theme(close_btn, _THEMES["close"])
+
+        dpg.add_text("", tag=_SUBTITLE_TEXT, wrap=0, color=COLORS["text_secondary"])
+        dpg.add_separator()
+
+        # ---- Ask row: input + Send + New Chat, all on one line ----
+        with dpg.group(horizontal=True):
+            dpg.add_input_text(
+                tag=_SEARCH_INPUT,
+                default_value="",
+                width=-CHAT_INPUT_RESERVE,
+                hint="Ask anything, e.g. 'What is a Trojan?'",
+                callback=_on_search_click,
+                on_enter=True
+            )
+            dpg.add_button(label="Send", width=CHAT_SEND_WIDTH, height=CHAT_BUTTON_HEIGHT,
+                           callback=_on_search_click)
+            dpg.add_button(label="New Chat", tag=_NEW_CHAT_BTN, width=CHAT_NEWCHAT_WIDTH,
+                           height=CHAT_BUTTON_HEIGHT, callback=_on_new_chat_click)
+        dpg.bind_item_theme(_SEARCH_INPUT, _THEMES["input"])
+        dpg.bind_item_theme(_NEW_CHAT_BTN, _THEMES["secondary"])
+
+        # ---- Conversation (this box stretches with the window) ----
+        convo_label = dpg.add_text("CONVERSATION", color=COLORS["text_secondary"])
+        _bind_font(convo_label, "mono_small")
+        with dpg.child_window(tag=_CHAT_CHILD, width=-1, height=-CHAT_RESERVE_BELOW, border=True):
+            with dpg.group(tag=_MESSAGES_CONTAINER):
+                pass
+
+        # ---- Suggested questions ----
+        sug_label = dpg.add_text("SUGGESTED QUESTIONS", color=COLORS["text_secondary"])
+        _bind_font(sug_label, "mono_small")
+        with dpg.child_window(width=-1, height=CHAT_SUGGEST_HEIGHT, border=True):
+            questions = _KB.get_all_questions() if _KB and _KB.all_topics else [
+                "What is a Trojan and how does it differ from a virus?",
+                "What is ransomware and how does it work?",
+                "What is a computer worm?",
+                "What is phishing and how to prevent it?",
+                "What is malware entropy analysis?",
+                "How do machine learning malware detectors work?"
+            ]
+            for i, question in enumerate(questions[:CHAT_SUGGEST_COUNT]):
+                label = _clean_text(question)
+                if len(label) > CHAT_SUGGEST_MAX_CHARS:
+                    label = label[:CHAT_SUGGEST_MAX_CHARS - 3] + "..."
+                btn_tag = f"{_SUGGESTION_PREFIX}{i}"
+                dpg.add_button(
+                    label=label,
+                    width=-1,
+                    height=CHAT_SUGGEST_BUTTON_HEIGHT,
+                    tag=btn_tag,
+                    callback=_on_suggestion_click,
+                    user_data=question
+                )
+                dpg.bind_item_theme(btn_tag, _THEMES["chip"])
+
+        # ---- Footer status ----
+        with dpg.group(horizontal=True):
+            kb_count = len(_KB.all_topics) if _KB and _KB.all_topics else 0
+            dpg.add_text("Ready", tag=_STATUS_TEXT, color=COLORS["text_secondary"])
+            dpg.add_spacer(width=12)
+            dpg.add_text(f"KB Topics: {kb_count}", color=COLORS["text_secondary"])
+
+    _update_ai_status_display()
+
+    # Initial welcome message (only once)
+    if not _messages:
+        welcome_extra = ""
+        if not _AI_ENABLED:
+            welcome_extra = (
+                "\n\nNo API key configured yet. Go to Settings > AI API Settings "
+                "to add your OpenRouter key. Using local knowledge base mode."
+            )
+        _add_message("system",
+            "Welcome to CyberLearn Assistant!\n\n"
+            "I'm an AI-powered cybersecurity educator. I can explain concepts, "
+            "describe malware types, teach detection techniques, and more.\n\n"
+            "Tips:\n"
+            "\u2022 Type any question and press Enter or click Send\n"
+            "\u2022 Click suggested questions below to get started\n"
+            "\u2022 Ask follow-up questions - I remember our conversation!\n"
+            "\u2022 Click 'New Chat' to start fresh\n\n"
+            "What would you like to learn about?" + welcome_extra
+        )
+    else:
+        _refresh_chat_display()
+
+
 def _toggle_cyberlearn():
-    """Open CyberLearn chat window."""
+    """Open CyberLearn chat window (the help button hides while it's open)."""
     global _KB, _AI_CLIENT, _AI_ENABLED
     
     # Ensure KB and AI are ready
@@ -384,174 +751,72 @@ def _toggle_cyberlearn():
     _ensure_ai_initialized()
     
     if dpg.does_item_exist(_CHAT_WINDOW):
-        dpg.show_item(_CHAT_WINDOW)
+        dpg.configure_item(_CHAT_WINDOW, show=True)
+        _layout_chat_window(force_pos=True)
         dpg.focus_item(_CHAT_WINDOW)
         _update_ai_status_display()
+    else:
+        _build_chat_window()
+        _layout_chat_window(force_pos=True)
+
+    if dpg.does_item_exist(_FLOATING_BUTTON):
+        dpg.configure_item(_FLOATING_BUTTON, show=False)
+
+
+def _reposition_floating_button(content_w=None, content_h=None):
+    """Keeps the button a fixed distance from the bottom-right corner on every resize."""
+    if not dpg.does_item_exist(_FLOATING_BUTTON):
         return
-    
-    # Create chat window
-    with dpg.window(label="🎓 CyberLearn Assistant (AI Powered)", tag=_CHAT_WINDOW, width=620, height=750,
-                    pos=(780, 90)):
-        
-        # Theme
-        with dpg.theme() as chat_theme:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_WindowBg, COLORS["bg_card"])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, COLORS["text_primary"])
-                dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["border"])
-                dpg.add_theme_color(dpg.mvThemeCol_Button, COLORS["accent_blue"])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (76, 150, 246))
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (46, 120, 236))
-                dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 6)
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
-        
-        dpg.bind_item_theme(_CHAT_WINDOW, chat_theme)
-        
-        # Header
-        with dpg.group(horizontal=True):
-            dpg.add_text("🎓 CyberLearn Assistant", color=COLORS["accent_blue"])
-            dpg.add_spacer(width=-1)
-            # AI status badge
-            with dpg.theme() as badge_theme:
-                with dpg.theme_component(dpg.mvAll):
-                    if _AI_ENABLED:
-                        dpg.add_theme_color(dpg.mvThemeCol_Button, (40, 167, 69, 50))
-                        dpg.add_theme_color(dpg.mvThemeCol_Text, (40, 167, 69))
-                    else:
-                        dpg.add_theme_color(dpg.mvThemeCol_Button, (255, 193, 7, 50))
-                        dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 193, 7))
-            badge = dpg.add_text(tag=_AI_STATUS_TEXT, wrap=0)
-            dpg.bind_item_theme(badge, badge_theme)
-            _update_ai_status_display()
-        
-        dpg.add_text("AI-powered cybersecurity educator • Ask anything!", color=COLORS["text_secondary"])
-        dpg.add_spacer(height=10)
-        
-        # Search / Ask area
-        dpg.add_text("Ask:", color=COLORS["text_secondary"])
-        dpg.add_spacer(height=5)
-        with dpg.group(horizontal=True):
-            dpg.add_input_text(
-                tag=_SEARCH_INPUT,
-                default_value="",
-                width=-120,
-                hint="e.g. 'What is a Trojan?' • 'How to prevent phishing?'",
-                callback=_on_search_click,
-                on_enter=True
-            )
-            dpg.add_button(label="Send", width=80, height=32, callback=_on_search_click)
-            dpg.add_button(label="New Chat", tag=_NEW_CHAT_BTN, width=90, height=32, callback=_on_new_chat_click)
-            # Style New Chat button slightly differently
-            with dpg.theme() as nc_theme:
-                with dpg.theme_component(dpg.mvButton):
-                    dpg.add_theme_color(dpg.mvThemeCol_Button, (108, 117, 125))
-                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (130, 139, 147))
-                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (90, 98, 104))
-            dpg.bind_item_theme(_NEW_CHAT_BTN, nc_theme)
-        
-        dpg.add_spacer(height=10)
-        
-        # Chat history
-        dpg.add_text("Chat:", color=COLORS["text_secondary"])
-        dpg.add_spacer(height=5)
-        with dpg.child_window(width=-1, height=330, border=True, tag="cyberlearn_chat_child"):
-            dpg.add_spacer(height=10)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=10)
-                dpg.add_text("", tag=_MESSAGES_CONTAINER, wrap=560, color=COLORS["text_primary"])
-        
-        dpg.add_spacer(height=10)
-        
-        # Popular / Suggested topics
-        dpg.add_text("� Suggested Questions:", color=COLORS["text_secondary"])
-        dpg.add_spacer(height=5)
-        with dpg.child_window(width=-1, height=130, border=True):
-            questions = _KB.get_all_questions() if _KB and _KB.all_topics else [
-                "What is a Trojan and how does it differ from a virus?",
-                "What is ransomware and how does it work?",
-                "What is a computer worm?",
-                "What is phishing and how to prevent it?",
-                "What is malware entropy analysis?",
-                "How do machine learning malware detectors work?"
-            ]
-            for i, question in enumerate(questions[:6]):
-                btn_label = (question[:55] + "...") if len(question) > 55 else question
-                btn_tag = f"{_SUGGESTION_PREFIX}{i}"
-                dpg.add_button(
-                    label=btn_label,
-                    width=-1,
-                    height=32,
-                    tag=btn_tag,
-                    callback=_on_suggestion_click,
-                    user_data=question
-                )
-                dpg.add_spacer(height=4)
-        
-        dpg.add_spacer(height=10)
-        
-        # Footer status
-        with dpg.group(horizontal=True):
-            kb_count = len(_KB.all_topics) if _KB and _KB.all_topics else 0
-            dpg.add_text("Ready", tag=_STATUS_TEXT, color=COLORS["text_secondary"])
-            dpg.add_spacer(width=-1)
-            dpg.add_text(f"KB Topics: {kb_count}", color=COLORS["text_secondary"])
-        
-        # Initial welcome message (only once)
-        if not _messages:
-            welcome_extra = ""
-            if not _AI_ENABLED:
-                welcome_extra = (
-                    "\n\n⚠️ No API key configured yet. Go to Settings > AI API Settings "
-                    "to add your OpenRouter key. Using local knowledge base mode."
-                )
-            _add_message("system",
-                "👋 Welcome to CyberLearn Assistant!\n\n"
-                "I'm an AI-powered cybersecurity educator. I can explain concepts, "
-                "describe malware types, teach detection techniques, and more.\n\n"
-                "Tips:\n"
-                "• Type any question and press Enter or click Send\n"
-                "• Click suggested questions below to get started\n"
-                "• Ask follow-up questions - I remember our conversation!\n"
-                "• Click 'New Chat' to start fresh\n\n"
-                "What would you like to learn about?" + welcome_extra
-            )
+    vw = dpg.get_viewport_client_width()
+    vh = dpg.get_viewport_client_height()
+    dpg.configure_item(
+        _FLOATING_BUTTON,
+        pos=(vw - FLOAT_WINDOW_SIZE - FLOAT_MARGIN_RIGHT, vh - FLOAT_WINDOW_SIZE - FLOAT_MARGIN_BOTTOM),
+    )
 
 
 def create_floating_button():
-    """Create a FLOATING button in BOTTOM-RIGHT CORNER!"""
+    """Create a FLOATING button that follows the bottom-right corner."""
     if dpg.does_item_exist(_FLOATING_BUTTON):
         return
-    
-    with dpg.window(label="", tag=_FLOATING_BUTTON, 
-                  no_title_bar=True, no_resize=True, no_scrollbar=True,
-                  no_move=False, no_background=True,
-                  width=80, height=80,
-                  pos=(1480, 820)):
-        
-        # Theme for button
+
+    with dpg.window(label="", tag=_FLOATING_BUTTON,
+                    no_title_bar=True, no_resize=True, no_scrollbar=True,
+                    no_move=False, no_background=True,
+                    width=FLOAT_WINDOW_SIZE, height=FLOAT_WINDOW_SIZE,
+                    pos=(1480, 820)):
+
         with dpg.theme() as btn_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, COLORS["accent_blue"])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (76, 150, 246))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (46, 120, 236))
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 50)
-        
-        dpg.add_spacer(height=10)
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=10)
-            btn = dpg.add_button(
-                label="🎓",
-                width=60,
-                height=60,
-                callback=_toggle_cyberlearn
+
+        if dpg.does_item_exist(FLOAT_ICON_TEXTURE):
+            btn = dpg.add_image_button(
+                FLOAT_ICON_TEXTURE,
+                width=FLOAT_BTN_SIZE - 20,
+                height=FLOAT_BTN_SIZE - 20,
+                frame_padding=10,
+                background_color=COLORS["accent_blue"],
+                tint_color=(255, 255, 255, 255),
+                callback=_toggle_cyberlearn,
             )
-            dpg.bind_item_theme(btn, btn_theme)
+        else:
+            # Fallback if the icon texture is missing: plain "?" button
+            btn = dpg.add_button(label="?", width=FLOAT_BTN_SIZE, height=FLOAT_BTN_SIZE,
+                                 callback=_toggle_cyberlearn)
+        dpg.bind_item_theme(btn, btn_theme)
+
+    register_resize("help_button", _reposition_floating_button)
+    register_resize("cyberlearn_chat", _on_chat_resize)
 
 
-def init_cyberlearn_for_dpg():
-    """Initialize CyberLearn! Must be called after main_content exists!"""
-    global _KB, _AI_CLIENT, _AI_ENABLED
+def init_cyberlearn_for_dpg(fonts=None):
+    """Initialize CyberLearn! Must be called after main_content exists! Pass the fonts dict for bold titles."""
+    global _KB, _AI_CLIENT, _AI_ENABLED, _FONTS
+    _FONTS = fonts or {}
     
     # Initialize KB early with fixed path resolution
     if _KB is None:

@@ -26,5 +26,16 @@ def apply_global_theme():
             dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 0)
             dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 8)
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+            dpg.add_theme_color(dpg.mvThemeCol_ModalWindowDimBg, (0, 0, 0, 150))   # dim behind modal dialogs
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBg, COLORS["bg_card"])
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, COLORS["bg_card"])
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBgCollapsed, COLORS["bg_card"])
+            # slim scrollbars everywhere (values match ui/scrollbar_theme.py)
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (0, 0, 0, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, COLORS["border"])
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, (80, 96, 128))
+            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, COLORS["accent_blue"])
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 8)
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 8)
 
     dpg.bind_theme(global_theme)

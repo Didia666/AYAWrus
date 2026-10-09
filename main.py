@@ -12,6 +12,7 @@ from ui.settings import build_settings
 from ui.threat_chart import create_chart_theme
 from ui.fonts import load_fonts
 from ui.icons import load_icons
+from ui.layout import init_layout
 
 # main.py
 
@@ -43,20 +44,27 @@ with dpg.window(tag="primary_window", no_scrollbar=True):
 # Initialize CyberLearn
 try: 
     from ui.cyberlearn_assistant_dpg import init_cyberlearn_for_dpg 
-    init_cyberlearn_for_dpg() 
+    init_cyberlearn_for_dpg(fonts) 
 except Exception:
     traceback.print_exc()
 
+VIEWPORT_DEFAULT_WIDTH = 1600
+VIEWPORT_DEFAULT_HEIGHT = 900
+VIEWPORT_MIN_WIDTH = 1200
+VIEWPORT_MIN_HEIGHT = 700
+
 dpg.create_viewport(
     title='AYAWrus',
-    width=1600,
-    height=950,
-    min_width=1390,
-    min_height=850,
+    width=VIEWPORT_DEFAULT_WIDTH,
+    height=VIEWPORT_DEFAULT_HEIGHT,
+    min_width=VIEWPORT_MIN_WIDTH,
+    min_height=VIEWPORT_MIN_HEIGHT,
     resizable=True
 )
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("primary_window", True)
+init_layout()
+
 dpg.start_dearpygui()
 dpg.destroy_context()
