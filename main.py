@@ -13,6 +13,7 @@ from ui.threat_chart import create_chart_theme
 from ui.fonts import load_fonts
 from ui.icons import load_icons
 from ui.layout import init_layout
+from ui.background import init_background, set_background_clear_color
 
 # main.py
 
@@ -21,6 +22,7 @@ apply_global_theme()
 create_chart_theme()
 fonts = load_fonts()
 icons = load_icons()
+init_background()   # ui/background.py: glow overlay. Created BEFORE the pages so the toast layer ends up on top of it
 
 with dpg.window(tag="primary_window", no_scrollbar=True):
     dpg.bind_font(fonts["body"])
@@ -62,6 +64,7 @@ dpg.create_viewport(
     resizable=True
 )
 dpg.setup_dearpygui()
+set_background_clear_color()
 dpg.show_viewport()
 dpg.set_primary_window("primary_window", True)
 init_layout()
