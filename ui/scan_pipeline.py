@@ -21,6 +21,8 @@ PIPE_ICON_SIZE = 32
 PIPE_ICON_TITLE_GAP = 4
 PIPE_EXPANDED_ICON_TOP = 12    # spacer above the icon when the card is expanded (icon + title block)
 TITLE_FALLBACK_CHAR_WIDTH = 9  # only used if DPG can't measure text
+DESC_FONT_KEY = "table"        # font of the step description below the cards (Inter 20). None = the old small default
+TITLE_FONT_KEY = "table"       # font of the title inside a card ("Quarantine"). None = the old small default
 
 # ---- Tooltips (shown on hover, only on cards that are NOT the selected one) ----
 TIP_ENABLED = True                       # False = no tooltips at all
@@ -90,8 +92,9 @@ def _row_width(content_w):
 def _text_width(i):
     if i not in _s["tw"]:
         title = _one_line(_s["steps"][i]["title"])
+        font = _s["fonts"].get(TITLE_FONT_KEY) if TITLE_FONT_KEY else None
         try:
-            size = dpg.get_text_size(title)
+            size = dpg.get_text_size(title, font=font) if font is not None else dpg.get_text_size(title)
         except Exception:
             size = None
         _s["tw"][i] = size[0] if size else len(title) * TITLE_FALLBACK_CHAR_WIDTH
@@ -183,6 +186,9 @@ def _build_card(i, step, icons, is_active):
     mono = _s["fonts"].get("mono_small")
     if mono is not None:
         dpg.bind_item_font(badge_tag, mono)
+    title_font = _s["fonts"].get(TITLE_FONT_KEY) if TITLE_FONT_KEY else None
+    if title_font is not None:
+        dpg.bind_item_font(txt_tag, title_font)   # the number badge keeps its own mono font
     return (step_tag, img_tag, txt_tag)
 
 
@@ -215,6 +221,9 @@ def build_pipeline_panel(icons, fonts, steps, selected):
             dpg.add_spacer(height=DESC_PAD_Y)
             dpg.add_text(steps[selected]["description"], color=COLORS["text_secondary"],
                          wrap=700, tag="step_description_text", indent=DESC_SIDE_PAD)
+            desc_font = _s["fonts"].get(DESC_FONT_KEY) if DESC_FONT_KEY else None
+            if desc_font is not None:
+                dpg.bind_item_font("step_description_text", desc_font)
 
     dpg.add_spacer(height=PIPE_BOTTOM_MARGIN)
 
@@ -335,8 +344,12 @@ def _resize_pipeline(content_w, content_h):
     desc_wrap = inner - 2 * CHILD_PAD_X - 2 * DESC_SIDE_PAD - DESC_WRAP_TRIM
     max_h = 0
     for step in _s["steps"]:
+        desc_font = _s["fonts"].get(DESC_FONT_KEY) if DESC_FONT_KEY else None
         try:
-            size = dpg.get_text_size(step["description"], wrap_width=desc_wrap)
+            if desc_font is not None:
+                size = dpg.get_text_size(step["description"], wrap_width=desc_wrap, font=desc_font)
+            else:
+                size = dpg.get_text_size(step["description"], wrap_width=desc_wrap)
         except Exception:
             size = None
         if size:
