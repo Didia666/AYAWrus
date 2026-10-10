@@ -22,6 +22,7 @@ from ui.scan_threats import _flat_button_theme, PILL_BG_ALPHA
 from ui.quarantine import _pill_theme   # same pill look as Quarantine / Exclusions
 from ui.toast import init_toast, show_toast
 from ui.settings_dialogs import init_settings_dialogs, open_qr_dialog, open_instruction_dialog
+from ui.boot import get_boot_mode, set_boot_mode
 
 #settings.py
 # Add parent directory to path to import Malware_System
@@ -142,6 +143,22 @@ EYE_PAD = (EYE_BTN_SIZE - EYE_ICON_SIZE) // 2
 EYE_BG = COLORS["bg_sidebar"]
 EYE_BG_HOVER = (45, 58, 84)
 
+# ---- Intro card ----
+INTRO_TITLE = "Intro Animation"
+INTRO_HELPER = "Choose when the AYAWrus intro plays"
+INTRO_NOTE = "Applies the next time AYAWrus opens"
+INTRO_MODES = (                # (value saved in ui_prefs.json, button label)
+    ("always", "Every launch"),
+    ("once_per_boot", "Once per PC start"),
+    ("never", "Never"),
+)
+INTRO_BTN_W = 190
+INTRO_NOTE_COLOR = COLORS["text_primary"]   # COLORS["text_secondary"] = grey again
+INTRO_NOTE_GAP = 10            # space between the buttons and the note
+INTRO_CARD_HEIGHT = 196
+MSG_INTRO_SET = "Intro set to: {label}"
+MSG_INTRO_FAILED = "Couldn't save the intro setting (see terminal)"
+
 SERVER_PORT_DEFAULT = 5001
 
 _T = {}
@@ -253,6 +270,7 @@ def refresh_settings():
     _sync_custom_box()         # set_value doesn't fire the combo's callback, so show / hide the custom box by hand
     _set_key_visible(False)    # coming back to the tab always hides the key again
     _refresh_mobile_status()   # the sidebar calls this when the tab opens
+    _sync_intro_buttons()
 
 
 def send_report_to_telegram():
@@ -744,6 +762,67 @@ def _build_mobile_card(fonts, icons):
         dpg.bind_item_font("mobile_title", fonts["subheading"])
 
 
+# ---------------------------------------------------------------------------
+# Intro card (the animation itself lives in ui/boot.py)
+# ---------------------------------------------------------------------------
+
+def _sync_intro_buttons():
+    """The active mode is blue, the other two are slate."""
+    base = _get_themes()
+    current = get_boot_mode()
+    for mode, _label in INTRO_MODES:
+        tag = f"intro_btn_{mode}"
+        if dpg.does_item_exist(tag):
+            dpg.bind_item_theme(tag, base["btn_start"] if mode == current else base["btn_secondary"])
+
+
+def _on_intro_mode(sender, app_data, user_data):
+    mode = user_data
+    label = dict(INTRO_MODES).get(mode, mode)
+    if set_boot_mode(mode):
+        _sync_intro_buttons()
+        show_toast(MSG_INTRO_SET.format(label=label), "success")
+    else:
+        show_toast(MSG_INTRO_FAILED, "error")
+
+
+def _build_intro_card(fonts, icons):
+    t = _themes()
+    icon = icons.get("play") if icons else None
+
+    with dpg.child_window(width=CARD_START_W, height=INTRO_CARD_HEIGHT, tag="intro_card",
+                          no_scrollbar=True, no_scroll_with_mouse=True):
+        dpg.add_spacer(height=CARD_TOP_PAD)
+
+        with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+            with dpg.child_window(width=BADGE_SIZE, height=BADGE_SIZE, tag="intro_badge",
+                                  no_scrollbar=True, no_scroll_with_mouse=True):
+                if icon:
+                    pad = (BADGE_SIZE - BADGE_ICON) // 2
+                    dpg.add_image(icon, width=BADGE_ICON, height=BADGE_ICON,
+                                  tint_color=COLORS["accent_blue"], pos=(pad, pad))
+            with dpg.group():
+                dpg.add_text(INTRO_TITLE, color=COLORS["text_primary"], tag="intro_title")
+                dpg.add_text(INTRO_HELPER, color=COLORS["text_secondary"])
+
+        dpg.add_spacer(height=HEADER_GAP)
+
+        with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+            for mode, label in INTRO_MODES:
+                dpg.add_button(label=label, tag=f"intro_btn_{mode}", width=INTRO_BTN_W, height=BTN_H,
+                               callback=_on_intro_mode, user_data=mode)
+
+        dpg.add_spacer(height=INTRO_NOTE_GAP)
+        with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+            dpg.add_text(INTRO_NOTE, color=INTRO_NOTE_COLOR)
+
+    dpg.bind_item_theme("intro_card", t["card"])
+    dpg.bind_item_theme("intro_badge", t["badge"])
+    if fonts and fonts.get("subheading") is not None:
+        dpg.bind_item_font("intro_title", fonts["subheading"])
+    _sync_intro_buttons()
+
+
 def _resize_settings(content_w, content_h):
     """Called by ui/layout.py whenever the window size changes."""
     row_w = _row_width(content_w)   # same edges as every other tab
@@ -760,6 +839,8 @@ def _resize_settings(content_w, content_h):
     if dpg.does_item_exist("mobile_hint_text"):
         dpg.configure_item("mobile_hint_text", wrap=info_w)
     _resize_ai(row_w)
+    if dpg.does_item_exist("intro_card"):
+        dpg.configure_item("intro_card", width=row_w)
 
 
 def show_instruction_modal(sender=None, app_data=None, user_data=None):
@@ -787,6 +868,8 @@ def build_settings(parent, fonts, icons):
             dpg.add_spacer(height=20)
 
             _build_ai_card(fonts, icons)
+            dpg.add_spacer(height=20)
+            _build_intro_card(fonts, icons)
             dpg.add_spacer(height=AI_BOTTOM_MARGIN)
 
 

@@ -16,9 +16,10 @@ from ui.theme import COLORS
 # Clicks pass through it, so a click or Esc skips it. If anything fails, the cover removes itself.
 
 # ---- When it plays ----
-BOOT_MODE = "always"           # "always" | "once_per_boot" (once until the PC restarts) | "never". A "boot_mode" key in ui_prefs.json overrides this
+BOOT_MODE = "once_per_boot"          # "always" | "once_per_boot" (once until the PC restarts) | "never". A "boot_mode" key in ui_prefs.json overrides this
 BOOT_SAME_TOLERANCE = 120      # seconds: two boot-time readings closer than this count as the same PC start
-PREFS_FILE = "ui_prefs.json"   # next to main.py. Add it to .gitignore (it's per machine)
+BOOT_MODES = ("always", "once_per_boot", "never")   # the values "boot_mode" can have (the Settings buttons use these)
+PREFS_FILE = "ui_prefs.json"
 
 # ---- Content ----
 SKULL_PATH = "assets/icons/skull.png"   # transparent PNG, shown at its native size
@@ -126,6 +127,28 @@ def _save_prefs(prefs):
             json.dump(prefs, f, indent=4)
     except Exception:
         traceback.print_exc()
+
+
+def get_boot_mode():
+    """The mode in use right now: the saved choice, otherwise the BOOT_MODE constant."""
+    mode = _load_prefs().get("boot_mode", BOOT_MODE)
+    return mode if mode in BOOT_MODES else BOOT_MODE
+
+
+def set_boot_mode(mode):
+    """Saves the choice into ui_prefs.json (other keys, like last_boot_ts, are kept). Returns True if it was saved."""
+    if mode not in BOOT_MODES:
+        print(f"[boot] unknown boot mode '{mode}', nothing saved")
+        return False
+    prefs = _load_prefs()
+    prefs["boot_mode"] = mode
+    try:
+        with open(os.path.join(ROOT, PREFS_FILE), "w") as f:
+            json.dump(prefs, f, indent=4)
+        return True
+    except Exception:
+        traceback.print_exc()
+        return False
 
 
 def _boot_timestamp():
