@@ -27,3 +27,5 @@ system/config.json
 # Firebase / Google service account credentials
 system/firebase_service_account.json
 *.service_account.json
+
+ui_prefs.json
