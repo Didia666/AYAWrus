@@ -14,6 +14,7 @@ from ui.fonts import load_fonts
 from ui.icons import load_icons
 from ui.layout import init_layout
 from ui.background import init_background, set_background_clear_color
+from ui.boot import init_boot
 
 # main.py
 
@@ -49,6 +50,8 @@ try:
     init_cyberlearn_for_dpg(fonts) 
 except Exception:
     traceback.print_exc()
+
+init_boot()   # ui/boot.py: intro animation. Created LAST so it sits on top of every other layer. BOOT_MODE = "never" there turns it off
 
 VIEWPORT_DEFAULT_WIDTH = 1600
 VIEWPORT_DEFAULT_HEIGHT = 900
