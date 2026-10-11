@@ -1,5 +1,12 @@
 import dearpygui.dearpygui as dpg
 from ui.theme import COLORS
+from ui.layout import register_resize
+
+# ---- Sidebar layout constants (tune here) ----
+SIDEBAR_SPACER_DEFAULT = 380   # starting height of the gap above "System Protected"
+SIDEBAR_SPACER_MIN = 20        # the gap never gets smaller than this
+SIDEBAR_FIXED_HEIGHT = 496     # everything else in the sidebar (logo + nav + status). Raise it to move
+                               # "System Protected" UP, lower it to move it DOWN
 import threading
 import time
 
@@ -13,7 +20,7 @@ NAV_ITEMS = [
     {"key": "quarantine", "label": "Quarantine", "icon": "shield_cog"},
     {"key": "history", "label": "History", "icon": "history"},
     {"key": "exclusions", "label": "Exclusions", "icon": "sliders_horizontal"},
-    {"key": "settings", "label": "Settings", "icon": "sliders_horizontal"},
+    {"key": "settings", "label": "Settings", "icon": "settings"},
 ]
 
 def pulse_dot(tag):
@@ -66,6 +73,10 @@ def _switch_page(sender, app_data, user_data):
             _rebuild_history()
     if dpg.does_item_exist("page_exclusions"):
         dpg.configure_item("page_exclusions", show=(CURRENT_PAGE == "exclusions"))
+        # Refresh the exclusions list when the tab opens (re-checks which folders still exist on disk)
+        if CURRENT_PAGE == "exclusions":
+            from ui.exclusions import _rebuild_list
+            _rebuild_list()
     if dpg.does_item_exist("page_settings"):
         dpg.configure_item("page_settings", show=(CURRENT_PAGE == "settings"))
         # Refresh settings when switching to settings tab!
@@ -100,8 +111,14 @@ def _handle_click(sender, app_data):
             _switch_page(sender, app_data, item["key"])
             return
         
+def _resize_sidebar(content_w, content_h):
+    """Called by ui/layout.py on every window resize. Keeps the status block pinned to the bottom."""
+    if dpg.does_item_exist("sidebar_spacer"):
+        dpg.configure_item("sidebar_spacer", height=max(SIDEBAR_SPACER_MIN, content_h - SIDEBAR_FIXED_HEIGHT))
+
+
 def build_sidebar(icons):
-    with dpg.child_window(width=220, border=False, tag="sidebar"):
+    with dpg.child_window(width=220, border=False, tag="sidebar", no_scrollbar=True):
         with dpg.handler_registry():
             dpg.add_mouse_click_handler(callback=_handle_click)
         dpg.add_spacer(height=15)
@@ -116,11 +133,11 @@ def build_sidebar(icons):
         dpg.add_spacer(height=15)
 
         for i, item in enumerate(NAV_ITEMS):
-            nav_item(item["key"], item["label"], icons[item["icon"]])
+            nav_item(item["key"], item["label"], icons.get(item["icon"]) or icons["sliders_horizontal"])
             if i < len(NAV_ITEMS) - 1:
                 dpg.add_spacer(height=4)
 
-        dpg.add_spacer(height=380)
+        dpg.add_spacer(height=SIDEBAR_SPACER_DEFAULT, tag="sidebar_spacer")
         dpg.add_separator()
         dpg.add_spacer(height=10)
 
@@ -132,3 +149,5 @@ def build_sidebar(icons):
             dpg.add_text("System Protected", color=COLORS["accent_green"])
 
         pulse_dot("status_dot_shape")
+
+    register_resize("sidebar", _resize_sidebar)

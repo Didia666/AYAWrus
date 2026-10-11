@@ -4,6 +4,7 @@ import dearpygui.dearpygui as dpg
 from ui.activity_feed import build_activity_feed
 from ui.threat_chart import build_threat_chart, create_chart_theme
 from ui.theme import COLORS
+from ui.layout import register_resize
 import threading
 import time
 import sys
@@ -18,7 +19,25 @@ except Exception as e:
     print(f"Warning: Could not load dashboard backend: {e}")
     BACKEND_AVAILABLE = False
 
-CARD_GAP = 20
+# ---- Dashboard layout constants (tune here) ----
+CARD_GAP = 20                  # visual gap between cards (DPG adds item spacing on top, handled below)
+ITEM_SPACING_X = 8             # DPG's default horizontal item spacing
+DASH_LEFT_PAD = 24             # the spacer at the left of the page
+DASH_RIGHT_MARGIN = 16         # breathing room on the right (raise it if a horizontal scrollbar appears)
+DASH_HEADER_HEIGHT = 110       # estimated height of title + subtitle block above the cards
+DASH_BOTTOM_MARGIN = 24        # space left below the bottom row
+
+STAT_CARD_PREFIXES = ("threat_score", "active_threats", "files_scanned")
+STAT_CARD_MIN_WIDTH = 260
+STAT_CARD_HEIGHT_RATIO = 0.19  # share of the content height
+STAT_CARD_MIN_HEIGHT = 165
+STAT_CARD_MAX_HEIGHT = 210
+
+CHART_WIDTH_RATIO = 0.60       # chart gets 60%, feed gets the rest
+CHART_MIN_WIDTH = 480
+FEED_MIN_WIDTH = 340
+BOTTOM_ROW_MIN_HEIGHT = 300    # below this the page scrolls instead of squishing
+THREAT_PLOT_HEADER_OFFSET = 75 # chart card height minus this = plot height (title row + padding)
 # dashboard.py
 
 def animate_number(tag, target_value, duration=0.6, is_int=True):
@@ -101,7 +120,7 @@ def refresh_dashboard_stats():
     animate_number("files_scanned_value", files_scanned)
 
 def stat_card(icon_texture, label, value, subtitle, color, tag_prefix, fonts):
-    with dpg.child_window(width=400, height=140, tag=f"{tag_prefix}_card"):
+    with dpg.child_window(width=400, height=STAT_CARD_MIN_HEIGHT, tag=f"{tag_prefix}_card", no_scrollbar=True):
         with dpg.group(horizontal=True):
             if icon_texture:
                 dpg.add_image(icon_texture, width=26, height=26, tint_color=color)
@@ -121,6 +140,35 @@ def stat_card(icon_texture, label, value, subtitle, color, tag_prefix, fonts):
     dpg.bind_item_theme(f"{tag_prefix}_card", hover_theme)
 
     animate_number(value_tag, value)
+
+def _resize_dashboard(content_w, content_h):
+    """Called by ui/layout.py whenever the window size changes."""
+    usable_w = content_w - DASH_LEFT_PAD - ITEM_SPACING_X - DASH_RIGHT_MARGIN
+    gap = CARD_GAP + 2 * ITEM_SPACING_X  # a spacer in a horizontal group gets spacing on both sides
+
+    # Row 1: three equal stat cards
+    stat_w = max(STAT_CARD_MIN_WIDTH, int((usable_w - 2 * gap) / 3))
+    stat_h = int(content_h * STAT_CARD_HEIGHT_RATIO)
+    stat_h = max(STAT_CARD_MIN_HEIGHT, min(STAT_CARD_MAX_HEIGHT, stat_h))
+    for prefix in STAT_CARD_PREFIXES:
+        tag = f"{prefix}_card"
+        if dpg.does_item_exist(tag):
+            dpg.configure_item(tag, width=stat_w, height=stat_h)
+
+    # Row 2: chart (wider) + feed, filling the rest of the height
+    bottom_h = content_h - DASH_HEADER_HEIGHT - stat_h - CARD_GAP - DASH_BOTTOM_MARGIN
+    bottom_h = max(BOTTOM_ROW_MIN_HEIGHT, bottom_h)
+    row_w = usable_w - gap
+    chart_w = max(CHART_MIN_WIDTH, int(row_w * CHART_WIDTH_RATIO))
+    feed_w = max(FEED_MIN_WIDTH, row_w - chart_w)
+
+    if dpg.does_item_exist("threat_chart_card"):
+        dpg.configure_item("threat_chart_card", width=chart_w, height=bottom_h)
+    if dpg.does_item_exist("threat_plot"):
+        dpg.configure_item("threat_plot", height=bottom_h - THREAT_PLOT_HEADER_OFFSET)
+    if dpg.does_item_exist("activity_feed_card"):
+        dpg.configure_item("activity_feed_card", width=feed_w, height=bottom_h)
+
 
 def build_dashboard(parent, fonts, icons):
     dpg.add_spacer(height=20, parent=parent)
@@ -169,3 +217,5 @@ def build_dashboard(parent, fonts, icons):
                 build_threat_chart(fonts, icons)
                 dpg.add_spacer(width=CARD_GAP)
                 build_activity_feed(fonts, icons)
+
+    register_resize("dashboard", _resize_dashboard)
