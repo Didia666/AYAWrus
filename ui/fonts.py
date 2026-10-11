@@ -25,7 +25,9 @@ def load_fonts():
 
     return {
         "body": font_body,
+        "subheading": font_subheading,
         "heading": font_heading,
         "number_large": font_number_large,
         "mono_small": font_mono_small,
+        "table": font_table,
     }

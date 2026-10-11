@@ -12,6 +12,9 @@ from ui.settings import build_settings
 from ui.threat_chart import create_chart_theme
 from ui.fonts import load_fonts
 from ui.icons import load_icons
+from ui.layout import init_layout
+from ui.background import init_background, set_background_clear_color
+from ui.boot import init_boot
 
 # main.py
 
@@ -20,6 +23,7 @@ apply_global_theme()
 create_chart_theme()
 fonts = load_fonts()
 icons = load_icons()
+init_background()   # ui/background.py: glow overlay. Created BEFORE the pages so the toast layer ends up on top of it
 
 with dpg.window(tag="primary_window", no_scrollbar=True):
     dpg.bind_font(fonts["body"])
@@ -43,20 +47,30 @@ with dpg.window(tag="primary_window", no_scrollbar=True):
 # Initialize CyberLearn
 try: 
     from ui.cyberlearn_assistant_dpg import init_cyberlearn_for_dpg 
-    init_cyberlearn_for_dpg() 
+    init_cyberlearn_for_dpg(fonts) 
 except Exception:
     traceback.print_exc()
 
+init_boot()   # ui/boot.py: intro animation. Created LAST so it sits on top of every other layer. BOOT_MODE = "never" there turns it off
+
+VIEWPORT_DEFAULT_WIDTH = 1600
+VIEWPORT_DEFAULT_HEIGHT = 900
+VIEWPORT_MIN_WIDTH = 1200
+VIEWPORT_MIN_HEIGHT = 700
+
 dpg.create_viewport(
     title='AYAWrus',
-    width=1600,
-    height=950,
-    min_width=1390,
-    min_height=850,
+    width=VIEWPORT_DEFAULT_WIDTH,
+    height=VIEWPORT_DEFAULT_HEIGHT,
+    min_width=VIEWPORT_MIN_WIDTH,
+    min_height=VIEWPORT_MIN_HEIGHT,
     resizable=True
 )
 dpg.setup_dearpygui()
+set_background_clear_color()
 dpg.show_viewport()
 dpg.set_primary_window("primary_window", True)
+init_layout()
+
 dpg.start_dearpygui()
 dpg.destroy_context()
