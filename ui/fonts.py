@@ -16,7 +16,11 @@ def load_fonts():
     with dpg.font_registry():
         with dpg.font(_font_path("Inter_18pt-Regular.ttf"), 16) as font_body:
             pass
+        with dpg.font(_font_path("Inter_18pt-Bold.ttf"), 16) as font_subheading:
+            pass
         with dpg.font(_font_path("Inter_18pt-Bold.ttf"), 20) as font_heading:
+            pass
+        with dpg.font(_font_path("Inter_18pt-Regular.ttf"), 14) as font_table:
             pass
         with dpg.font(_font_path("JetBrainsMono-Bold.ttf"), 32) as font_number_large:
             pass

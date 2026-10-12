@@ -857,33 +857,7 @@ def build_settings(parent, fonts, icons):
             dpg.add_text("Configure AI API settings and mobile pairing", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
 
-<<<<<<< HEAD
-            with dpg.child_window(width=-1, height=420, border=False):
-                dpg.add_text("AYAWrus Settings", color=COLORS["text_primary"])
-                dpg.add_spacing(count=8)
-                status = mobile_status_payload()
-                connection_status = "Status: Mobile Connection Available" if status.get("connected_devices", 0) >= 0 else "Status: Mobile Connection Available"
-                dpg.add_text(connection_status, color=COLORS["accent_blue"])
-                dpg.add_text(f"System Name: {socket.gethostname()}", color=COLORS["text_primary"])
-                local_address = get_active_local_address()
-                port = int(os.environ.get("SERVER_PORT", "5001"))
-                dpg.add_text(f"Local Address: {local_address}:{port}", color=COLORS["text_primary"])
-                dpg.add_text(f"System ID: {SYSTEM_ID}", color=COLORS["text_secondary"])
-                dpg.add_text("Pair Mobile Device", color=COLORS["text_primary"])
-                dpg.add_spacer(height=8)
-                with dpg.group(tag="mobile_qr_parent"):
-                    pass
-                dpg.add_spacer(height=6)
-                dpg.add_button(label="View QR Code", width=150, height=36, callback=show_qr_modal)
-                dpg.add_spacer(height=10)
-                dpg.add_button(label="Generate New QR", width=180, height=36, callback=regenerate_mobile_qr)
-                dpg.add_spacer(height=10)
-                dpg.add_text("Pairing code expires in: 05:00", tag="mobile_qr_expiry", color=COLORS["text_secondary"])
-                dpg.add_spacer(height=10)
-                dpg.add_text("", tag="mobile_qr_status", color=COLORS["text_secondary"])
-=======
             _build_mobile_card(fonts, icons)
->>>>>>> 8fa79519595c331ae4ce54076a746490b16e9fdd
 
             dpg.add_spacer(height=20)
 

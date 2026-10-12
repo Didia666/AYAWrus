@@ -75,7 +75,7 @@ def build_threat_chart(fonts, icons):
         y_top, y_step = _y_axis_scale(max(threat_values))
 
         with dpg.plot(width=-1, height=THREAT_PLOT_DEFAULT_HEIGHT, tag="threat_plot",
-                      no_inputs=True, no_menus=True, no_box_select=True, no_mouse_pos=True):
+                      no_menus=True, no_box_select=True, no_mouse_pos=True):
             dpg.add_plot_legend(show=False)
 
             x_axis = dpg.add_plot_axis(dpg.mvXAxis, no_gridlines=True, lock_min=True, lock_max=True,
