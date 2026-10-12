@@ -29,3 +29,10 @@ system/firebase_service_account.json
 *.service_account.json
 
 ui_prefs.json
+# PyInstaller
+dist/
+build/
+
+# Python cache
+__pycache__/
+*.pyc
