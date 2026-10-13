@@ -36,3 +36,8 @@ build/
 # Python cache
 __pycache__/
 *.pyc
+
+
+# PyInstaller
+dist/
+build/
