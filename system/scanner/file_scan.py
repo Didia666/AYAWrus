@@ -5,6 +5,7 @@ from system.config import HEADER_PEEK_SIZE, KNOWN_SCRIPT_EXTS, KNOWN_SKIP_EXTS, 
 from system.security.exclusions import is_excluded
 from system.security.allowed import allow_threat
 from system.scanner.extractor import get_extractor
+from system.scanner.pe_statistics import record_pe_statistics
 from system.history.logs import add_log_entry
 from system.model_load import (
     model,
@@ -93,17 +94,48 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     file_bytes = f.read()
             except Exception as e:
                 return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
+
+        def save_pe_statistics(verdict, probability=None, category=None):
+            try:
+                return record_pe_statistics(
+                    file_path=file_path,
+                    verdict=verdict,
+                    probability=probability,
+                    category=category,
+                    file_bytes=file_bytes,
+                )
+            except Exception as stats_error:
+                print(
+                    f"[PE statistics] Could not save analysis for "
+                    f"{file_path}: {stats_error}"
+                )
+                return None
+
         try:
             features = extractor.feature_vector(file_bytes)
         except Exception as e:
             # It had 'MZ' but failed extraction - still log it as ERROR but not spam
             add_log_entry(file_path, result="ERROR", details=f"PE extraction failed: {str(e)[:50]}")
-            return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
+            stats = save_pe_statistics("ERROR")
+            return {
+                "result": "ERROR",
+                "probability": 0,
+                "file_path": file_path,
+                "details": str(e),
+                "pe_statistics": stats,
+            }
         
         # Check if model is available
         if model is None:
             add_log_entry(file_path, result="UNKNOWN", details="Model not loaded")
-            return {"result": "UNKNOWN", "probability": 0, "file_path": file_path, "details": "Model not available"}
+            stats = save_pe_statistics("UNKNOWN")
+            return {
+                "result": "UNKNOWN",
+                "probability": 0,
+                "file_path": file_path,
+                "details": "Model not available",
+                "pe_statistics": stats,
+            }
         
         try:
             raw_features = np.asarray(
@@ -115,13 +147,17 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             X = _prepare_model_features(raw_features)
         except ValueError as e:
             add_log_entry(file_path, result="ERROR", details=str(e))
+            stats = save_pe_statistics("ERROR")
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
-                    "details": "Feature schema mismatch — extractor/model version drift"}
+                    "details": "Feature schema mismatch — extractor/model version drift",
+                    "pe_statistics": stats}
 
         if X.shape[1] != getattr(model, "expected_input_dim", expected_input_dim or X.shape[1]):
             add_log_entry(file_path, result="ERROR", details=f"Feature vector shape mismatch ({X.shape[1]})")
+            stats = save_pe_statistics("ERROR")
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
-                    "details": "Feature schema mismatch — extractor/model version drift"}
+                    "details": "Feature schema mismatch — extractor/model version drift",
+                    "pe_statistics": stats}
 
         # Predict malware probability
         try:
@@ -129,7 +165,14 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             prediction = 1.0 if prob >= 0.5 else 0.0
         except Exception as e:
             add_log_entry(file_path, result="ERROR", details=f"Prediction failed: {e}")
-            return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
+            stats = save_pe_statistics("ERROR")
+            return {
+                "result": "ERROR",
+                "probability": 0,
+                "file_path": file_path,
+                "details": str(e),
+                "pe_statistics": stats,
+            }
 
         behavior_probability = 0.0
         behavior_result = "NOT_EVALUATED"
@@ -178,6 +221,11 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
 
         category = categorize_threat(prob)
+        stats = save_pe_statistics(
+            "MALICIOUS" if prediction == 1 else "CLEAN",
+            probability=prob,
+            category=category,
+        )
 
         # Generate XAI explanation asynchronously (without blocking scan)
         result_str = (
@@ -241,6 +289,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "detection_id": detection_id,
                 "xai_job_id": xai_job_id,
                 "xai_report": xai_report,
+                "pe_statistics": stats,
             }
         else:
             # Clean results don't need file_bytes or features
@@ -255,6 +304,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "behavior_type": behavior_type,
                 "behavior_model_metrics": get_behavior_model_metrics(), 
                 "xai_report": xai_report,
+                "pe_statistics": stats,
             }
     except Exception as e:
         print(f"Unexpected error scanning {file_path}: {e}")
