@@ -22,6 +22,7 @@ from system.security.exclusions import list_exclusions
 from system.security.allowed import allow_threat
 from system.scanner.file_scan import scan_text
 from system.scanner.workers import *
+from system.scanner.pe_statistics import record_pe_statistics
 from system.history.logs import add_log_entry
 from system.model_load import (
     model,
@@ -34,6 +35,20 @@ from system.utils import categorize_threat
 from system.xai.engine import xai_engine
 from system.xai.display import display_xai_explanation
 MAX_PENDING = 8
+
+
+def _record_pe_statistics(file_path, verdict, probability=None, category=None):
+    try:
+        return record_pe_statistics(
+            file_path=file_path,
+            verdict=verdict,
+            probability=probability,
+            category=category,
+        )
+    except Exception as exc:
+        print(f"[PE statistics] Could not save analysis for {file_path}: {exc}")
+        return None
+
 
 def submit_post_process(fn):
     # Apply backpressure rather than dropping
@@ -149,6 +164,7 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
         if model is None:
             for f, _ in chunk:
                 add_log_entry(f, result="UNKNOWN", details="Model not loaded")
+                _record_pe_statistics(f, "UNKNOWN")
             return
 
         X = np.asarray([c[1] for c in chunk], dtype=np.float32)
@@ -162,6 +178,7 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                 for f, _ in chunk:
                     add_log_entry(f, result="ERROR",
                                   details="Feature schema mismatch — extractor/model version drift")
+                    _record_pe_statistics(f, "ERROR")
                 return
 
         expected_dim = getattr(model, "expected_input_dim", expected_input_dim)
@@ -174,6 +191,7 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
         if X.shape[1] != getattr(model, "expected_input_dim", expected_input_dim or X.shape[1]):
             for f, _ in chunk:
                 add_log_entry(f, result="ERROR", details="Feature schema mismatch — extractor/model version drift")
+                _record_pe_statistics(f, "ERROR")
             return
 
         try:
@@ -181,6 +199,7 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
         except Exception as e:
             for f, _ in chunk:
                 add_log_entry(f, result="ERROR", details=f"Prediction failed: {e}")
+                _record_pe_statistics(f, "ERROR")
             return
 
         for (f, features), prob in zip(chunk, probs):
@@ -188,6 +207,12 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
             pred = 1.0 if prob >= 0.5 else 0.0
             category = categorize_threat(prob)
             result_str = "MALICIOUS" if pred == 1 else "CLEAN"
+            _record_pe_statistics(
+                f,
+                result_str,
+                probability=prob,
+                category=category,
+            )
 
             if pred == 1:
                 behavior_probability = 0.0

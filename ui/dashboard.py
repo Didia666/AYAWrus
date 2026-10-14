@@ -68,43 +68,52 @@ def animate_number(tag, target_value, duration=0.6, is_int=True):
     threading.Thread(target=_animate, daemon=True).start()
 
 def _get_dashboard_stats():
-    """Returns threat_score, active_threats, files_scanned."""
-    threat_score = 0
-    active_threats = 0
-    files_scanned = 0
+    """
+    Returns:
+        high_risk_items
+        quarantined_files
+        recorded_scans
+    """
+    high_risk_items = 0
+    quarantined_files = 0
+    recorded_scans = 0
 
-    if BACKEND_AVAILABLE:
-        # Files scanned comes from history
-        log = hs.load_log()
-        files_scanned = len(log)
+    if not BACKEND_AVAILABLE:
+        return 0, 0, 0
 
+    # Count saved history records
+    try:
+        logs = hs.load_log()
+        recorded_scans = len(logs)
+    except Exception as e:
+        print(f"Dashboard history error: {e}")
+
+    # Count quarantined files
+    try:
         quarantine_entries = qq.list_quarantine_items()
 
-        print("Dashboard quarantine entries:", quarantine_entries)
-        print("Dashboard active threats:", len(quarantine_entries))
+        quarantined_files = len(quarantine_entries)
 
-        active_threats = len(quarantine_entries)
+        for item in quarantine_entries:
+            try:
+                probability = float(
+                    item.get("probability", 0)
+                )
 
-        # Calculate threat score
-        if quarantine_entries:
-            high_severity = 0
+                if probability >= 0.70:
+                    high_risk_items += 1
 
-            for item in quarantine_entries:
-                try:
-                    if float(item.get("probability", 0)) >= 0.7:
-                        high_severity += 1
-                except Exception:
-                    pass
+            except (TypeError, ValueError):
+                continue
 
-            threat_score = min(
-                100,
-                int(
-                    (high_severity / max(1, active_threats)) * 100
-                    + active_threats * 5
-                ),
-            )
+    except Exception as e:
+        print(f"Dashboard quarantine error: {e}")
 
-    return threat_score, active_threats, files_scanned
+    return (
+        high_risk_items,
+        quarantined_files,
+        recorded_scans
+    )
 
 
 def refresh_dashboard_stats():
@@ -175,9 +184,9 @@ def build_dashboard(parent, fonts, icons):
     with dpg.group(horizontal=True, parent=parent):
         dpg.add_spacer(width=24)
         with dpg.group():
-            dpg.add_text("System Overview", tag="dashboard_page_title")
+            dpg.add_text("Security Overview", tag="dashboard_page_title")
             dpg.bind_item_font("dashboard_page_title", fonts["heading"])
-            dpg.add_text("Real-time threat monitoring and analytics", color=COLORS["text_secondary"])
+            dpg.add_text("A summary of quarantined files, " "recorded scans, and recent detections.", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
 
             # Get dashboard statistics
@@ -206,11 +215,27 @@ def build_dashboard(parent, fonts, icons):
             files_color = COLORS["accent_blue"]
 
             with dpg.group(horizontal=True):
-                stat_card(threat_icon, "Threat Score", threat_score, "Action recommended", threat_color, "threat_score", fonts)
+                stat_card(threat_icon, "High-Risk Items", threat_score, "Quarantined files with estimates of 70% or higher", threat_color, "threat_score", fonts)
                 dpg.add_spacer(width=CARD_GAP)
-                stat_card(threats_icon, "Active Threats", active_threats, "Threats in quarantine", threats_color, "active_threats", fonts)
+                stat_card(
+                    threats_icon,
+                    "Quarantined Files",
+                    active_threats,
+                    "Files currently held in isolation",
+                    threats_color,
+                    "active_threats",
+                    fonts
+                )
                 dpg.add_spacer(width=CARD_GAP)
-                stat_card(files_icon, "Files Scanned", files_scanned, "Total files processed by ML", files_color, "files_scanned", fonts)
+                stat_card(
+                    files_icon,
+                    "Recorded Scans",
+                    files_scanned,
+                    "Results saved in scan history",
+                    files_color,
+                    "files_scanned",
+                    fonts
+                )
 
             dpg.add_spacer(height=CARD_GAP)
             with dpg.group(horizontal=True):

@@ -20,6 +20,7 @@ class DummySingleOutputBehaviorModel:
 def test_score_behavior_probability_uses_average_positive_class():
     model_load.behavior_model = DummyMultiOutputBehaviorModel()
     model_load.behavior_selected_feature_indices = None
+    model_load.behavior_expected_input_dim = None
     X = np.ones((2, 5), dtype=np.float32)
 
     score = model_load.score_behavior_probability(X)
@@ -30,6 +31,7 @@ def test_score_behavior_probability_uses_average_positive_class():
 def test_score_behavior_probability_handles_single_output():
     model_load.behavior_model = DummySingleOutputBehaviorModel()
     model_load.behavior_selected_feature_indices = None
+    model_load.behavior_expected_input_dim = None
     X = np.ones((1, 5), dtype=np.float32)
 
     score = model_load.score_behavior_probability(X)
@@ -40,6 +42,7 @@ def test_score_behavior_probability_handles_single_output():
 def test_get_behavior_prediction_summary_uses_label_catalog():
     model_load.behavior_model = DummyMultiOutputBehaviorModel()
     model_load.behavior_selected_feature_indices = None
+    model_load.behavior_expected_input_dim = None
     model_load.behavior_label_names = ["spyware", "worm"]
     model_load.behavior_label_thresholds = {"spyware": 0.5, "worm": 0.5}
     model_load.behavior_model_metrics = {"f1_macro": 0.42}

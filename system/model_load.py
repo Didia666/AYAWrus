@@ -34,6 +34,37 @@ behavior_model_metrics = {}
 _behavior_metadata_loaded = False
 
 
+class _ONNXClassifier:
+    def __init__(self, model_path):
+        self.session = rt.InferenceSession(
+            model_path,
+            providers=["CPUExecutionProvider"],
+        )
+        self.input_name = self.session.get_inputs()[0].name
+        self.output_names = [output.name for output in self.session.get_outputs()]
+        input_shape = self.session.get_inputs()[0].shape
+        self.n_features_in_ = (
+            input_shape[1]
+            if len(input_shape) > 1 and isinstance(input_shape[1], int)
+            else None
+        )
+
+    def predict_proba(self, X):
+        outputs = self.session.run(
+            self.output_names,
+            {self.input_name: np.asarray(X, dtype=np.float32)},
+        )
+        if len(outputs) < 2:
+            raise RuntimeError("ONNX classifier did not return probability output")
+        return outputs[1]
+
+    def predict(self, X):
+        return self.session.run(
+            [self.output_names[0]],
+            {self.input_name: np.asarray(X, dtype=np.float32)},
+        )[0]
+
+
 def _load_behavior_metadata_once():
     """Load the behavior label catalog and evaluation metrics from Model_Behavior."""
     global behavior_label_names, behavior_label_thresholds, behavior_model_metrics, _behavior_metadata_loaded
@@ -41,48 +72,64 @@ def _load_behavior_metadata_once():
     if _behavior_metadata_loaded:
         return
 
-    # Prefer the explicit mapping file generated with the model and fall back to the
-    # shorter label map file if the training metadata is unavailable.
+    # Use one ordered label catalog; combining mapping files can mismatch output
+    # positions when the files describe different retained-label sets.
     mapping_candidates = [
-        os.path.join(BEHAVIOR_MODEL_DIR, "behavior_label_mapping.json"),
-        os.path.join(BEHAVIOR_MODEL_DIR, "behavior_label_map.json"),
         os.path.join(BEHAVIOR_MODEL_DIR, "behavior_model_metadata.json"),
+        os.path.join(BEHAVIOR_MODEL_DIR, "behavior_label_map.json"),
+        os.path.join(BEHAVIOR_MODEL_DIR, "behavior_label_mapping.json"),
     ]
-    merged = {}
     for path in mapping_candidates:
         if not os.path.exists(path):
             continue
         try:
             with open(path, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
-            if isinstance(data, dict):
-                merged.update(data)
+            if not isinstance(data, dict):
+                continue
+
+            labels = data.get("labels") or data.get("included_labels") or []
+            if isinstance(labels, list) and labels and isinstance(labels[0], dict):
+                ordered_labels = sorted(
+                    (
+                        item for item in labels
+                        if (item.get("retained") is not False)
+                        and (item.get("included") is not False)
+                    ),
+                    key=lambda item: item.get("index", 0),
+                )
+                behavior_label_names = [
+                    item.get("name") or item.get("label")
+                    for item in ordered_labels
+                ]
+            elif isinstance(labels, list):
+                behavior_label_names = [str(label) for label in labels]
+
+            label_to_index = data.get("label_to_index")
+            if not behavior_label_names and isinstance(label_to_index, dict):
+                behavior_label_names = [
+                    label
+                    for label, _ in sorted(
+                        label_to_index.items(),
+                        key=lambda item: item[1],
+                    )
+                ]
+
+            thresholds = data.get("thresholds")
+            if isinstance(thresholds, list) and behavior_label_names:
+                behavior_label_thresholds = {
+                    label: float(thresholds[idx]) if idx < len(thresholds) else 0.5
+                    for idx, label in enumerate(behavior_label_names)
+                }
+            elif behavior_label_names:
+                behavior_label_thresholds = {
+                    label: 0.5 for label in behavior_label_names
+                }
+
+            if behavior_label_names:
+                break
         except Exception as exc:
             print(f"Failed to load behavior metadata {path}: {exc}")
-
-    labels = merged.get("labels") or merged.get("included_labels") or []
-    if isinstance(labels, list) and labels and isinstance(labels[0], dict):
-        behavior_label_names = [
-            item.get("name") or item.get("label") or str(item.get("index"))
-            for item in labels
-            if (item.get("retained") is not False) and (item.get("included") is not False)
-        ]
-    elif isinstance(labels, list):
-        behavior_label_names = [str(label) for label in labels]
-
-    if not behavior_label_names and isinstance(merged.get("label_to_index"), dict):
-        behavior_label_names = list(merged["label_to_index"].keys())
-
-    thresholds = merged.get("thresholds")
-    if isinstance(thresholds, list) and behavior_label_names:
-        behavior_label_thresholds = {
-            label: float(thresholds[idx]) if idx < len(thresholds) else 0.5
-            for idx, label in enumerate(behavior_label_names)
-        }
-    elif isinstance(merged.get("label_to_index"), dict):
-        label_to_index = merged["label_to_index"]
-        for label, idx in label_to_index.items():
-            behavior_label_thresholds[label] = 0.5
 
     metrics_path = os.path.join(BEHAVIOR_MODEL_DIR, "model_metrics.json")
     if os.path.exists(metrics_path):
@@ -190,6 +237,7 @@ def _load_model_once():
         return
 
     malware_model_path = os.path.join(MALWARE_MODEL_DIR, "rf_ember_model_malware.pkl")
+    malware_onnx_path = os.path.join(MALWARE_MODEL_DIR, "rf_ember_model_malware.onnx")
     legacy_onnx_path = os.path.join(os.path.dirname(BASE_DIR), "rf_ember_model.onnx")
     if not os.path.exists(legacy_onnx_path):
         legacy_onnx_path = os.path.join(BASE_DIR, "rf_ember_model.onnx")
@@ -197,7 +245,10 @@ def _load_model_once():
     if not os.path.exists(legacy_joblib_path):
         legacy_joblib_path = os.path.join(BASE_DIR, "rf_ember_model.pkl")
 
-    print(f"Trying malware model path: {malware_model_path} (exists: {os.path.exists(malware_model_path)})")
+    print(
+        f"Trying malware ONNX path: {malware_onnx_path} "
+        f"(exists: {os.path.exists(malware_onnx_path)})"
+    )
 
     if os.path.exists(SELECTED_FEATURES_FILE):
         try:
@@ -206,7 +257,18 @@ def _load_model_once():
         except Exception as e:
             print(f"Failed to load selected_features.pkl: {e}")
 
-    if os.path.exists(malware_model_path):
+    if ONNX_AVAILABLE and os.path.exists(malware_onnx_path):
+        try:
+            model = _ONNXClassifier(malware_onnx_path)
+            expected_input_dim = model.n_features_in_
+            print(
+                f"Loaded malware ONNX model from {malware_onnx_path} "
+                f"(expects {expected_input_dim} features)"
+            )
+        except Exception as e:
+            print(f"Failed to load malware ONNX model: {e}")
+
+    if model is None and os.path.exists(malware_model_path):
         try:
             model = joblib.load(malware_model_path)
             expected_input_dim = getattr(model, "n_features_in_", None)
@@ -216,26 +278,14 @@ def _load_model_once():
 
     if model is None and ONNX_AVAILABLE and os.path.exists(legacy_onnx_path):
         try:
-            sess = rt.InferenceSession(legacy_onnx_path)
-            input_name = sess.get_inputs()[0].name
-            input_shape = sess.get_inputs()[0].shape
-            label_name = sess.get_outputs()[0].name
-            prob_name = sess.get_outputs()[1].name if len(sess.get_outputs()) > 1 else None
-            expected_input_dim = input_shape[1] if len(input_shape) > 1 and isinstance(input_shape[1], int) else None
-
-            def predict_proba(x):
-                return sess.run([prob_name], {input_name: x.astype(np.float32)})[0]
-
-            def predict(x):
-                return sess.run([label_name], {input_name: x.astype(np.float32)})[0]
-
-            model = type('', (), {})()
-            model.predict_proba = predict_proba
-            model.predict = predict
-            model.expected_input_dim = expected_input_dim
-            print(f"Loaded model from ONNX file (expects {expected_input_dim} features)")
+            model = _ONNXClassifier(legacy_onnx_path)
+            expected_input_dim = model.n_features_in_
+            print(
+                f"Loaded legacy malware ONNX model from {legacy_onnx_path} "
+                f"(expects {expected_input_dim} features)"
+            )
         except Exception as e:
-            print(f"Failed to load ONNX model: {e}")
+            print(f"Failed to load legacy malware ONNX model: {e}")
             import traceback
             traceback.print_exc()
 
@@ -257,6 +307,7 @@ def _load_behavior_model_once():
         return
 
     behavior_model_path = os.path.join(BEHAVIOR_MODEL_DIR, "rf_ember_model.pkl")
+    behavior_onnx_path = os.path.join(BEHAVIOR_MODEL_DIR, "rf_ember_model.onnx")
     legacy_behavior_model_path = os.path.join(BEHAVIOR_MODEL_DIR, "rf_ember_model_behavior.pkl")
     behavior_features_path = os.path.join(BEHAVIOR_MODEL_DIR, "selected_features.pkl")
 
@@ -270,13 +321,35 @@ def _load_behavior_model_once():
         except Exception as e:
             print(f"Failed to load behavior selected features: {e}")
 
-    if os.path.exists(behavior_model_path):
+    if ONNX_AVAILABLE and os.path.exists(behavior_onnx_path):
+        try:
+            behavior_model = _ONNXClassifier(behavior_onnx_path)
+            behavior_expected_input_dim = behavior_model.n_features_in_
+            print(
+                f"Loaded behavior ONNX model from {behavior_onnx_path} "
+                f"(expects {behavior_expected_input_dim} features)"
+            )
+        except Exception as e:
+            print(f"Failed to load behavior ONNX model: {e}")
+
+    if behavior_model is None and os.path.exists(behavior_model_path):
         try:
             behavior_model = joblib.load(behavior_model_path)
             behavior_expected_input_dim = getattr(behavior_model, "n_features_in_", None)
             print(f"Loaded behavior model from {behavior_model_path} (expects {behavior_expected_input_dim} features)")
         except Exception as e:
             print(f"Failed to load behavior model: {e}")
+
+    if behavior_model is None and os.path.exists(legacy_behavior_model_path):
+        try:
+            behavior_model = joblib.load(legacy_behavior_model_path)
+            behavior_expected_input_dim = getattr(behavior_model, "n_features_in_", None)
+            print(
+                f"Loaded legacy behavior model from {legacy_behavior_model_path} "
+                f"(expects {behavior_expected_input_dim} features)"
+            )
+        except Exception as e:
+            print(f"Failed to load legacy behavior model: {e}")
 
     _behavior_model_loaded = True
 

@@ -3,6 +3,8 @@ import time
 import threading
 from contextlib import contextmanager
 import dearpygui.dearpygui as dpg
+from concurrent.futures import ThreadPoolExecutor
+from system.xai.shap_explainer import generate_shap_explanation
 from ui.theme import COLORS
 from ui.layout import register_resize
 from ui.scrollbar_theme import (SCROLL_SIZE, SCROLL_ROUNDING, SCROLL_TRACK,
@@ -67,7 +69,7 @@ TABS = [
     ("overview", "shield_alert", "Overview"),
     ("steps", "monitor_cog", "Scan Steps"),
     ("suspicious", "octagon_alert", "PE Analysis"),
-    ("explanation", "search", "Explanation"),
+    ("shap", "chart_bar", "SHAP Explanation"),
     ("actions", "circle_check", "Actions"),
     ("learn", "chart_bar", "Learn Why"),
 ]
@@ -88,6 +90,19 @@ _s = {
     "tab_cur": [], "tab_tgt": [], "animating": False, "labels": [],
     "veil_t0": None, "geo": None,
 }
+_shap_executor = ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="AYAWrusSHAP"
+)
+
+_shap_future = None
+_shap_request_id = 0
+_shap_future_request_id = None
+_shap_future_path = None
+
+_shap_lock = threading.Lock()
+
+_s["shap_file_path"] = None
 
 _REPL = {"\u2192": "->", "\u2190": "<-", "\u2713": "", "\u200d": "", "\u200b": ""}
 
@@ -410,8 +425,52 @@ def _page_overview(threat, report):
         if cat:
             _caption("Category")
             dpg.add_text(cat, wrap=0, color=COLORS["text_primary"])
-    if not report:
-        _empty_page("No detailed AI explanation is available for this file.")
+    # Brief explanation in Overview
+    explanation = _clean(
+        (report or {}).get("explanation")
+    )
+
+    if explanation:
+
+        dpg.add_spacer(height=12)
+
+        with _card(
+            _card_h(
+                TITLE_H,
+                _text_h(explanation)
+            )
+        ):
+            dpg.add_text(
+                "Why was this file flagged?",
+                color=COLORS["accent_blue"]
+            )
+
+            dpg.add_text(
+                explanation,
+                wrap=0,
+                color=COLORS["text_secondary"]
+            )
+
+    else:
+        dpg.add_spacer(height=12)
+
+        dpg.add_text(
+            "A detailed explanation is not available "
+            "for this detection.",
+            wrap=0,
+            color=COLORS["text_secondary"]
+        )
+
+    # Guide users to the other tabs.
+    dpg.add_spacer(height=10)
+
+    dpg.add_text(
+        "For more details, visit PE Analysis to review "
+        "the file's characteristics or SHAP Explanation "
+        "to examine the model's decision.",
+        wrap=0,
+        color=COLORS["text_secondary"]
+    )
 
 
 def _page_steps(report):
@@ -439,16 +498,27 @@ def _page_suspicious(report):
     def display(value):
         return "N/A" if value is None else str(value)
 
-    def add_metric(label, value):
-        with _card(_card_h(TITLE_H, TITLE_H)):
+    def add_metric_card(label, value, description=""):
+        value_text = display(value)
+
+        with _card(_card_h(
+            CAPTION_H,
+            TITLE_H,
+            _text_h(description) if description else 0
+        )):
+            _caption(label)
+
             dpg.add_text(
-                label,
-                color=COLORS["text_secondary"]
-            )
-            dpg.add_text(
-                display(value),
+                value_text,
                 color=COLORS["text_primary"]
             )
+
+            if description:
+                dpg.add_text(
+                    description,
+                    color=COLORS["text_secondary"],
+                    wrap=0
+                )
 
     # PE Analysis heading
     dpg.add_text(
@@ -469,55 +539,45 @@ def _page_suspicious(report):
         else:
             size_text = "N/A"
 
-        add_metric("File Size", size_text)
-
         entropy = pe.get("entropy")
-        add_metric(
-            "File Entropy",
-            f"{entropy:.3f} / 8.0"
-            if entropy is not None else "N/A"
-        )
+
+        metrics = [
+            (
+                "File Size",
+                size_text,
+                "How much storage space this file takes."
+            ),
+            (
+                "File Entropy",
+                f"{entropy:.3f} / 8.0" if entropy is not None else "N/A",
+                "How random or scrambled the file's data appears."
+            ),
+        ]
 
         if pe.get("is_pe"):
-            add_metric(
-                "Architecture",
-                pe.get("architecture")
-            )
-
-            add_metric(
-                "PE Sections",
-                pe.get("section_count")
-            )
-
-            add_metric(
-                "Imported DLL Count",
-                pe.get("dll_count")
-            )
-
-            add_metric(
-                "Imported Function Count",
-                pe.get("import_count")
-            )
-
-            dll_names = pe.get("dll_names") or []
-
-            if dll_names:
-                dll_text = "\n".join(dll_names)
-
-                with _card(_card_h(
-                    TITLE_H,
-                    _text_h(dll_text)
-                )):
-                    dpg.add_text(
-                        "Imported DLLs",
-                        color=COLORS["text_primary"]
-                    )
-
-                    dpg.add_text(
-                        dll_text,
-                        color=COLORS["text_secondary"],
-                        wrap=0
-                    )
+            metrics.extend([
+                (
+                    "Architecture",
+                    pe.get("architecture"),
+                    "The type of computer processor this program is designed for."
+                ),
+                (
+                    "PE Sections",
+                    pe.get("section_count"),
+                    "The internal parts that make up this Windows program."
+                ),
+                (
+                    "Imported DLL Count",
+                    pe.get("dll_count"),
+                    "The number of unique Windows libraries the file references."
+                ),
+                (
+                    "Imported Function Count",
+                    pe.get("import_count"),
+                    "The number of functions requested from those libraries."
+                ),
+            ])
+            
 
         else:
             dpg.add_text(
@@ -525,6 +585,46 @@ def _page_suspicious(report):
                 color=COLORS["text_secondary"],
                 wrap=0
             )
+
+        with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchSame, width=-1):
+            dpg.add_table_column()
+            dpg.add_table_column()
+            for row_start in range(0, len(metrics), 2):
+                with dpg.table_row():
+                    add_metric_card(*metrics[row_start])
+                    if row_start + 1 < len(metrics):
+                        add_metric_card(*metrics[row_start + 1])
+        # Compact, collapsible DLL list
+        if pe.get("is_pe"):
+            dll_names = pe.get("dll_names") or []
+            dll_count = pe.get("dll_count")
+
+            count_text = (
+                str(dll_count)
+                if dll_count is not None
+                else "N/A"
+            )
+
+            with dpg.collapsing_header(
+                label=f"Imported DLLs ({count_text})",
+                default_open=False
+            ):
+                if dll_names:
+                    with dpg.child_window(
+                        width=-1,
+                        height=min(180, max(55, len(dll_names) * 24 + 12)),
+                        border=False
+                    ):
+                        for dll_name in dll_names:
+                            dpg.add_text(
+                                dll_name,
+                                color=COLORS["text_secondary"]
+                            )
+                else:
+                    dpg.add_text(
+                        "No imported DLLs reported.",
+                        color=COLORS["text_secondary"]
+                    )
 
     else:
         dpg.add_text(
@@ -539,9 +639,17 @@ def _page_suspicious(report):
         dpg.add_separator()
 
         dpg.add_text(
-            "Analysis Findings",
+            "Characteristics Worth Reviewing",
             color=COLORS["text_primary"]
         )
+
+        dpg.add_text(
+            "These are file characteristics that may deserve attention. "
+            "They do not necessarily mean the file is malicious.",
+            color=COLORS["text_secondary"],
+            wrap=0
+        )
+        
 
         for item in items:
             desc = _clean(item.get("description"))
@@ -558,6 +666,330 @@ def _page_suspicious(report):
                     color=COLORS["text_secondary"]
                 )
 
+def _page_shap(threat, report):
+    dpg.add_text(
+        "SHAP Explanation",
+        color=COLORS["text_primary"]
+    )
+
+    description = (
+        "SHAP helps explain why AYAWrus made its prediction.\n\n"
+        "Think of it as showing which clues the AI used "
+        "when deciding whether a file may be dangerous.\n\n"
+        "Some features push the prediction toward malware, "
+        "while others push it toward benign."
+    )
+
+    with _card(_card_h(TITLE_H, _text_h(description))):
+        dpg.add_text(
+            "What is SHAP?",
+            color=COLORS["accent_blue"]
+        )
+
+        dpg.add_text(
+            description,
+            color=COLORS["text_secondary"],
+            wrap=0
+        )
+
+    button_description = (
+        "When you press Generate Explanation, AYAWrus "
+        "will analyze this file using its trained malware "
+        "detection model and calculate which features "
+        "contributed most to its prediction.\n\n"
+        "This process runs in the background and may "
+        "take some time. The file will not be executed."
+    )
+
+    button_height = 30
+    button_spacer_height = 12
+    with _card(_card_h(
+        TITLE_H,
+        _text_h(button_description),
+        button_spacer_height,
+        button_height
+    )):
+        dpg.add_text(
+            "Generate a Model Explanation",
+            color=COLORS["text_primary"]
+        )
+
+        dpg.add_text(
+            button_description,
+            color=COLORS["text_secondary"],
+            wrap=0
+        )
+
+        dpg.add_spacer(height=button_spacer_height)
+
+        dpg.add_button(
+            label="Generate Explanation",
+            tag="shap_generate_button",
+            height=button_height,
+            callback=_start_shap,
+            user_data=threat.get("file_path")
+        )
+
+    dpg.add_spacer(height=10)
+
+    dpg.add_text(
+        "Ready to generate an explanation.",
+        tag="shap_status",
+        color=COLORS["text_secondary"]
+    )
+
+    with dpg.group(tag="shap_results"):
+        pass
+
+def _start_shap(sender, app_data, file_path):
+    global _shap_future
+    global _shap_request_id
+    global _shap_future_request_id
+    global _shap_future_path
+
+    if not file_path:
+        dpg.set_value(
+            "shap_status",
+            "The file path is unavailable."
+        )
+        return
+
+    if file_path != _s.get("shap_file_path"):
+        return
+
+    with _shap_lock:
+        # Do not queue another expensive computation.
+        if (
+            _shap_future is not None
+            and not _shap_future.done()
+        ):
+            dpg.set_value(
+                "shap_status",
+                "Another SHAP explanation is still processing. "
+                "Please wait for it to finish."
+            )
+            return
+
+        # New unique request
+        _shap_request_id += 1
+        request_id = _shap_request_id
+
+        _shap_future_request_id = request_id
+        _shap_future_path = file_path
+
+        try:
+            _shap_future = _shap_executor.submit(
+                generate_shap_explanation,
+                file_path
+            )
+        except RuntimeError as exc:
+            _shap_future = None
+            _shap_future_request_id = None
+            _shap_future_path = None
+            dpg.set_value(
+                "shap_status",
+                f"Unable to start SHAP: {exc}"
+            )
+            return
+
+    if dpg.does_item_exist("shap_generate_button"):
+        dpg.configure_item(
+            "shap_generate_button",
+            enabled=False
+        )
+
+    if dpg.does_item_exist("shap_status"):
+        dpg.set_value(
+            "shap_status",
+            "Generating SHAP explanation... Please wait."
+        )
+
+    if dpg.does_item_exist("shap_results"):
+        dpg.delete_item(
+            "shap_results",
+            children_only=True
+        )
+def _poll_shap_result():
+    global _shap_future
+    global _shap_future_request_id
+    global _shap_future_path
+
+    with _shap_lock:
+        future = _shap_future
+
+        if future is None or not future.done():
+            return
+
+        completed_request_id = _shap_future_request_id
+        completed_file_path = _shap_future_path
+
+        # Clear completed worker tracking.
+        _shap_future = None
+        _shap_future_request_id = None
+        _shap_future_path = None
+
+        current_request_id = _shap_request_id
+
+    # Reject old requests.
+    if completed_request_id != current_request_id:
+        return
+
+    # Reject results belonging to another file.
+    if completed_file_path != _s.get("shap_file_path"):
+        return
+
+    # Reject results if the popup is closing or closed.
+    if _s["mode"] not in ("open", "opening"):
+        return
+
+    # Reject results if their UI has been destroyed.
+    if not (
+        dpg.does_item_exist("shap_results")
+        and dpg.does_item_exist("shap_status")
+    ):
+        return
+
+
+    try:
+        result = future.result()
+
+    except Exception as exc:
+        dpg.set_value(
+            "shap_status",
+            f"Unable to generate explanation: {exc}"
+        )
+
+        if dpg.does_item_exist("shap_generate_button"):
+            dpg.configure_item(
+                "shap_generate_button",
+                enabled=True
+            )
+
+        return
+
+    if dpg.does_item_exist("shap_generate_button"):
+        dpg.configure_item(
+            "shap_generate_button",
+            enabled=True
+        )
+        
+
+    dpg.set_value(
+        "shap_status",
+        "Explanation generated successfully."
+    )
+
+    dpg.delete_item(
+        "shap_results",
+        children_only=True
+    )
+
+    with dpg.group(parent="shap_results"):
+        probability = result["model_probability"] * 100
+        baseline = result["baseline_probability"] * 100
+        total_effect = result["total_contribution"] * 100
+        reconstructed = result["reconstructed_probability"] * 100
+
+        dpg.add_text(
+            f"Model malware score: {probability:.2f}%"
+        )
+
+        with dpg.collapsing_header(
+            label="Advanced Explanation Details",
+            default_open=False
+        ):
+            dpg.add_text(
+                f"Baseline model estimate: {baseline:.2f}%\n"
+                f"Combined feature contribution: "
+                f"{total_effect:+.2f} percentage points\n"
+                f"Reconstructed model estimate: {reconstructed:.2f}%",
+                color=COLORS["text_secondary"]
+            )
+
+            dpg.add_text(
+                "These values show how the explanation's "
+                "feature contributions combine to reproduce "
+                "the model's estimate. They are primarily "
+                "intended for technical review.",
+                wrap=0,
+                color=COLORS["text_secondary"]
+            )
+
+        dpg.add_text(
+            "The baseline is the model's expected score before attributing this "
+            "file's feature values. "
+            "Adding the signed SHAP effects gives this file's score. A positive "
+            "effect pushes the score toward malware; a negative effect pushes it "
+            "toward benign. These are model explanations, not proof of malicious "
+            "intent or a guarantee that a file is safe.",
+            wrap=0,
+            color=COLORS["text_secondary"]
+        )
+
+        dpg.add_spacer(height=10)
+
+        dpg.add_text(
+            "What Influenced This Prediction?",
+            color=COLORS["text_primary"]
+        )
+
+        dpg.add_text(
+            "AYAWrus examined several groups of file characteristics. "
+            "The results below show which groups influenced the model "
+            "the most and whether they increased or decreased its "
+            "malware estimate.",
+            wrap=0,
+            color=COLORS["text_secondary"]
+        )
+
+        dpg.add_spacer(height=8)
+
+        for group in result["feature_groups"]:
+            direction = group["direction"]
+            color = (
+                COLORS["accent_red"]
+                if direction == "toward_malware"
+                else COLORS["accent_green"]
+                if direction == "toward_benign"
+                else COLORS["text_secondary"]
+            )
+
+            group_name = group["label"]
+            net_effect = group["net_contribution"] * 100
+            impact = group["absolute_impact"] * 100
+            share = group["impact_share"] * 100
+            if direction == "toward_malware":
+                direction_text = "Increases the malware estimate"
+            elif direction == "toward_benign":
+                direction_text = "Decreases the malware estimate"
+            else:
+                direction_text = "Contains mixed or balanced effects"
+
+            details = (
+                f"{direction_text}\n"
+                f"Overall change: {net_effect:+.2f} percentage points\n"
+                f"Share of total measured influence: {share:.1f}%"
+            )
+            card_height = _card_h(
+                TITLE_H,
+                _text_h(group["description"]),
+                _text_h(details),
+            )
+            with _card(card_height):
+                dpg.add_text(
+                    group_name,
+                    color=color,
+                )
+                dpg.add_text(
+                    group["description"],
+                    wrap=0,
+                    color=COLORS["text_secondary"],
+                )
+                dpg.add_text(
+                    details,
+                    wrap=0,
+                    color=COLORS["text_primary"],
+                )
 
 def _page_explanation(report):
     text = _clean((report or {}).get("explanation"))
@@ -595,9 +1027,12 @@ def _page_learn(report):
 
 def _build_pages(threat, report):
     builders = [
-        lambda: _page_overview(threat, report), lambda: _page_steps(report),
-        lambda: _page_suspicious(report), lambda: _page_explanation(report),
-        lambda: _page_actions(report), lambda: _page_learn(report),
+        lambda: _page_overview(threat, report),
+        lambda: _page_steps(report),
+        lambda: _page_suspicious(report),
+        lambda: _page_shap(threat, report),
+        lambda: _page_actions(report),
+        lambda: _page_learn(report),
     ]
     for i, build in enumerate(builders):
         with dpg.group(tag=f"xai_page_{i}", parent=CONTENT, show=(i == _s["sel"])):
@@ -609,6 +1044,14 @@ def _build_pages(threat, report):
 # ---------------------------------------------------------------------------
 
 def _destroy():
+    global _shap_request_id
+
+    with _shap_lock:
+        _shap_request_id += 1
+
+    _s["shap_file_path"] = None
+
+    
     for i in range(len(TABS)):
         win = f"xai_tabwin_{i}"
         if dpg.does_item_exist(win):
@@ -677,6 +1120,12 @@ def open_explain(threat, report):
         return
     if dpg.does_item_exist(POPUP) or dpg.does_item_exist(BACKDROP):
         _destroy()
+    global _shap_request_id
+
+    with _shap_lock:
+        _shap_request_id += 1
+
+    _s["shap_file_path"] = threat.get("file_path")
     t = _themes()
     g = _geometry()
     _s["geo"] = g
@@ -752,6 +1201,7 @@ def open_explain(threat, report):
         return
 
     print(f"[explain] built | popup={dpg.does_item_exist(POPUP)} backdrop={dpg.does_item_exist(BACKDROP)} mode={_s['mode']}")
+
     now = time.time()
     _s["opened_at"] = now
     _s["slide_t0"] = now
@@ -831,11 +1281,20 @@ def _ticker_loop():
         mode = _s["mode"]
         if mode == "closed":
             continue
-        if mode == "open" and not _s["animating"] and _s["veil_t0"] is None:
+        if (
+            mode == "open"
+            and not _s["animating"]
+            and _s["veil_t0"] is None
+            and not (
+                _shap_future is not None
+                and _shap_future.done()
+            )
+        ):
             continue
         try:
             with dpg.mutex():
                 _tick(now, dt)
+                _poll_shap_result()
         except Exception:
             import traceback
             traceback.print_exc()
