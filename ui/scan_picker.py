@@ -144,10 +144,7 @@ def _layout():
     vw, vh, w, h, x, y = _geometry()
     if dpg.does_item_exist(PICKER):
         dpg.configure_item(PICKER, width=w, height=h)
-        try:
-            dpg.configure_item(PICKER, pos=[x, y])
-        except Exception:
-            pass   # if this build of DPG won't move the dialog, it keeps its own position
+        dpg.set_item_pos(PICKER, [x, y])
         _x_place()
 
 

@@ -263,7 +263,16 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
                 f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
             )
-            add_log_entry(file_path, result="MALICIOUS", probability=prob, details=details)
+            add_log_entry(
+                file_path,
+                result="MALICIOUS",
+                probability=prob,
+                details=details,
+                behavior_confidence=behavior_probability,
+                behavior_type=behavior_type,
+                behavior_types=behavior_types,
+                behavior_result=behavior_result,
+            )
 
             try:
                 enqueue_threat_notification(file_path, "MALICIOUS", prob, category)

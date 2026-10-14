@@ -108,7 +108,16 @@ def flush_log_buffer(status: str = "COMPLETED"):
         pass
     return snapshot
 
-def add_log_entry(file_path, result, probability=None, details=None):
+def add_log_entry(
+    file_path,
+    result,
+    probability=None,
+    details=None,
+    behavior_confidence=None,
+    behavior_type=None,
+    behavior_types=None,
+    behavior_result=None,
+):
     batch_id = None
     try:
         _inc_batch(result)
@@ -124,6 +133,14 @@ def add_log_entry(file_path, result, probability=None, details=None):
         "details": details,
         "batch_id": batch_id,
     }
+    if behavior_confidence is not None:
+        entry["behavior_confidence"] = behavior_confidence
+    if behavior_type is not None:
+        entry["behavior_type"] = behavior_type
+    if behavior_types is not None:
+        entry["behavior_types"] = behavior_types
+    if behavior_result is not None:
+        entry["behavior_result"] = behavior_result
     with _log_buffer_lock:
         if _buffering_active:
             _log_buffer.append(entry)

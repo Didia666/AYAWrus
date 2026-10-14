@@ -13,14 +13,14 @@ THREATS_PANEL_HEIGHT = 420     # fixed; the table scrolls inside
 THREATS_TABLE_CHROME = 140     # table height = panel height - this (title + footer + padding). Raise if the footer gets cut off
 THREATS_TITLE_GAP = 8
 THREATS_FOOTER_GAP = 10
-NARROW_BREAKPOINT = 1100       # content width below which the Location column hides (about a 1360px window)
+NARROW_BREAKPOINT = 1200       # content width below which the Location column hides (about a 1360px window)
 
 # ---- Columns (fixed ones in px, stretch ones as weights) ----
-COL_SELECT_W = 80              # widened for the bigger table font (the "Select" header would clip at 64)
-COL_EXPLAIN_W = 110
-COL_CONF_W = 150               # "Confidence" header needs room at the table font size
-COL_BEHAVIOR_W = 220           # include the behavioral score plus the inferred behavior label
-COL_TYPE_W = 180               # retired: the type is folded into the behavior cell
+COL_SELECT_W = 65              # widened for the bigger table font (the "Select" header would clip at 64)
+COL_EXPLAIN_W = 85
+COL_CONF_W = 105              # "Confidence" header needs room at the table font size
+COL_BEHAVIOR_W = 165          # include the behavioral score plus the inferred behavior label
+COL_VERDICT_W = 110               # retired: the type is folded into the behavior cell
 COL_NAME_WEIGHT = 2.0
 COL_LOCATION_WEIGHT = 3.0
 
@@ -121,15 +121,61 @@ def build_threats_table(parent):
                    borders_innerV=False, borders_outerV=False,
                    scrollY=True, freeze_rows=1, width=-1,
                    height=THREATS_PANEL_HEIGHT - THREATS_TABLE_CHROME):
-        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
-        dpg.add_table_column(label="Select", width_fixed=True, init_width_or_weight=COL_SELECT_W)
-        dpg.add_table_column(label="Explain", width_fixed=True, init_width_or_weight=COL_EXPLAIN_W)
-        dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=COL_NAME_WEIGHT)
-        dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=COL_LOCATION_WEIGHT,
-                             tag="threat_col_location", show=not _state["narrow"])
-        dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=COL_CONF_W)
-        dpg.add_table_column(label="Behavior", width_fixed=True, init_width_or_weight=COL_BEHAVIOR_W)
-        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
+        dpg.add_table_column(
+            label="",
+            width_fixed=True,
+            init_width_or_weight=GUTTER_W
+        )
+
+        dpg.add_table_column(
+            label="Select",
+            width_fixed=True,
+            init_width_or_weight=COL_SELECT_W
+        )
+
+        dpg.add_table_column(
+            label="Explain",
+            width_fixed=True,
+            init_width_or_weight=COL_EXPLAIN_W
+        )
+
+        dpg.add_table_column(
+            label="File Name",
+            width_stretch=True,
+            init_width_or_weight=COL_NAME_WEIGHT
+        )
+
+        dpg.add_table_column(
+            label="Location",
+            width_stretch=True,
+            init_width_or_weight=COL_LOCATION_WEIGHT,
+            tag="threat_col_location",
+            show=not _state["narrow"]
+        )
+
+        dpg.add_table_column(
+            label="Confidence",
+            width_fixed=True,
+            init_width_or_weight=COL_CONF_W
+        )
+
+        dpg.add_table_column(
+            label="Behavior",
+            width_fixed=True,
+            init_width_or_weight=COL_BEHAVIOR_W
+        )
+
+        dpg.add_table_column(
+            label="Verdict",
+            width_fixed=True,
+            init_width_or_weight=COL_VERDICT_W
+        )
+
+        dpg.add_table_column(
+            label="",
+            width_fixed=True,
+            init_width_or_weight=GUTTER_W
+        )
     dpg.bind_item_theme("threats_table", t["table"])
     apply_table_font("threats_table", _state["fonts"])   # shared table font; scan.py rebuilds this table, so it re-applies every time
 
@@ -175,22 +221,113 @@ def _format_behavior_type(threat):
 
 def _behavior_score_button(threat):
     t = _themes()
-    behavior_confidence = threat.get("behavior_confidence")
-    behavior_label = _format_behavior_type(threat)
 
+    behavior_confidence = threat.get("behavior_confidence")
+    behavior_types = threat.get("behavior_types") or []
+
+    if isinstance(behavior_types, str):
+        behavior_types = [behavior_types]
+
+    labels = [
+        _humanize_behavior_name(item)
+        for item in behavior_types
+        if item
+    ]
+
+    if not labels:
+        single_type = threat.get("behavior_type")
+
+        if single_type:
+            labels = [_humanize_behavior_name(single_type)]
+
+    # Compact behavior label
+    if labels:
+        primary = labels[0]
+
+        # Prevent exceptionally long names from
+        # overflowing the fixed-width column.
+        if len(primary) > 13:
+            primary = primary[:12] + "..."
+
+        extra = len(labels) - 1
+
+        if extra > 0:
+            short_label = f"{primary} +{extra}"
+        else:
+            short_label = primary
+    else:
+        short_label = "Not identified"
+
+    # Format confidence
     try:
         score = float(behavior_confidence)
-        label = f"{score:.1%} - {behavior_label}"
-        key = "behavior"
-    except (TypeError, ValueError):
-        label = "-"
-        key = "dash"
 
-    btn = dpg.add_button(label=label, width=-1, height=ROW_ITEM_HEIGHT)
-    dpg.bind_item_theme(btn, t[key])
-    if behavior_label != "-":
-        with dpg.tooltip(btn):
-            dpg.add_text(threat.get("behavior_result", ""), color=COLORS["text_secondary"])
+        score_text = f"{score:.0%}"
+        theme_key = "behavior"
+
+    except (TypeError, ValueError):
+        score_text = None
+        theme_key = "dash"
+
+    if labels and score_text:
+        button_label = f"{score_text} | {short_label}"
+    elif labels:
+        button_label = short_label
+    else:
+        button_label = "-"
+
+    btn = dpg.add_button(
+        label=button_label,
+        width=-1,
+        height=ROW_ITEM_HEIGHT
+    )
+
+    dpg.bind_item_theme(btn, t[theme_key])
+
+    # Full details appear on hover
+    with dpg.tooltip(btn):
+
+        dpg.add_text(
+            "Behavior Analysis",
+            color=COLORS["text_primary"]
+        )
+
+        if score_text:
+            dpg.add_text(
+                f"Reported Confidence: {score_text}",
+                color=COLORS["text_secondary"]
+            )
+
+        dpg.add_separator()
+
+        if labels:
+            dpg.add_text(
+                "Predicted Behaviors:",
+                color=COLORS["text_primary"]
+            )
+
+            for label in labels:
+                dpg.add_text(
+                    f"- {label}",
+                    color=COLORS["text_secondary"]
+                )
+        else:
+            dpg.add_text(
+                "No behavior type was identified.",
+                color=COLORS["text_secondary"]
+            )
+
+        behavior_result = threat.get("behavior_result")
+
+        if behavior_result:
+            dpg.add_separator()
+
+            dpg.add_text(
+                str(behavior_result),
+                color=COLORS["text_secondary"],
+                wrap=350
+            )
+
     return btn
 
 
@@ -229,12 +366,20 @@ def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
 
 def add_empty_row(table):
     with dpg.table_row(parent=table):
-        dpg.add_text("")
-        dpg.add_text("")
-        dpg.add_text("")
-        dpg.add_text("No threats detected", color=COLORS["text_secondary"])
-        for _ in range(5):
-            dpg.add_text("")
+        dpg.add_text("")  # Gutter
+        dpg.add_text("")  # Select
+        dpg.add_text("")  # Explain
+
+        dpg.add_text(
+            "No threats detected",
+            color=COLORS["text_secondary"]
+        )
+
+        dpg.add_text("")  # Location
+        dpg.add_text("")  # Confidence
+        dpg.add_text("")  # Behavior
+        dpg.add_text("")  # Verdict
+        dpg.add_text("")  # Right gutter
 
 
 # ---------------------------------------------------------------------------

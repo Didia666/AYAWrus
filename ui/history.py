@@ -133,6 +133,9 @@ DETAIL_COL_NAME_WEIGHT = 2.0
 DETAIL_COL_LOCATION_WEIGHT = 3.0
 DETAIL_COL_RESULT_W = 170      # raise if the QUARANTINED pill clips
 DETAIL_COL_CONF_W = 140
+DETAIL_COL_EXPLAIN_W = 100
+DETAIL_COL_BEHAVIOR_CONF_W = 115
+DETAIL_COL_TYPE_W = 150
 
 # ---- Detail view: result -> (color, icon keys tried in order) ----
 RESULT_STYLE = {
@@ -672,6 +675,86 @@ def _conf_text(entry):
     return f"Score {p:.0f}"
 
 
+def _behavior_fields(entry):
+    """Read structured behavior data, with support for older log detail strings."""
+    confidence = entry.get("behavior_confidence")
+    behavior_types = entry.get("behavior_types") or []
+    behavior_type = entry.get("behavior_type")
+
+    if isinstance(behavior_types, str):
+        behavior_types = [
+            item.strip()
+            for item in behavior_types.split(",")
+            if item.strip() and item.strip().lower() != "unknown"
+        ]
+    elif not isinstance(behavior_types, (list, tuple)):
+        behavior_types = []
+
+    details = str(entry.get("details") or entry.get("detail") or "")
+    if confidence is None and "behavior_probability=" in details:
+        raw_confidence = details.split("behavior_probability=", 1)[1].split(";", 1)[0]
+        try:
+            confidence = float(raw_confidence)
+        except ValueError:
+            confidence = None
+
+    if not behavior_types and "behavior_types=" in details:
+        raw_types = details.split("behavior_types=", 1)[1].split(";", 1)[0]
+        behavior_types = [
+            item.strip()
+            for item in raw_types.split(",")
+            if item.strip() and item.strip().lower() != "unknown"
+        ]
+
+    if not behavior_type and behavior_types:
+        behavior_type = behavior_types[0]
+
+    return confidence, behavior_type, behavior_types
+
+
+def _behavior_conf_text(entry):
+    confidence, _, _ = _behavior_fields(entry)
+    if confidence is None:
+        return "-"
+    try:
+        return f"{float(confidence):.1%}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def _behavior_type_text(entry):
+    _, behavior_type, behavior_types = _behavior_fields(entry)
+    labels = behavior_types or ([behavior_type] if behavior_type else [])
+    if not labels:
+        return "-"
+    return ", ".join(
+        "Ransomware" if str(label).strip().lower() == "ransom"
+        else "PUA" if str(label).strip().lower() == "pua"
+        else str(label).replace("_", " ").replace("-", " ").title()
+        for label in labels
+    )
+
+
+def _open_history_explanation(sender, app_data, entry):
+    file_path = entry.get("file_path") or entry.get("fileName")
+    if not file_path:
+        print("[History] Cannot open explanation: file path is missing.")
+        return
+
+    threat = dict(entry)
+    threat["file_path"] = file_path
+    threat["result"] = entry.get("result") or entry.get("verdict") or "UNKNOWN"
+    threat["probability"] = entry.get("probability")
+    confidence, behavior_type, behavior_types = _behavior_fields(entry)
+    threat["behavior_confidence"] = confidence
+    threat["behavior_type"] = behavior_type
+    threat["behavior_types"] = behavior_types
+
+    from ui.scan_explain import open_explain
+
+    open_explain(threat, entry.get("xai_report"))
+
+
 def _build_summary(batch, icons):
     """The summary card at the top of the detail view (an 'opened up' version of the list card)."""
     own = _themes()
@@ -784,6 +867,15 @@ def _detail_file_row(entry, icons):
             if tex:
                 dpg.add_image(tex, width=DETAIL_ICON_SIZE, height=DETAIL_ICON_SIZE, tint_color=color)
 
+        explain = dpg.add_button(
+            label="Explain",
+            width=-1,
+            height=TABLE_ROW_HEIGHT,
+            callback=_open_history_explanation,
+            user_data=entry,
+        )
+        dpg.bind_item_theme(explain, _get_themes()["btn_secondary"])
+
         name_btn = dpg.add_button(label=name, width=-1, height=TABLE_ROW_HEIGHT)
         dpg.bind_item_theme(name_btn, tt["name"])
         with dpg.tooltip(name_btn):
@@ -807,6 +899,31 @@ def _detail_file_row(entry, icons):
         else:
             dpg.bind_item_theme(conf, own["muted_text"])
 
+        behavior_conf = dpg.add_button(
+            label=_behavior_conf_text(entry),
+            width=-1,
+            height=TABLE_ROW_HEIGHT,
+        )
+        behavior_conf_value, _, _ = _behavior_fields(entry)
+        dpg.bind_item_theme(
+            behavior_conf,
+            tt["behavior"] if behavior_conf_value is not None else own["muted_text"],
+        )
+
+        behavior_type_text = _behavior_type_text(entry)
+        behavior_type = dpg.add_button(
+            label=behavior_type_text,
+            width=-1,
+            height=TABLE_ROW_HEIGHT,
+        )
+        dpg.bind_item_theme(
+            behavior_type,
+            tt["behavior"] if behavior_type_text != "-" else own["muted_text"],
+        )
+        if behavior_type_text != "-":
+            with dpg.tooltip(behavior_type):
+                dpg.add_text(behavior_type_text, color=TIP_COLOR)
+
         dpg.add_spacer(width=1)   # right gutter cell
 
 
@@ -820,10 +937,14 @@ def _build_files_table(files, icons, panel_h):
         from ui.scan_threats import GUTTER_W
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=DETAIL_COL_ICON_W)
+        dpg.add_table_column(label="Explain", width_fixed=True, init_width_or_weight=DETAIL_COL_EXPLAIN_W)
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=DETAIL_COL_NAME_WEIGHT)
         dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=DETAIL_COL_LOCATION_WEIGHT)
         dpg.add_table_column(label="Result", width_fixed=True, init_width_or_weight=DETAIL_COL_RESULT_W)
         dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=DETAIL_COL_CONF_W)
+        dpg.add_table_column(label="Behavior confidence", width_fixed=True,
+                             init_width_or_weight=DETAIL_COL_BEHAVIOR_CONF_W)
+        dpg.add_table_column(label="Type", width_fixed=True, init_width_or_weight=DETAIL_COL_TYPE_W)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("history_detail_table", tt["table"])
     apply_table_font("history_detail_table", _state["fonts"])   # shared table font (ui/table_style.py)
