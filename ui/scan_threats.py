@@ -19,8 +19,8 @@ NARROW_BREAKPOINT = 1100       # content width below which the Location column h
 COL_SELECT_W = 80              # widened for the bigger table font (the "Select" header would clip at 64)
 COL_EXPLAIN_W = 110
 COL_CONF_W = 150               # "Confidence" header needs room at the table font size
-COL_BEHAVIOR_W = 124
-COL_TYPE_W = 180               # the "SUSPICIOUS" pill needs room at the table font size
+COL_BEHAVIOR_W = 220           # include the behavioral score plus the inferred behavior label
+COL_TYPE_W = 180               # retired: the type is folded into the behavior cell
 COL_NAME_WEIGHT = 2.0
 COL_LOCATION_WEIGHT = 3.0
 
@@ -129,7 +129,6 @@ def build_threats_table(parent):
                              tag="threat_col_location", show=not _state["narrow"])
         dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=COL_CONF_W)
         dpg.add_table_column(label="Behavior", width_fixed=True, init_width_or_weight=COL_BEHAVIOR_W)
-        dpg.add_table_column(label="Type", width_fixed=True, init_width_or_weight=COL_TYPE_W)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("threats_table", t["table"])
     apply_table_font("threats_table", _state["fonts"])   # shared table font; scan.py rebuilds this table, so it re-applies every time
@@ -150,6 +149,49 @@ def _percent_button(value, theme_key):
         key = "dash"
     btn = dpg.add_button(label=label, width=-1, height=ROW_ITEM_HEIGHT)
     dpg.bind_item_theme(btn, t[key])
+
+
+def _humanize_behavior_name(name):
+    if not name:
+        return "-"
+    label = str(name).strip().replace("_", " ").replace("-", " ")
+    if label.lower() in {"ransom", "ransomware"}:
+        return "Ransomware"
+    if label.lower() == "pua":
+        return "PUA"
+    return label.title()
+
+
+def _format_behavior_type(threat):
+    behavior_types = threat.get("behavior_types") or []
+    if isinstance(behavior_types, str):
+        return behavior_types
+    if behavior_types:
+        labels = [_humanize_behavior_name(item) for item in behavior_types if item]
+        return ", ".join(labels)
+    behavior_type = threat.get("behavior_type")
+    return _humanize_behavior_name(behavior_type) if behavior_type else "-"
+
+
+def _behavior_score_button(threat):
+    t = _themes()
+    behavior_confidence = threat.get("behavior_confidence")
+    behavior_label = _format_behavior_type(threat)
+
+    try:
+        score = float(behavior_confidence)
+        label = f"{score:.1%} - {behavior_label}"
+        key = "behavior"
+    except (TypeError, ValueError):
+        label = "-"
+        key = "dash"
+
+    btn = dpg.add_button(label=label, width=-1, height=ROW_ITEM_HEIGHT)
+    dpg.bind_item_theme(btn, t[key])
+    if behavior_label != "-":
+        with dpg.tooltip(btn):
+            dpg.add_text(threat.get("behavior_result", ""), color=COLORS["text_secondary"])
+    return btn
 
 
 def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
@@ -177,7 +219,7 @@ def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
         dpg.bind_item_theme(loc_btn, t["path"])
 
         _percent_button(threat.get("probability"), "conf")
-        _percent_button(threat.get("behavior_confidence"), "behavior")
+        _behavior_score_button(threat)
 
         result = str(threat.get("result", ""))
         pill = dpg.add_button(label=result, width=-1, height=PILL_HEIGHT)

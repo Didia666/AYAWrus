@@ -1,0 +1,957 @@
+{
+  "label_type": "behavior",
+  "min_samples": 30,
+  "label_count": 74,
+  "included_labels": [
+    "adware",
+    "antiav",
+    "antivm",
+    "autorun",
+    "avkill",
+    "backdoor",
+    "banker",
+    "bho",
+    "binder",
+    "blocker",
+    "bypassuac",
+    "clicker",
+    "coinminer",
+    "cracktool",
+    "cryptor",
+    "ddos",
+    "delfiles",
+    "dialer",
+    "disabler",
+    "dllhijack",
+    "dllhijacker",
+    "downloader",
+    "dropper",
+    "email",
+    "encoder",
+    "exploit",
+    "fakealert",
+    "fakeantivirus",
+    "fakedoc",
+    "flooder",
+    "fraud",
+    "gamehack",
+    "gametool",
+    "hacktool",
+    "hideproc",
+    "hijacker",
+    "hoax",
+    "infector",
+    "injector",
+    "installer",
+    "ircbot",
+    "joke",
+    "keygen",
+    "keylogger",
+    "killfiles",
+    "killproc",
+    "loader",
+    "lockscreen",
+    "nettool",
+    "packed",
+    "passwordstealer",
+    "patcher",
+    "proxy",
+    "psdownload",
+    "pua",
+    "ransom",
+    "redirector",
+    "regrun",
+    "remoteshell",
+    "riskware",
+    "rootkit",
+    "runner",
+    "selfdel",
+    "selfmod",
+    "server",
+    "servstart",
+    "spyware",
+    "startpage",
+    "stealer",
+    "toolbar",
+    "vbinject",
+    "virus",
+    "wiper",
+    "worm"
+  ],
+  "label_to_index": {
+    "adware": 0,
+    "antiav": 1,
+    "antivm": 2,
+    "autorun": 3,
+    "avkill": 4,
+    "backdoor": 5,
+    "banker": 6,
+    "bho": 7,
+    "binder": 8,
+    "blocker": 9,
+    "bypassuac": 10,
+    "clicker": 11,
+    "coinminer": 12,
+    "cracktool": 13,
+    "cryptor": 14,
+    "ddos": 15,
+    "delfiles": 16,
+    "dialer": 17,
+    "disabler": 18,
+    "dllhijack": 19,
+    "dllhijacker": 20,
+    "downloader": 21,
+    "dropper": 22,
+    "email": 23,
+    "encoder": 24,
+    "exploit": 25,
+    "fakealert": 26,
+    "fakeantivirus": 27,
+    "fakedoc": 28,
+    "flooder": 29,
+    "fraud": 30,
+    "gamehack": 31,
+    "gametool": 32,
+    "hacktool": 33,
+    "hideproc": 34,
+    "hijacker": 35,
+    "hoax": 36,
+    "infector": 37,
+    "injector": 38,
+    "installer": 39,
+    "ircbot": 40,
+    "joke": 41,
+    "keygen": 42,
+    "keylogger": 43,
+    "killfiles": 44,
+    "killproc": 45,
+    "loader": 46,
+    "lockscreen": 47,
+    "nettool": 48,
+    "packed": 49,
+    "passwordstealer": 50,
+    "patcher": 51,
+    "proxy": 52,
+    "psdownload": 53,
+    "pua": 54,
+    "ransom": 55,
+    "redirector": 56,
+    "regrun": 57,
+    "remoteshell": 58,
+    "riskware": 59,
+    "rootkit": 60,
+    "runner": 61,
+    "selfdel": 62,
+    "selfmod": 63,
+    "server": 64,
+    "servstart": 65,
+    "spyware": 66,
+    "startpage": 67,
+    "stealer": 68,
+    "toolbar": 69,
+    "vbinject": 70,
+    "virus": 71,
+    "wiper": 72,
+    "worm": 73
+  },
+  "labels": {
+    "adware": {
+      "index": 0,
+      "train_count": 23632,
+      "test_count": 6506,
+      "included": true,
+      "rare": false
+    },
+    "antiav": {
+      "index": 1,
+      "train_count": 254,
+      "test_count": 100,
+      "included": true,
+      "rare": false
+    },
+    "antifw": {
+      "index": null,
+      "train_count": 24,
+      "test_count": 64,
+      "included": false,
+      "rare": true
+    },
+    "antivm": {
+      "index": 2,
+      "train_count": 56,
+      "test_count": 60,
+      "included": true,
+      "rare": false
+    },
+    "atm": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "autorun": {
+      "index": 3,
+      "train_count": 5784,
+      "test_count": 2834,
+      "included": true,
+      "rare": false
+    },
+    "avkill": {
+      "index": 4,
+      "train_count": 130,
+      "test_count": 2,
+      "included": true,
+      "rare": false
+    },
+    "backdoor": {
+      "index": 5,
+      "train_count": 296038,
+      "test_count": 100026,
+      "included": true,
+      "rare": false
+    },
+    "banker": {
+      "index": 6,
+      "train_count": 1850,
+      "test_count": 854,
+      "included": true,
+      "rare": false
+    },
+    "bho": {
+      "index": 7,
+      "train_count": 1008,
+      "test_count": 304,
+      "included": true,
+      "rare": false
+    },
+    "binder": {
+      "index": 8,
+      "train_count": 160,
+      "test_count": 54,
+      "included": true,
+      "rare": false
+    },
+    "blocker": {
+      "index": 9,
+      "train_count": 2268,
+      "test_count": 604,
+      "included": true,
+      "rare": false
+    },
+    "bot": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "bundler": {
+      "index": null,
+      "train_count": 28,
+      "test_count": 14,
+      "included": false,
+      "rare": true
+    },
+    "bypassuac": {
+      "index": 10,
+      "train_count": 226,
+      "test_count": 100,
+      "included": true,
+      "rare": false
+    },
+    "cdeject": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "chromex": {
+      "index": null,
+      "train_count": 16,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "clicker": {
+      "index": 11,
+      "train_count": 1374,
+      "test_count": 642,
+      "included": true,
+      "rare": false
+    },
+    "coinminer": {
+      "index": 12,
+      "train_count": 68386,
+      "test_count": 4300,
+      "included": true,
+      "rare": false
+    },
+    "constructor": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "cracktool": {
+      "index": 13,
+      "train_count": 1612,
+      "test_count": 472,
+      "included": true,
+      "rare": false
+    },
+    "crypter": {
+      "index": null,
+      "train_count": 18,
+      "test_count": 4,
+      "included": false,
+      "rare": true
+    },
+    "cryptor": {
+      "index": 14,
+      "train_count": 3060,
+      "test_count": 342,
+      "included": true,
+      "rare": false
+    },
+    "ddos": {
+      "index": 15,
+      "train_count": 3114,
+      "test_count": 730,
+      "included": true,
+      "rare": false
+    },
+    "delfiles": {
+      "index": 16,
+      "train_count": 82,
+      "test_count": 24,
+      "included": true,
+      "rare": false
+    },
+    "dialer": {
+      "index": 17,
+      "train_count": 172,
+      "test_count": 76,
+      "included": true,
+      "rare": false
+    },
+    "disabler": {
+      "index": 18,
+      "train_count": 580,
+      "test_count": 1590,
+      "included": true,
+      "rare": false
+    },
+    "diskcoder": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "diskfill": {
+      "index": null,
+      "train_count": 6,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "dllhijack": {
+      "index": 19,
+      "train_count": 360,
+      "test_count": 198,
+      "included": true,
+      "rare": false
+    },
+    "dllhijacker": {
+      "index": 20,
+      "train_count": 62,
+      "test_count": 12,
+      "included": true,
+      "rare": false
+    },
+    "downloader": {
+      "index": 21,
+      "train_count": 90704,
+      "test_count": 17222,
+      "included": true,
+      "rare": false
+    },
+    "dropper": {
+      "index": 22,
+      "train_count": 39196,
+      "test_count": 6926,
+      "included": true,
+      "rare": false
+    },
+    "email": {
+      "index": 23,
+      "train_count": 338,
+      "test_count": 54,
+      "included": true,
+      "rare": false
+    },
+    "encoder": {
+      "index": 24,
+      "train_count": 6744,
+      "test_count": 338,
+      "included": true,
+      "rare": false
+    },
+    "exploit": {
+      "index": 25,
+      "train_count": 1346,
+      "test_count": 462,
+      "included": true,
+      "rare": false
+    },
+    "exploitkit": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "explorerhijack": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "fakealert": {
+      "index": 26,
+      "train_count": 448,
+      "test_count": 166,
+      "included": true,
+      "rare": false
+    },
+    "fakeantivirus": {
+      "index": 27,
+      "train_count": 514,
+      "test_count": 320,
+      "included": true,
+      "rare": false
+    },
+    "fakedoc": {
+      "index": 28,
+      "train_count": 128,
+      "test_count": 60,
+      "included": true,
+      "rare": false
+    },
+    "flooder": {
+      "index": 29,
+      "train_count": 414,
+      "test_count": 196,
+      "included": true,
+      "rare": false
+    },
+    "fraud": {
+      "index": 30,
+      "train_count": 98,
+      "test_count": 64,
+      "included": true,
+      "rare": false
+    },
+    "ftp": {
+      "index": null,
+      "train_count": 6,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "gamehack": {
+      "index": 31,
+      "train_count": 5368,
+      "test_count": 1268,
+      "included": true,
+      "rare": false
+    },
+    "gamethief": {
+      "index": null,
+      "train_count": 16,
+      "test_count": 20,
+      "included": false,
+      "rare": true
+    },
+    "gametool": {
+      "index": 32,
+      "train_count": 414,
+      "test_count": 74,
+      "included": true,
+      "rare": false
+    },
+    "hacktool": {
+      "index": 33,
+      "train_count": 6746,
+      "test_count": 1826,
+      "included": true,
+      "rare": false
+    },
+    "hideproc": {
+      "index": 34,
+      "train_count": 38,
+      "test_count": 72,
+      "included": true,
+      "rare": false
+    },
+    "hijacker": {
+      "index": 35,
+      "train_count": 122,
+      "test_count": 14,
+      "included": true,
+      "rare": false
+    },
+    "hoax": {
+      "index": 36,
+      "train_count": 36,
+      "test_count": 40,
+      "included": true,
+      "rare": false
+    },
+    "hotbar": {
+      "index": null,
+      "train_count": 26,
+      "test_count": 12,
+      "included": false,
+      "rare": true
+    },
+    "iframe": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "infector": {
+      "index": 37,
+      "train_count": 2546,
+      "test_count": 0,
+      "included": true,
+      "rare": false
+    },
+    "inject": {
+      "index": null,
+      "train_count": 16,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "injector": {
+      "index": 38,
+      "train_count": 15650,
+      "test_count": 4376,
+      "included": true,
+      "rare": false
+    },
+    "installer": {
+      "index": 39,
+      "train_count": 92,
+      "test_count": 72,
+      "included": true,
+      "rare": false
+    },
+    "ircbot": {
+      "index": 40,
+      "train_count": 2240,
+      "test_count": 264,
+      "included": true,
+      "rare": false
+    },
+    "joke": {
+      "index": 41,
+      "train_count": 270,
+      "test_count": 68,
+      "included": true,
+      "rare": false
+    },
+    "keygen": {
+      "index": 42,
+      "train_count": 472,
+      "test_count": 198,
+      "included": true,
+      "rare": false
+    },
+    "keylogger": {
+      "index": 43,
+      "train_count": 1952,
+      "test_count": 550,
+      "included": true,
+      "rare": false
+    },
+    "killfiles": {
+      "index": 44,
+      "train_count": 1424,
+      "test_count": 82,
+      "included": true,
+      "rare": false
+    },
+    "killproc": {
+      "index": 45,
+      "train_count": 44,
+      "test_count": 18,
+      "included": true,
+      "rare": false
+    },
+    "loader": {
+      "index": 46,
+      "train_count": 1054,
+      "test_count": 552,
+      "included": true,
+      "rare": false
+    },
+    "lockscreen": {
+      "index": 47,
+      "train_count": 258,
+      "test_count": 60,
+      "included": true,
+      "rare": false
+    },
+    "mailer": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "nettool": {
+      "index": 48,
+      "train_count": 34,
+      "test_count": 4,
+      "included": true,
+      "rare": false
+    },
+    "notifier": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "nuker": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "packed": {
+      "index": 49,
+      "train_count": 18350,
+      "test_count": 3670,
+      "included": true,
+      "rare": false
+    },
+    "passwordstealer": {
+      "index": 50,
+      "train_count": 23254,
+      "test_count": 3680,
+      "included": true,
+      "rare": false
+    },
+    "patcher": {
+      "index": 51,
+      "train_count": 898,
+      "test_count": 264,
+      "included": true,
+      "rare": false
+    },
+    "perflog": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "phishing": {
+      "index": null,
+      "train_count": 8,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "porn": {
+      "index": null,
+      "train_count": 10,
+      "test_count": 4,
+      "included": false,
+      "rare": true
+    },
+    "processhijack": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "prockill": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "propagate": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "proxy": {
+      "index": 52,
+      "train_count": 7982,
+      "test_count": 5646,
+      "included": true,
+      "rare": false
+    },
+    "psdownload": {
+      "index": 53,
+      "train_count": 108,
+      "test_count": 14,
+      "included": true,
+      "rare": false
+    },
+    "pua": {
+      "index": 54,
+      "train_count": 15108,
+      "test_count": 3872,
+      "included": true,
+      "rare": false
+    },
+    "ransom": {
+      "index": 55,
+      "train_count": 24282,
+      "test_count": 3304,
+      "included": true,
+      "rare": false
+    },
+    "redirector": {
+      "index": 56,
+      "train_count": 98,
+      "test_count": 8,
+      "included": true,
+      "rare": false
+    },
+    "regrun": {
+      "index": 57,
+      "train_count": 284,
+      "test_count": 68,
+      "included": true,
+      "rare": false
+    },
+    "remoteshell": {
+      "index": 58,
+      "train_count": 4406,
+      "test_count": 638,
+      "included": true,
+      "rare": false
+    },
+    "riskware": {
+      "index": 59,
+      "train_count": 3810,
+      "test_count": 1116,
+      "included": true,
+      "rare": false
+    },
+    "rogue": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 6,
+      "included": false,
+      "rare": true
+    },
+    "rootkit": {
+      "index": 60,
+      "train_count": 1538,
+      "test_count": 398,
+      "included": true,
+      "rare": false
+    },
+    "runner": {
+      "index": 61,
+      "train_count": 508,
+      "test_count": 406,
+      "included": true,
+      "rare": false
+    },
+    "screensaver": {
+      "index": null,
+      "train_count": 6,
+      "test_count": 8,
+      "included": false,
+      "rare": true
+    },
+    "searcher": {
+      "index": null,
+      "train_count": 4,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "searchit": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "selfdel": {
+      "index": 62,
+      "train_count": 5518,
+      "test_count": 236,
+      "included": true,
+      "rare": false
+    },
+    "selfmod": {
+      "index": 63,
+      "train_count": 19508,
+      "test_count": 430,
+      "included": true,
+      "rare": false
+    },
+    "server": {
+      "index": 64,
+      "train_count": 60,
+      "test_count": 0,
+      "included": true,
+      "rare": false
+    },
+    "servstart": {
+      "index": 65,
+      "train_count": 2424,
+      "test_count": 512,
+      "included": true,
+      "rare": false
+    },
+    "sms": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "smssend": {
+      "index": null,
+      "train_count": 0,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "sniffer": {
+      "index": null,
+      "train_count": 16,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "spam": {
+      "index": null,
+      "train_count": 12,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "spyware": {
+      "index": 66,
+      "train_count": 49422,
+      "test_count": 24504,
+      "included": true,
+      "rare": false
+    },
+    "sshbruteforce": {
+      "index": null,
+      "train_count": 18,
+      "test_count": 8,
+      "included": false,
+      "rare": true
+    },
+    "startpage": {
+      "index": 67,
+      "train_count": 504,
+      "test_count": 248,
+      "included": true,
+      "rare": false
+    },
+    "stealer": {
+      "index": 68,
+      "train_count": 20056,
+      "test_count": 4004,
+      "included": true,
+      "rare": false
+    },
+    "toolbar": {
+      "index": 69,
+      "train_count": 422,
+      "test_count": 120,
+      "included": true,
+      "rare": false
+    },
+    "vbinject": {
+      "index": 70,
+      "train_count": 42,
+      "test_count": 2,
+      "included": true,
+      "rare": false
+    },
+    "virtool": {
+      "index": null,
+      "train_count": 2,
+      "test_count": 4,
+      "included": false,
+      "rare": true
+    },
+    "virus": {
+      "index": 71,
+      "train_count": 199530,
+      "test_count": 41884,
+      "included": true,
+      "rare": false
+    },
+    "vmdetect": {
+      "index": null,
+      "train_count": 18,
+      "test_count": 2,
+      "included": false,
+      "rare": true
+    },
+    "webshell": {
+      "index": null,
+      "train_count": 6,
+      "test_count": 0,
+      "included": false,
+      "rare": true
+    },
+    "wiper": {
+      "index": 72,
+      "train_count": 448,
+      "test_count": 100,
+      "included": true,
+      "rare": false
+    },
+    "worm": {
+      "index": 73,
+      "train_count": 133524,
+      "test_count": 17200,
+      "included": true,
+      "rare": false
+    }
+  },
+  "split_stats": {
+    "train": {
+      "records": 4160000,
+      "records_with_behavior": 994090
+    },
+    "test": {
+      "records": 960000,
+      "records_with_behavior": 219632
+    },
+    "challenge": {
+      "records": 6315,
+      "records_with_behavior": 504
+    }
+  }
+}

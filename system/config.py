@@ -5,7 +5,10 @@ import threading
 # ===========================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SELECTED_FEATURES_FILE = os.path.join(BASE_DIR, "selected_features.pkl")
+PROJECT_DIR = os.path.dirname(BASE_DIR)
+MALWARE_MODEL_DIR = os.path.join(PROJECT_DIR, "Model_Malware")
+BEHAVIOR_MODEL_DIR = os.path.join(PROJECT_DIR, "Model_Behavior")
+SELECTED_FEATURES_FILE = os.path.join(MALWARE_MODEL_DIR, "selected_features.pkl")
 
 
 # ===========================================
