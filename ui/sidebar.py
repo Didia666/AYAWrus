@@ -29,7 +29,7 @@ def pulse_dot(tag):
             for alpha in list(range(80, 256, 15)) + list(range(255, 79, -15)):
                 try:
                     dpg.configure_item(tag, fill=(*COLORS["accent_green"], alpha), color=(*COLORS["accent_green"], alpha))
-                    time.sleep(0.05)
+                    time.sleep(0.08)
                 except:
                     return
     threading.Thread(target=_pulse, daemon=True).start()

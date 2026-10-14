@@ -89,6 +89,7 @@ checking it.
         self.suspicious_characteristics = []
         self.feature_evidence = []
         self._analysis_lock = threading.RLock()
+        self.pe_analysis = {}
     
     def analyze_file(self, file_path: str, file_bytes: bytes, features: list, probability: float, result: str):
         """
@@ -101,6 +102,17 @@ checking it.
         self.scan_steps = []
         self.suspicious_characteristics = []
         self.feature_evidence = []
+        self.pe_analysis = {
+            "file_size": len(file_bytes),
+            "entropy": None,
+            "is_pe": False,
+            "architecture": None,
+            "section_count": None,
+            "dll_count": None,
+            "import_count": None,
+            "dll_names": [],
+            "parse_error": None,
+        }
         
         # Keep the scan steps understandable without requiring file-format knowledge.
         self._add_scan_step("Checking the file type", "Checking whether this is a Windows program file.")
@@ -158,6 +170,7 @@ checking it.
                 ),
             })
 
+        self.pe_analysis["entropy"] = round(entropy, 3)
         if entropy > 7.0:
             self.suspicious_characteristics.append({
                 "type": "high_entropy",
@@ -174,12 +187,20 @@ checking it.
         try:
             pe = pefile.PE(data=file_bytes)
             optional_header = pe.OPTIONAL_HEADER
+            
             machine_names = {
                 0x014C: "32-bit Windows (x86)",
                 0x8664: "64-bit Windows (x64)",
                 0x01C0: "32-bit ARM",
                 0xAA64: "64-bit ARM",
             }
+            self.pe_analysis["is_pe"] = True
+
+            self.pe_analysis["architecture"] = machine_names.get(
+                pe.FILE_HEADER.Machine,
+                f"Unknown (0x{pe.FILE_HEADER.Machine:04X})"
+            )
+            self.pe_analysis["section_count"] = len(pe.sections)
             subsystem_names = {
                 1: "device/driver",
                 2: "Windows graphical app",
@@ -199,6 +220,7 @@ checking it.
 
             section_details = []
             high_entropy_sections = []
+
             for section in pe.sections:
                 section_entropy = section.get_entropy()
                 section_name = section.Name.decode("utf-8", errors="replace").strip("\x00") or "<unnamed>"
@@ -243,9 +265,16 @@ checking it.
             suspicious_imports = []
             imports_by_dll = []
             import_count = 0
+            dll_names = set()
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode("utf-8", errors="replace")
+                    dll_name = (
+                        entry.dll.decode("utf-8", errors="replace")
+                        if entry.dll else "<unnamed>"
+                    )
+
+                    if entry.dll:
+                        dll_names.add(dll_name.lower())
                     dll_imports = []
                     for imp in entry.imports:
                         import_count += 1
@@ -257,11 +286,19 @@ checking it.
                             continue
                         dll_imports.append(imp_name)
                         if imp.name:
-                            for suspicious_api in self.SUSPICIOUS_APIS:
-                                if suspicious_api.lower() in imp_name.lower():
-                                    suspicious_imports.append(imp_name)
-                                    break
+                            api_name = imp_name.lower()
+
+                            if any(
+                                api_name == api.lower()
+                                or api_name == api.lower() + "a"
+                                or api_name == api.lower() + "w"
+                                for api in self.SUSPICIOUS_APIS
+                            ):
+                                suspicious_imports.append(imp_name)
                     imports_by_dll.append((dll_name, dll_imports))
+            self.pe_analysis["dll_count"] = len(dll_names)
+            self.pe_analysis["import_count"] = import_count
+            self.pe_analysis["dll_names"] = sorted(dll_names)
             if imports_by_dll:
                 import_summary = [
                     f"{dll} uses: {', '.join(names[:8]) or 'no named functions'}"
@@ -306,9 +343,13 @@ checking it.
                     "description": ", ".join(unique_imports),
                 })
         except pefile.PEFormatError as exc:
+            self.pe_analysis["parse_error"] = str(exc)
+
             self.feature_evidence.append({
                 "title": "Program details could not be read",
-                "description": f"We could not read the Windows program layout ({exc}).",
+                "description": (
+                    f"We could not read the Windows program layout ({exc})."
+                ),
             })
         finally:
             if pe is not None:
@@ -396,12 +437,14 @@ checking it.
             "prediction": "Malicious" if result == "MALICIOUS" else "Suspicious" if result == "SUSPICIOUS" else "Safe",
             "confidence": confidence,
             "risk_level": risk_level,
+            "pe_analysis": dict(self.pe_analysis),
             "scan_steps": self.scan_steps,
             "suspicious_characteristics": self.suspicious_characteristics,
             "feature_evidence": self.feature_evidence,
             "explanation": "\n\n".join(explanation_parts),
             "recommendations": recommendations,
             "educational_topics": self.EDUCATIONAL_TOPICS
+            
         }
     
     def _get_action_recommendations(self, result: str, probability: float, risk_level: str) -> list:

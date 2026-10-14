@@ -66,7 +66,7 @@ MAX_DT = 0.05
 TABS = [
     ("overview", "shield_alert", "Overview"),
     ("steps", "monitor_cog", "Scan Steps"),
-    ("suspicious", "octagon_alert", "Suspicious"),
+    ("suspicious", "octagon_alert", "PE Analysis"),
     ("explanation", "search", "Explanation"),
     ("actions", "circle_check", "Actions"),
     ("learn", "chart_bar", "Learn Why"),
@@ -433,14 +433,130 @@ def _page_steps(report):
 
 
 def _page_suspicious(report):
-    items = (report or {}).get("suspicious_characteristics") or []
-    if not items:
-        return _empty_page("No suspicious characteristics were recorded for this file.")
-    for item in items:
-        desc = _clean(item.get("description"))
-        with _card(_card_h(TITLE_H, _text_h(desc))):
-            dpg.add_text(_clean(item.get("title")), color=COLORS["accent_orange"])
-            dpg.add_text(desc, wrap=0, color=COLORS["text_secondary"])
+    report = report or {}
+    pe = report.get("pe_analysis") or {}
+
+    def display(value):
+        return "N/A" if value is None else str(value)
+
+    def add_metric(label, value):
+        with _card(_card_h(TITLE_H, TITLE_H)):
+            dpg.add_text(
+                label,
+                color=COLORS["text_secondary"]
+            )
+            dpg.add_text(
+                display(value),
+                color=COLORS["text_primary"]
+            )
+
+    # PE Analysis heading
+    dpg.add_text(
+        "PE Analysis",
+        color=COLORS["text_primary"]
+    )
+
+    if pe:
+        file_size = pe.get("file_size")
+
+        if file_size is not None:
+            if file_size >= 1024 * 1024:
+                size_text = f"{file_size / (1024 * 1024):.2f} MB"
+            elif file_size >= 1024:
+                size_text = f"{file_size / 1024:.2f} KB"
+            else:
+                size_text = f"{file_size} bytes"
+        else:
+            size_text = "N/A"
+
+        add_metric("File Size", size_text)
+
+        entropy = pe.get("entropy")
+        add_metric(
+            "File Entropy",
+            f"{entropy:.3f} / 8.0"
+            if entropy is not None else "N/A"
+        )
+
+        if pe.get("is_pe"):
+            add_metric(
+                "Architecture",
+                pe.get("architecture")
+            )
+
+            add_metric(
+                "PE Sections",
+                pe.get("section_count")
+            )
+
+            add_metric(
+                "Imported DLL Count",
+                pe.get("dll_count")
+            )
+
+            add_metric(
+                "Imported Function Count",
+                pe.get("import_count")
+            )
+
+            dll_names = pe.get("dll_names") or []
+
+            if dll_names:
+                dll_text = "\n".join(dll_names)
+
+                with _card(_card_h(
+                    TITLE_H,
+                    _text_h(dll_text)
+                )):
+                    dpg.add_text(
+                        "Imported DLLs",
+                        color=COLORS["text_primary"]
+                    )
+
+                    dpg.add_text(
+                        dll_text,
+                        color=COLORS["text_secondary"],
+                        wrap=0
+                    )
+
+        else:
+            dpg.add_text(
+                "PE structure unavailable for this file.",
+                color=COLORS["text_secondary"],
+                wrap=0
+            )
+
+    else:
+        dpg.add_text(
+            "No structured PE analysis available.",
+            color=COLORS["text_secondary"]
+        )
+
+    # Preserve your existing suspicious findings
+    items = report.get("suspicious_characteristics") or []
+
+    if items:
+        dpg.add_separator()
+
+        dpg.add_text(
+            "Analysis Findings",
+            color=COLORS["text_primary"]
+        )
+
+        for item in items:
+            desc = _clean(item.get("description"))
+
+            with _card(_card_h(TITLE_H, _text_h(desc))):
+                dpg.add_text(
+                    _clean(item.get("title")),
+                    color=COLORS["accent_orange"]
+                )
+
+                dpg.add_text(
+                    desc,
+                    wrap=0,
+                    color=COLORS["text_secondary"]
+                )
 
 
 def _page_explanation(report):
@@ -694,8 +810,21 @@ def _tick(now, dt):
 
 def _ticker_loop():
     last = time.time()
+
     while True:
-        time.sleep(FRAME_SECONDS)
+        mode = _s["mode"]
+
+        if (
+            mode == "closed"
+            or (
+                mode == "open"
+                and not _s["animating"]
+                and _s["veil_t0"] is None
+            )
+        ):
+            time.sleep(0.10)
+        else:
+            time.sleep(FRAME_SECONDS)
         now = time.time()
         dt = min(MAX_DT, now - last)
         last = now

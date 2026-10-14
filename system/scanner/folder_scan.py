@@ -4,8 +4,19 @@ import random
 import threading
 from itertools import islice
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
-
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    as_completed,
+    ThreadPoolExecutor,
+    wait,
+)
+from threading import BoundedSemaphore
+from system.scanner.xai_scheduler import schedule_xai
+_post_executor = ThreadPoolExecutor(
+    max_workers=2,
+    thread_name_prefix="AYAWrusPost"
+)
+_post_slots = BoundedSemaphore(4)
 from system.config import SKIP_DIRS, HEADER_PEEK_SIZE, DETECTED_MALWARE
 from system.security.exclusions import list_exclusions
 from system.security.allowed import allow_threat
@@ -16,14 +27,30 @@ from system.model_load import (
     model,
     selected_feature_indices,
     expected_input_dim,
-    score_behavior_probability,
+    get_behavior_prediction_summary,
 )
 from system.quarantines import quarantine_file
-from system.notifications import send_telegram_notification
 from system.utils import categorize_threat
 from system.xai.engine import xai_engine
 from system.xai.display import display_xai_explanation
 MAX_PENDING = 8
+
+def submit_post_process(fn):
+    # Apply backpressure rather than dropping
+    # quarantine or notification tasks.
+    _post_slots.acquire()
+
+    try:
+        future = _post_executor.submit(fn)
+    except Exception:
+        _post_slots.release()
+        raise
+
+    future.add_done_callback(
+        lambda completed: _post_slots.release()
+    )
+
+    return future
 
 
 def locally_shuffled(iterable, buffer_size=500, rng=None):
@@ -107,6 +134,7 @@ def process_batch_results(batch_results, pe_candidates, excluded_roots):
 
 def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_size=32):
     pending = []
+    post_futures = []
     excluded_roots = [os.path.abspath(e).lower() for e in list_exclusions()]  # loaded ONCE
 
     pe_candidates = []
@@ -164,57 +192,120 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
             if pred == 1:
                 behavior_probability = 0.0
                 behavior_result = "NOT_EVALUATED"
+                behavior_types = []
+                behavior_type = None
+
                 try:
-                    behavior_probability = score_behavior_probability(features)
-                    behavior_result = "BEHAVIORAL_ANOMALY" if behavior_probability >= 0.5 else "BEHAVIORAL_NORMAL"
+                    # Original feature vector from the batch.
+                    raw_features = np.asarray(
+                        features,
+                        dtype=np.float32
+                    ).reshape(1, -1)
+
+                    # One inference call only.
+                    behavior_summary = get_behavior_prediction_summary(
+                        raw_features
+                    )
+
+                    behavior_probability = float(
+                        behavior_summary.get("mean_probability", 0.0)
+                    )
+
+                    behavior_types = behavior_summary.get(
+                        "predicted_labels", []
+                    )
+
+                    behavior_type = behavior_summary.get("top_label")
+
+                    behavior_result = (
+                        "BEHAVIORAL_ANOMALY"
+                        if behavior_types
+                        else "NO_BEHAVIOR_LABEL_PREDICTED"
+                    )
+
                 except Exception as e:
-                    print(f"Behavior model evaluation failed for {f}: {e}")
+                    print(
+                        f"Behavior model evaluation failed for {f}: {e}"
+                    )
+
                     behavior_probability = 0.0
                     behavior_result = "BEHAVIOR_ERROR"
+                    behavior_types = []
+                    behavior_type = None
 
                 DETECTED_MALWARE.append(f)
                 add_log_entry(
                     f,
                     result="MALICIOUS",
                     probability=prob,
-                    details=f"Category: {category}; behavior_probability={behavior_probability:.3f}; behavior_result={behavior_result}"
+                    details=(
+                        f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
+                        f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
+                    )
                 )
 
-                def _post_process_malware(file_path=f, file_prob=prob, file_category=category, file_features=features, file_result=result_str, behavior_prob=behavior_probability, behavior_state=behavior_result):
-                    try:
-                        with open(file_path, "rb") as file:
-                            file_bytes = file.read()
-                        xai_report = None
-                        try:
-                            xai_report = xai_engine.analyze_file(file_path, file_bytes, file_features, file_prob, file_result)
-                        except Exception as e:
-                            print(f"XAI failed: {e}")
-                        message = (
-                            f"[!] Malware Detected!\nFile: {os.path.basename(file_path)}\n"
-                            f"Path: {file_path}\nProbability: {file_prob:.2%}\nSeverity: {file_category}\nBehavior probability: {behavior_prob:.2%}\nBehavior state: {behavior_state}"
-                        )
-                        send_telegram_notification(message)
-                        if file_prob >= 0.90:
-                            quarantine_file(file_path)
-                        else:
-                            allow_threat(file_path, file_category, "MALICIOUS")
-                        print({
-                            "result": "MALICIOUS",
-                            "probability": file_prob,
-                            "file_path": file_path,
-                            "category": file_category,
-                            "behavior_probability": behavior_prob,
-                            "behavior_confidence": behavior_prob,
-                            "behavior_result": behavior_state,
-                        })
-                        if xai_report:
-                            display_xai_explanation(xai_report)
-                    except Exception as e:
-                        print(f"Post-process malware error for {file_path}: {e}")
+                
+                def _post_process_malware(
+                    file_path=f,
+                    file_prob=prob,
+                    file_category=category,
+                ):
+                    """
+                    Background security post-processing.
 
-                threading.Thread(target=_post_process_malware, daemon=True).start()
-            else:
-                print({"result": "CLEAN", "probability": prob, "file_path": f})
+                    No Telegram calls.
+                    No XAI scheduling before quarantine.
+                    """
+
+                    try:
+                        if file_prob >= 0.90:
+                            # Security action first.
+                            quarantine_result = quarantine_file(file_path)
+
+                            if not (
+                                isinstance(quarantine_result, str)
+                                and (
+                                    "MOVED TO QUARANTINE" in quarantine_result
+                                    or "ALREADY IN QUARANTINE" in quarantine_result
+                                )
+                            ):
+                                raise RuntimeError(
+                                    f"Quarantine did not succeed: {quarantine_result}"
+                                )
+
+                            print(
+                                f"[Security] Quarantine confirmed: {file_path}"
+                            )
+
+                        else:
+                            # Preserves the existing policy.
+                            allow_threat(
+                                file_path,
+                                file_category,
+                                "MALICIOUS"
+                            )
+
+                            print(
+                                f"[Security] Existing allow policy "
+                                f"applied: {file_path}"
+                            )
+
+                        return True
+
+                    except Exception as e:
+                        print(
+                            f"[Security] Post-processing failed "
+                            f"for {file_path}: {e}"
+                        )
+                        return False
+
+
+                # Submit to the bounded post-processing executor.
+                future = submit_post_process(
+                    _post_process_malware
+                )
+
+                post_futures.append(future)
 
     def drain_one_pending():
         """Pull one finished future, process its results, and flush
@@ -256,3 +347,41 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
     elif pe_candidates and model is None:
         for f, _ in pe_candidates:
             add_log_entry(f, result="UNKNOWN", details="Model not loaded")
+
+    
+    # Wait for outstanding security post-processing jobs.
+    if post_futures:
+        print(
+            f"[Security] Waiting for "
+            f"{len(post_futures)} submitted tasks."
+        )
+
+        wait(post_futures)
+
+        failed_count = 0
+
+        for future in post_futures:
+            try:
+                success = future.result()
+
+                if not success:
+                    failed_count += 1
+
+            except Exception as e:
+                failed_count += 1
+                print(
+                    f"[Security] Worker exception: {e}"
+                )
+
+        if failed_count:
+            print(
+                f"[Security] WARNING: "
+                f"{failed_count} post-processing tasks "
+                f"reported failure."
+            )
+
+        else:
+            print(
+                "[Security] All submitted "
+                "post-processing tasks finished."
+            )

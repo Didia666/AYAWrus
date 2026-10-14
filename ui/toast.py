@@ -81,6 +81,8 @@ GLOW_BOTTOM = "toast_glow_bottom"
 _s = {"ready": False, "pending": None, "mode": "idle", "t0": 0.0,
       "text": " ", "kind": "info", "tw": 0.0, "th": 20.0}
 
+_toast_wakeup = threading.Event()
+
 
 # ---------------------------------------------------------------------------
 # Glow textures (made once, white with a soft alpha: the toast's color is applied as a tint when drawing)
@@ -217,21 +219,42 @@ def _step():
 
 def _ticker_loop():
     while True:
-        time.sleep(TOAST_FRAME_SECONDS)
+        mode = _s["mode"]
+        pending = _s["pending"]
+
+        if mode == "idle" and pending is None:
+            # No notification: sleep until one arrives.
+            _toast_wakeup.wait()
+            _toast_wakeup.clear()
+
+        elif mode == "hold" and pending is None:
+            # Visible notification: no fade animation needed.
+            # Wake for expiry checks or a replacement toast.
+            _toast_wakeup.wait(timeout=0.05)
+            _toast_wakeup.clear()
+
+        else:
+            # Fade-in / fade-out: keep smooth animation.
+            time.sleep(TOAST_FRAME_SECONDS)
+
         if _s["mode"] == "idle" and _s["pending"] is None:
             continue
+
         try:
             with dpg.mutex():
                 _step()
+
         except Exception:
             traceback.print_exc()
-            _s["mode"] = "idle"          # fail-safe: never leave a toast stuck on screen
+            _s["mode"] = "idle"
             _s["pending"] = None
+
             try:
                 with dpg.mutex():
                     _paint(0.0, 0.0)
             except Exception:
                 traceback.print_exc()
+
 
 
 # ---------------------------------------------------------------------------
@@ -270,8 +293,11 @@ def init_toast():
 
 
 def show_toast(message, kind="info"):
-    """Shows a message. kind: "success", "warning", "error" or "info"."""
     if not _s["ready"]:
         print(f"[toast] not initialised, message dropped: {message}")
         return
+
     _s["pending"] = (str(message), kind)
+
+    # Wake the ticker immediately.
+    _toast_wakeup.set()

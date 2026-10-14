@@ -10,11 +10,16 @@ from system.model_load import (
     model,
     selected_feature_indices,
     expected_input_dim,
-    score_behavior_probability,
+    get_behavior_prediction_summary,
+    get_behavior_model_metrics,
+)
+from system.scanner.xai_scheduler import (
+    schedule_xai,
+    new_detection_id,
 )
 from system.quarantines.quarantine import quarantine_file
 from system.utils.utility import categorize_threat
-from system.notifications import send_telegram_notification, enqueue_threat_notification
+from system.notifications import enqueue_threat_notification
 from system.xai.engine import xai_engine
 
 def classify_file(file_path):
@@ -101,7 +106,13 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             return {"result": "UNKNOWN", "probability": 0, "file_path": file_path, "details": "Model not available"}
         
         try:
-            X = _prepare_model_features(features)
+            raw_features = np.asarray(
+                features,
+                dtype=np.float32
+            ).reshape(1, -1)
+
+            # Prepare features for the malware/benign model only.
+            X = _prepare_model_features(raw_features)
         except ValueError as e:
             add_log_entry(file_path, result="ERROR", details=str(e))
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
@@ -122,36 +133,88 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
         behavior_probability = 0.0
         behavior_result = "NOT_EVALUATED"
+        behavior_types = []
+        behavior_type = None
+
+        # Only evaluate behavior when malware is detected.
         if prediction == 1:
             try:
-                behavior_probability = score_behavior_probability(X)
-                behavior_result = "BEHAVIORAL_ANOMALY" if behavior_probability >= 0.5 else "BEHAVIORAL_NORMAL"
+                # Use ORIGINAL EMBER features.
+                # This function applies the behavior model's
+                # own selected feature indices.
+                behavior_summary = get_behavior_prediction_summary(
+                    raw_features
+                )
+
+                # Reuse the SAME prediction result.
+                behavior_probability = float(
+                    behavior_summary.get("mean_probability", 0.0)
+                )
+
+                behavior_types = behavior_summary.get(
+                    "predicted_labels", []
+                )
+
+                behavior_type = behavior_summary.get("top_label")
+
+                # Classify whether any behavior label passed
+                # its own configured threshold.
+                behavior_result = (
+                    "BEHAVIORAL_ANOMALY"
+                    if behavior_types
+                    else "NO_BEHAVIOR_LABEL_PREDICTED"
+                )
+
             except Exception as e:
-                print(f"Behavior model evaluation failed for {file_path}: {e}")
+                print(
+                    f"Behavior model evaluation failed "
+                    f"for {file_path}: {e}"
+                )
+
                 behavior_probability = 0.0
                 behavior_result = "BEHAVIOR_ERROR"
+                behavior_types = []
+                behavior_type = None
+
 
         category = categorize_threat(prob)
 
-        # Keep the explanation with the scan result for the Explain panel.
-        result_str = "MALICIOUS" if prediction == 1 else "CLEAN"
+        # Generate XAI explanation asynchronously (without blocking scan)
+        result_str = (
+            "MALICIOUS"
+            if prediction == 1
+            else "CLEAN"
+        )
+
         xai_report = None
+        detection_id = None
+        xai_job_id = None
 
         if result_str == "MALICIOUS":
-            try:
-                xai_report = xai_engine.analyze_file(
-                    file_path,
-                    file_bytes,
-                    features,
-                    prob,
-                    result_str,
-                )
-            except Exception as xai_error:
-                print(f"XAI analysis failed for {file_path}: {xai_error}")
+            # Every detection gets an independent identifier.
+            detection_id = new_detection_id()
+
+            if not auto_quarantine:
+                try:
+                    xai_job_id = schedule_xai(
+                        file_path=file_path,
+                        features=features,
+                        probability=prob,
+                        result=result_str,
+                        detection_id=detection_id
+                    )
+
+                except Exception as e:
+                    print(
+                        f"[XAI] Scheduling failed: {e}"
+                    )
 
         if prediction == 1:
             DETECTED_MALWARE.append(file_path)
-            details = f"Category: {category}; behavior_probability={behavior_probability:.3f}; behavior_result={behavior_result}"
+            details = (
+                f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
+                f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
+            )
             add_log_entry(file_path, result="MALICIOUS", probability=prob, details=details)
 
             try:
@@ -172,6 +235,11 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "behavior_probability": behavior_probability,
                 "behavior_confidence": behavior_probability,
                 "behavior_result": behavior_result,
+                "behavior_types": behavior_types,
+                "behavior_type": behavior_type,
+                "behavior_model_metrics": get_behavior_model_metrics(),
+                "detection_id": detection_id,
+                "xai_job_id": xai_job_id,
                 "xai_report": xai_report,
             }
         else:
@@ -183,6 +251,9 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "behavior_probability": behavior_probability,
                 "behavior_confidence": behavior_probability,
                 "behavior_result": behavior_result,
+                "behavior_types": behavior_types,
+                "behavior_type": behavior_type,
+                "behavior_model_metrics": get_behavior_model_metrics(), 
                 "xai_report": xai_report,
             }
     except Exception as e:
@@ -228,14 +299,15 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
     
     if found_keywords:
         # Run XAI analysis asynchronously for scripts too!
-        def _run_xai_script():
-            try:
-                file_bytes_copy = file_bytes
-                xai_engine.analyze_file(file_path, file_bytes_copy, [], 0.7, result_str)
-            except Exception as xai_error:
-                print(f"XAI analysis failed for script: {xai_error}")
-        threading.Thread(target=_run_xai_script, daemon=True).start()
-        xai_report = None  # We'll generate it on demand if user clicks "Explain"
+        if found_keywords:
+            schedule_xai(
+                file_path=file_path,
+                features=[],
+                probability=0.7,
+                result=result_str
+            )
+
+            xai_report = None
             
         DETECTED_SUSPICIOUS.append(file_path)
         add_log_entry(file_path, "SUSPICIOUS", details=f"Keywords: {', '.join(found_keywords)}")

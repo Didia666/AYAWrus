@@ -4,6 +4,7 @@ import threading
 import time
 import sys
 import os
+import psutil
 import traceback
 from ui.activity_feed import _rebuild_activity_feed, _rebuild_activity_feed_from_data
 from ui.dashboard import refresh_dashboard_stats, animate_number
@@ -16,6 +17,15 @@ from ui.scan_explain import init_explain, open_explain
 from ui.scan_picker import init_picker, open_picker
 from ui.scan_threats import (build_threats_panel, build_threats_table, add_threat_row, add_empty_row,
                              reset_threat_rows, update_selection_ui, apply_selection)
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    wait,
+    FIRST_COMPLETED,
+)
+from system.scanner.xai_scheduler import (
+    get_xai_report,
+    get_xai_status,
+)
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _api_server_started = False
@@ -31,8 +41,7 @@ try:
     import system.history.logs as hs
     from system.history.logs import begin_log_buffer, flush_log_buffer
     from system.notifications import enqueue_threat_notification
-    from system.xai.engine import XAIExplanationEngine
-    xai_engine = XAIExplanationEngine()
+
     BACKEND_AVAILABLE = True
     BACKEND_LOAD_ERROR = ""
 except Exception as e:
@@ -54,9 +63,13 @@ _PROGRESS_COUNTER_LOCK = threading.Lock()
 _PROGRESS_FILES_SCANNED = 0
 _PROGRESS_THREATS_FOUND = 0
 _PROGRESS_CURRENT_NAME = ""
-_PROGRESS_ESTIMATED_TOTAL = 100
+_PROGRESS_TOTAL_FILES = 0
+_PROGRESS_PHASE = "IDLE"
 _PROGRESS_START_TIME = 0.0
 _PROGRESS_TICKER_RUNNING = False
+
+SCAN_MAX_WORKERS = 4
+SCAN_MAX_PENDING = 8
 
 SCAN_TYPES = [
     {"key": "quick", "icon": "zap", "label": "Quick Scan", "subtitle": "Checks common areas"},
@@ -78,6 +91,49 @@ DETECTION_STEPS = [
 SELECTED_STEP = 0
 g_icons = None  # Global variable to store icons for step card rebuilding
 g_step_elements = []  # List to store (step_card_tag, image_tag, text_tag) for each step
+
+
+
+def get_scan_worker_config():
+    # Get physical CPU cores, ignoring hyperthreading.
+    physical_cores = psutil.cpu_count(logical=False)
+
+    if physical_cores is None:
+        physical_cores = max(1, (os.cpu_count() or 2) // 2)
+
+    # Available RAM right now, not total installed RAM.
+    available_ram_gb = (
+        psutil.virtual_memory().available / (1024 ** 3)
+    )
+
+    # Reserve CPU capacity for Windows and other applications.
+    cpu_workers = max(1, physical_cores - 1)
+
+    # Limit concurrency when available RAM is low.
+    if available_ram_gb < 2:
+        ram_workers = 1
+    elif available_ram_gb < 4:
+        ram_workers = 2
+    elif available_ram_gb < 8:
+        ram_workers = 3
+    else:
+        ram_workers = 6
+
+    # Combine CPU and memory limits.
+    max_workers = min(
+        cpu_workers,
+        ram_workers,
+        6
+    )
+
+    max_workers = max(1, max_workers)
+
+    # Keep only a small number of queued scan tasks.
+    max_pending = max_workers * 2
+
+    return max_workers, max_pending
+
+
 
 
 def _select_scan(sender, app_data, user_data):
@@ -254,167 +310,88 @@ def _quarantine_selected(sender, app_data):
 
 
 def _open_xai_panel(sender, app_data, user_data):
-    """Open the Explain popup (the UI lives in ui/scan_explain.py). Report generation is unchanged."""
+    """
+    Open cached XAI without rereading the executable
+    or running synchronous analysis.
+    """
 
     threat = user_data
 
-    # If the panel already exists, delete it first
-    if dpg.does_item_exist("xai_panel_window"):
-        dpg.delete_item("xai_panel_window")
+    job_id = threat.get("xai_job_id")
 
-    with dpg.window(
-        label="AI Explanation Panel",
-        tag="xai_panel_window",
-        width=800,
-        height=700,
-        pos=(200, 100),
-        modal=True,
-        on_close=lambda: dpg.delete_item("xai_panel_window")
-    ):
+    # Legacy/in-memory report fallback.
+    report = threat.get("xai_report")
 
-        with dpg.theme() as xai_theme:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_WindowBg, COLORS["bg_card"])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, COLORS["text_primary"])
-                dpg.add_theme_color(dpg.mvThemeCol_Border, COLORS["border"])
-                dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 6)
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
-
-        dpg.bind_item_theme("xai_panel_window", xai_theme)
-
-        dpg.add_text("🎓 AI Explanation Panel", color=COLORS["accent_blue"])
-        dpg.add_text(
-            f"File: {os.path.basename(threat['file_path'])}",
-            color=COLORS["text_secondary"]
-        )
-        dpg.add_spacer(height=10)
-
-        # Get XAI report (generate if not present)
-        xai_report = threat.get("xai_report")
-        if not xai_report and BACKEND_AVAILABLE:
-            try:
-                file_bytes = None
-                features = None
-                # Always read from disk to avoid keeping big data in memory
-                if os.path.exists(threat["file_path"]):
-                    with open(threat["file_path"], "rb") as f:
-                        file_bytes = f.read()
-                xai_report = xai_engine.analyze_file(
-                    threat["file_path"],
-                    file_bytes or b"",
-                    features or [],
-                    threat.get("probability", 0),
-                    threat["result"]
-                )
-            except Exception as e:
-                print(f"Failed to generate XAI report: {e}")
-
-        if xai_report:
-            # Prediction info
-            dpg.add_text("Scan result:", color=COLORS["accent_blue"])
-            dpg.add_text(xai_report["prediction"], color=COLORS["text_primary"])
-            dpg.add_spacer(height=5)
-
-            dpg.add_text("Model score (a guide, not a guarantee):", color=COLORS["accent_blue"])
-            dpg.add_text(f"{xai_report['confidence']:.1f}%", color=COLORS["text_primary"])
-            dpg.add_spacer(height=5)
-
-            dpg.add_text("Risk level:", color=COLORS["accent_blue"])
-            dpg.add_text(xai_report["risk_level"], color=COLORS["accent_orange"])
-            dpg.add_spacer(height=10)
-
-            # Scan steps
-            dpg.add_text("What the scan checked:", color=COLORS["accent_blue"])
-            dpg.add_separator()
-            for i, step in enumerate(xai_report["scan_steps"], 1):
-                dpg.add_text(f"{i}. {step['title']}")
-                dpg.add_text(f"   {step['description']}", color=COLORS["text_secondary"])
-                dpg.add_spacer(height=3)
-            dpg.add_spacer(height=10)
-
-            # Suspicious characteristics
-            if xai_report["suspicious_characteristics"]:
-                dpg.add_text("Things worth a closer look:", color=COLORS["accent_blue"])
-                dpg.add_separator()
-                for char in xai_report["suspicious_characteristics"]:
-                    dpg.add_text(f"• {char['title']}")
-                    dpg.add_text(f"  {char['description']}", color=COLORS["text_secondary"])
-                    dpg.add_spacer(height=3)
-                dpg.add_spacer(height=10)
-
-            if xai_report.get("feature_evidence"):
-                dpg.add_text(
-                    "What we found in the file (these clues do not prove it is harmful):",
-                    color=COLORS["accent_blue"],
-                )
-                dpg.add_separator()
-                for evidence in xai_report["feature_evidence"]:
-                    dpg.add_text(f"• {evidence['title']}")
-                    dpg.add_text(
-                        f"  {evidence['description']}",
-                        wrap=750,
-                        color=COLORS["text_secondary"],
-                    )
-                    dpg.add_spacer(height=3)
-                dpg.add_spacer(height=10)
-
-            # Detailed explanation
-            dpg.add_text("In plain language:", color=COLORS["accent_blue"])
-            dpg.add_separator()
-            with dpg.child_window(height=150, width=-1, border=True):
-                dpg.add_text(xai_report["explanation"], wrap=750)
-            dpg.add_spacer(height=10)
-
-            # Recommendations
-            dpg.add_text("What you can do:", color=COLORS["accent_blue"])
-            dpg.add_separator()
-            for rec in xai_report["recommendations"]:
-                dpg.add_text(f"→ {rec}")
-            dpg.add_spacer(height=10)
-
-            # Learn Why section
-            dpg.add_text("📚 Learn more:", color=COLORS["accent_blue"])
-            dpg.add_separator()
-            with dpg.child_window(height=180, width=-1, border=True):
-                for topic_key, topic in xai_report["educational_topics"].items():
-                    dpg.add_text(topic["title"], color=COLORS["accent_green"])
-                    dpg.add_text(topic["content"], wrap=750, color=COLORS["text_secondary"])
-                    dpg.add_spacer(height=8)
-        else:
-            dpg.add_text("XAI explanation not available for this file.", color=COLORS["text_secondary"])
-            dpg.add_spacer(height=10)
-
-        dpg.add_button(
-            label="Close",
-            width=100,
-            callback=lambda: (
-                dpg.delete_item("xai_panel_window")
-                if dpg.does_item_exist("xai_panel_window")
-                else None
-            ),
-        )
-    # Get XAI report (generate if not present)
-    xai_report = threat.get("xai_report")
-    if not xai_report and BACKEND_AVAILABLE:
+    if BACKEND_AVAILABLE and job_id:
         try:
-            file_bytes = None
-            features = None
-            # Always read from disk to avoid keeping big data in memory
-            if os.path.exists(threat["file_path"]):
-                with open(threat["file_path"], "rb") as f:
-                    file_bytes = f.read()
-            xai_report = xai_engine.analyze_file(
-                threat["file_path"],
-                file_bytes or b"",
-                features or [],
-                threat.get("probability", 0),
-                threat["result"]
-            )
-        except Exception as e:
-            print(f"Failed to generate XAI report: {e}")
+            cached = get_xai_report(job_id)
 
-    open_explain(threat, xai_report)
+            if cached is not None:
+                report = cached
+
+            else:
+                state = get_xai_status(job_id)
+                status = state.get("status")
+
+                if status == "PENDING":
+                    report = {
+                        "explanation": (
+                            "Background AI explanation is "
+                            "still being generated. "
+                            "Close this panel and click "
+                            "Explain again shortly."
+                        ),
+                        "scan_steps": [],
+                        "suspicious_characteristics": [],
+                        "feature_evidence": [],
+                        "pe_analysis": {},
+                        "recommendations": [],
+                    }
+
+                elif status == "ERROR":
+                    report = {
+                        "explanation": (
+                            "Background explanation failed: "
+                            + str(state.get("error"))
+                        ),
+                        "feature_evidence": [],
+                        "pe_analysis": {},
+                    }
+
+                else:
+                    report = {
+                        "explanation": (
+                            "No cached explanation is "
+                            "currently available for "
+                            "this detection."
+                        ),
+                        "feature_evidence": [],
+                        "pe_analysis": {},
+                    }
+
+        except Exception as e:
+            print(f"[XAI UI] Cache lookup failed: {e}")
+
+            report = {
+                "explanation": (
+                    "Unable to retrieve the AI explanation."
+                ),
+                "feature_evidence": [],
+                "pe_analysis": {},
+            }
+
+    elif report is None:
+        # Never run expensive XAI synchronously.
+        report = {
+            "explanation": (
+                "No background explanation was scheduled "
+                "for this detection."
+            ),
+            "feature_evidence": [],
+            "pe_analysis": {},
+        }
+
+    open_explain(threat, report)
 
 
 _THREAT_CHUNK_SIZE = 15
@@ -553,24 +530,39 @@ def _schedule_post_scan_ui_updates():
 
 
 def _reset_progress_counters(start_time):
-    global _PROGRESS_FILES_SCANNED, _PROGRESS_THREATS_FOUND, _PROGRESS_CURRENT_NAME
-    global _PROGRESS_ESTIMATED_TOTAL, _PROGRESS_START_TIME
+    global _PROGRESS_FILES_SCANNED
+    global _PROGRESS_THREATS_FOUND
+    global _PROGRESS_CURRENT_NAME
+    global _PROGRESS_TOTAL_FILES
+    global _PROGRESS_START_TIME
+    global _PROGRESS_PHASE
+
     with _PROGRESS_COUNTER_LOCK:
         _PROGRESS_FILES_SCANNED = 0
         _PROGRESS_THREATS_FOUND = 0
         _PROGRESS_CURRENT_NAME = ""
-        _PROGRESS_ESTIMATED_TOTAL = 100
+        _PROGRESS_TOTAL_FILES = 0
         _PROGRESS_START_TIME = start_time
+        _PROGRESS_PHASE = "DISCOVERING"
+
+def _set_discovered_total(total):
+    global _PROGRESS_TOTAL_FILES
+    global _PROGRESS_PHASE
+
+    with _PROGRESS_COUNTER_LOCK:
+        _PROGRESS_TOTAL_FILES = total
+        _PROGRESS_PHASE = "SCANNING"
 
 
-def _bump_files_scanned(name="", delta=1, extra_total=100):
-    global _PROGRESS_FILES_SCANNED, _PROGRESS_CURRENT_NAME, _PROGRESS_ESTIMATED_TOTAL
+def _bump_files_scanned(name="", delta=1):
+    global _PROGRESS_FILES_SCANNED
+    global _PROGRESS_CURRENT_NAME
+
     with _PROGRESS_COUNTER_LOCK:
         _PROGRESS_FILES_SCANNED += delta
+
         if name:
             _PROGRESS_CURRENT_NAME = name
-        _PROGRESS_ESTIMATED_TOTAL = max(_PROGRESS_ESTIMATED_TOTAL, _PROGRESS_FILES_SCANNED + extra_total)
-
 
 def _bump_threats_found(delta=1):
     global _PROGRESS_THREATS_FOUND
@@ -584,41 +576,141 @@ def _snapshot_progress():
             _PROGRESS_FILES_SCANNED,
             _PROGRESS_THREATS_FOUND,
             _PROGRESS_CURRENT_NAME,
-            _PROGRESS_ESTIMATED_TOTAL,
+            _PROGRESS_TOTAL_FILES,
             _PROGRESS_START_TIME,
+            _PROGRESS_PHASE,
         )
 
 
 def _progress_ticker_loop():
-    """Single ticker thread: updates UI once every ~120ms using counter snapshots.
-    Eliminates all per-file dpg.mutex() acquisition — mutex held only during the
-    handful of set_value() calls, no file I/O inside."""
     global _PROGRESS_TICKER_RUNNING
-    tick = 0.0
-    while True:
-        if not SCAN_IN_PROGRESS or SCAN_CANCEL_REQUESTED:
-            time.sleep(0.03)
+
+    try:
+        while True:
             if not SCAN_IN_PROGRESS:
                 break
-            continue
-        files_scanned, threats_found, cur_name, estimated_total, started_at = _snapshot_progress()
-        elapsed = time.time() - started_at
-        progress = min(0.99, files_scanned / max(1, estimated_total))
-        try:
-            with dpg.mutex():
-                if cur_name:
+
+            if SCAN_CANCEL_REQUESTED:
+                time.sleep(0.03)
+                continue
+
+            (
+                files_scanned,
+                threats_found,
+                cur_name,
+                total_files,
+                started_at,
+                phase,
+            ) = _snapshot_progress()
+
+            elapsed = time.time() - started_at
+
+            if phase == "DISCOVERING":
+                progress = 0.0
+                status = "Discovering files..."
+
+            elif total_files > 0:
+                progress = min(
+                    0.999,
+                    files_scanned / total_files
+                )
+
+                status = (
+                    f"Scanning: {cur_name} "
+                    f"({files_scanned:,}/{total_files:,} files)"
+                )
+
+            else:
+                progress = 0.0
+                status = "No files found"
+
+            try:
+                with dpg.mutex():
                     if dpg.does_item_exist("scan_status_text"):
-                        dpg.set_value("scan_status_text", f"Scanning: {cur_name} ({files_scanned} files)")
-                if dpg.does_item_exist("scan_progress_bar"):
-                    dpg.set_value("scan_progress_bar", progress)
-                if dpg.does_item_exist("scan_elapsed_time"):
-                    dpg.set_value("scan_elapsed_time", f"Elapsed: {elapsed:.1f}s")
-                if dpg.does_item_exist("scan_threat_count"):
-                    dpg.set_value("scan_threat_count", f"Threats found: {threats_found}")
-        except Exception:
-            pass
-        time.sleep(0.12)
-    _PROGRESS_TICKER_RUNNING = False
+                        dpg.set_value("scan_status_text", status)
+
+                    if dpg.does_item_exist("scan_progress_bar"):
+                        dpg.set_value("scan_progress_bar", progress)
+
+                    if dpg.does_item_exist("scan_elapsed_time"):
+                        dpg.set_value(
+                            "scan_elapsed_time",
+                            f"Elapsed: {elapsed:.1f}s"
+                        )
+
+                    if dpg.does_item_exist("scan_threat_count"):
+                        dpg.set_value(
+                            "scan_threat_count",
+                            f"Threats found: {threats_found}"
+                        )
+
+            except Exception as e:
+                print(f"Progress UI error: {e}")
+
+            time.sleep(0.25)
+
+    finally:
+        _PROGRESS_TICKER_RUNNING = False
+
+def _iter_scan_paths(scan_type, custom_path=""):
+# """
+# Enumerates paths using the same rules
+# for both counting and actual scanning.
+# """
+
+    if scan_type == "quick":
+        folders = cfg.QUICK_SCAN_DIRS
+
+    elif scan_type == "full":
+        folders = cfg.REGULAR_SCAN_DIRS
+
+    elif scan_type == "custom": 
+        if os.path.isfile(custom_path):
+            yield custom_path
+            return
+
+        folders = [custom_path] if os.path.isdir(custom_path) else []
+
+    else:
+        return
+
+    for folder in folders:
+        if SCAN_CANCEL_REQUESTED:
+            return
+
+        if not os.path.isdir(folder):
+            continue
+
+        for root, dirs, files in os.walk(folder):
+
+            if SCAN_CANCEL_REQUESTED:
+                return
+
+            if scan_type == "full":
+                skip = False
+
+                for skip_dir in cfg.SKIP_DIRS:
+                    root_abs = os.path.abspath(root)
+                    skip_abs = os.path.abspath(skip_dir)
+
+                    try:
+                        if os.path.commonpath(
+                            [root_abs, skip_abs]
+                        ) == skip_abs:
+                            skip = True
+                            break
+                    except ValueError:
+                        continue
+
+                if skip:
+                    dirs[:] = []
+                    continue
+
+            for filename in files:
+                if SCAN_CANCEL_REQUESTED:
+                    return
+
+                yield os.path.join(root, filename)
 
 
 def _update_scan_progress():
@@ -688,110 +780,263 @@ def _update_scan_progress():
                 _PROGRESS_TICKER_RUNNING = True
                 threading.Thread(target=_progress_ticker_loop, daemon=True).start()
 
+            scan_type = SELECTED_SCAN
+            custom_path = CURRENT_CUSTOM_PATH
+
+
+            # if SCAN_CANCEL_REQUESTED:
+            #     # Exit the scan branch through your cancellation
+            #     # handling; do not mark it completed.
+            #     pass
+            # else:
+            #     _set_discovered_total(total_files)
+
+            
             def scan_path(path):
+                """
+                Runs inside the ThreadPoolExecutor.
+
+                Performs file analysis without updating UI progress
+                counters or sending notifications.
+                """
+
                 if SCAN_CANCEL_REQUESTED:
-                    return
+                    return None
+
                 try:
                     ext = os.path.splitext(path)[1].lower()
-                except Exception:
-                    ext = ""
-                if ext in cfg.KNOWN_SKIP_EXTS:
-                    _bump_files_scanned()
-                    return
-                try:
-                    if not se.is_excluded(path):
-                        try:
-                            file_size = os.path.getsize(path)
-                            if file_size > 500 * 1024 * 1024:
-                                _bump_files_scanned()
-                                return
-                        except Exception:
-                            pass
 
-                        try:
-                            result = sf.scan_file(path, auto_quarantine=False)
-                        except Exception:
-                            result = None
+                    # Skip known extensions.
+                    if ext in cfg.KNOWN_SKIP_EXTS:
+                        return None
 
-                        _bump_files_scanned(name=os.path.basename(path))
+                    # Skip excluded files.
+                    if se.is_excluded(path):
+                        return None
 
-                        if result and result.get("result") in ("MALICIOUS", "SUSPICIOUS"):
-                            _bump_threats_found()
-                            DETECTED_THREATS.append(result)
-                            try:
-                                enqueue_threat_notification(
-                                    result["file_path"],
-                                    result["result"],
-                                    result.get("probability"),
-                                    result.get("category"),
-                                )
-                            except Exception:
-                                pass
-                            try:
-                                from system.api.server import notify_new_malware
-                                try:
-                                    prob_val = result.get("probability")
-                                    if prob_val is not None:
-                                        tl = int(round(float(prob_val) * 100))
-                                    else:
-                                        tl = 90 if result["result"] == "MALICIOUS" else 55
-                                    notify_new_malware(os.path.basename(result["file_path"]), tl)
-                                except Exception:
-                                    pass
-                            except Exception:
-                                pass
+                    # Skip files larger than 500 MB.
+                    try:
+                        file_size = os.path.getsize(path)
+
+                        if file_size > 500 * 1024 * 1024:
+                            return None
+
+                    except OSError:
+                        return None
+
+                    if SCAN_CANCEL_REQUESTED:
+                        return None
+
+                    # Execute actual malware analysis.
+                    return sf.scan_file(
+                        path,
+                        auto_quarantine=False
+                    )
+
                 except Exception as e:
-                    print(f"Error scanning file {path}: {e}")
-                    _bump_files_scanned()
+                    print(f"[Scan Worker] {path}: {e}")
+                    return None
 
-            if SELECTED_SCAN == "quick":
-                for folder in cfg.QUICK_SCAN_DIRS:
-                    if os.path.exists(folder):
-                        for root, dirs, files in os.walk(folder):
-                            for file in files:
-                                scan_path(os.path.join(root, file))
-                                if SCAN_CANCEL_REQUESTED:
-                                    break
-                            if SCAN_CANCEL_REQUESTED:
-                                break
-                    if SCAN_CANCEL_REQUESTED:
-                        break
 
-            elif SELECTED_SCAN == "full":
-                for folder in cfg.REGULAR_SCAN_DIRS:
-                    if os.path.exists(folder):
-                        for root, dirs, files in os.walk(folder):
-                            skip = False
-                            for skip_dir in cfg.SKIP_DIRS:
-                                if os.path.abspath(root).lower().startswith(os.path.abspath(skip_dir).lower()):
-                                    skip = True
-                                    break
-                            if skip:
-                                continue
-                            for file in files:
-                                scan_path(os.path.join(root, file))
-                                if SCAN_CANCEL_REQUESTED:
-                                    break
-                            if SCAN_CANCEL_REQUESTED:
-                                break
-                    if SCAN_CANCEL_REQUESTED:
-                        break
+            def handle_scan_result(path, result):
+                """
+                Runs in the scan coordinator thread.
 
-            elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
-                if os.path.isfile(CURRENT_CUSTOM_PATH):
-                    scan_path(CURRENT_CUSTOM_PATH)
-                elif os.path.isdir(CURRENT_CUSTOM_PATH):
-                    for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
-                        for file in files:
-                            scan_path(os.path.join(root, file))
-                            if SCAN_CANCEL_REQUESTED:
-                                break
+                Updates progress and handles detected threats.
+                """
+
+                _bump_files_scanned(
+                    name=os.path.basename(path)
+                )
+
+                if not result:
+                    return
+
+                if result.get("result") not in (
+                    "MALICIOUS",
+                    "SUSPICIOUS"
+                ):
+                    return
+
+                _bump_threats_found()
+                DETECTED_THREATS.append(result)
+
+                # Desktop/mobile notification
+                try:
+                    enqueue_threat_notification(
+                        result["file_path"],
+                        result["result"],
+                        result.get("probability"),
+                        result.get("category"),
+                    )
+
+                except Exception as e:
+                    print(f"Notification error: {e}")
+
+                # API notification
+                try:
+                    from system.api.server import notify_new_malware
+
+                    probability = result.get("probability")
+
+                    if probability is not None:
+                        threat_level = int(
+                            round(float(probability) * 100)
+                        )
+                    else:
+                        threat_level = (
+                            90 if result["result"] == "MALICIOUS"
+                            else 55
+                        )
+
+                    notify_new_malware(
+                        os.path.basename(result["file_path"]),
+                        threat_level
+                    )
+
+                except Exception as e:
+                    print(f"API notification error: {e}")
+
+
+            # if SELECTED_SCAN == "quick":
+            #     for folder in cfg.QUICK_SCAN_DIRS:
+            #         if os.path.exists(folder):
+            #             for root, dirs, files in os.walk(folder):
+            #                 for file in files:
+            #                     scan_path(os.path.join(root, file))
+            #                     if SCAN_CANCEL_REQUESTED:
+            #                         break
+            #                 if SCAN_CANCEL_REQUESTED:
+            #                     break
+            #         if SCAN_CANCEL_REQUESTED:
+            #             break
+
+            # elif SELECTED_SCAN == "full":
+            #     for folder in cfg.REGULAR_SCAN_DIRS:
+            #         if os.path.exists(folder):
+            #             for root, dirs, files in os.walk(folder):
+            #                 skip = False
+            #                 for skip_dir in cfg.SKIP_DIRS:
+            #                     if os.path.abspath(root).lower().startswith(os.path.abspath(skip_dir).lower()):
+            #                         skip = True
+            #                         break
+            #                 if skip:
+            #                     continue
+            #                 for file in files:
+            #                     scan_path(os.path.join(root, file))
+            #                     if SCAN_CANCEL_REQUESTED:
+            #                         break
+            #                 if SCAN_CANCEL_REQUESTED:
+            #                     break
+            #         if SCAN_CANCEL_REQUESTED:
+            #             break
+
+            # elif SELECTED_SCAN == "custom" and CURRENT_CUSTOM_PATH:
+            #     if os.path.isfile(CURRENT_CUSTOM_PATH):
+            #         scan_path(CURRENT_CUSTOM_PATH)
+            #     elif os.path.isdir(CURRENT_CUSTOM_PATH):
+            #         for root, dirs, files in os.walk(CURRENT_CUSTOM_PATH):
+            #             for file in files:
+            #                 scan_path(os.path.join(root, file))
+            #                 if SCAN_CANCEL_REQUESTED:
+            #                     break
+            #             if SCAN_CANCEL_REQUESTED:
+            #                 break
+            # Phase 1: Count files
+            scan_type = SELECTED_SCAN
+            custom_path = CURRENT_CUSTOM_PATH
+
+            files_to_scan = list(
+                _iter_scan_paths(scan_type, custom_path)
+            )
+
+            total_files = len(files_to_scan)
+
+            if not SCAN_CANCEL_REQUESTED:
+
+                _set_discovered_total(total_files)
+
+                # Calculate CPU/RAM limits for this scan.
+                workers, max_pending = get_scan_worker_config()
+
+                print(
+                    f"[AYAWrus] Starting scan: "
+                    f"{workers} workers, "
+                    f"{max_pending} pending tasks, "
+                    f"{total_files} files"
+                )
+
+                # Phase 2: Concurrent scanning
+                with ThreadPoolExecutor(
+                    max_workers=workers,
+                    thread_name_prefix="AYAWrusScan"
+                ) as executor:
+
+                    path_iterator = iter(files_to_scan)
+                    pending = {}
+
+                    def submit_next():
                         if SCAN_CANCEL_REQUESTED:
+                            return False
+
+                        try:
+                            path = next(path_iterator)
+                        except StopIteration:
+                            return False
+
+                        future = executor.submit(scan_path, path)
+                        pending[future] = path
+
+                        return True
+
+                    # Fill the initial queue.
+                    for _ in range(max_pending):
+                        if not submit_next():
                             break
 
+                    # Process jobs as they finish.
+                    while pending:
+
+                        if SCAN_CANCEL_REQUESTED:
+                            for future in pending:
+                                future.cancel()
+                            break
+
+                        done, _ = wait(
+                            pending,
+                            timeout=0.10,
+                            return_when=FIRST_COMPLETED
+                        )
+
+                        for future in done:
+
+                            path = pending.pop(future)
+
+                            if SCAN_CANCEL_REQUESTED:
+                                break
+
+                            try:
+                                result = future.result()
+
+                            except Exception as e:
+                                print(
+                                    f"[Scan Executor] "
+                                    f"{path}: {e}"
+                                )
+                                result = None
+
+                            handle_scan_result(
+                                path,
+                                result
+                            )
+
+                            if not SCAN_CANCEL_REQUESTED:
+                                submit_next()
+
+            was_cancelled = SCAN_CANCEL_REQUESTED
             SCAN_IN_PROGRESS = False
             time.sleep(0.06)
-            files_scanned, threats_found, _n, _e, _s = _snapshot_progress()
+            files_scanned, threats_found, _n, _e, _s, _phase = _snapshot_progress()
             duration = time.time() - start_time
 
             if BACKEND_AVAILABLE:
@@ -800,18 +1045,34 @@ def _update_scan_progress():
                 except Exception as flush_error:
                     print(f"Post-scan history flush error: {flush_error}")
 
-            completion_text = f"Scanned {files_scanned} files in {duration:.1f}s. {threats_found} threats found."
+            if was_cancelled:
+                completion_text = (
+                    f"Scan cancelled. Processed {files_scanned} files "
+                    f"in {duration:.1f}s. "
+                    f"{threats_found} threats found."
+                )
+            else:
+                completion_text = (
+                    f"Scanned {files_scanned} files "
+                    f"in {duration:.1f}s. "
+                    f"{threats_found} threats found."
+                )
             elapsed_text = f"Elapsed: {duration:.1f}s"
             threat_count_text = f"Threats found: {threats_found}"
 
             def _apply_completion_status():
                 try:
                     with dpg.mutex():
-                        dpg.set_value("scan_ready_heading", "Scan Complete!")
+                        dpg.set_value(
+                            "scan_ready_heading",
+                            "Scan Cancelled" if was_cancelled
+                            else "Scan Complete!"
+                        )
                         if dpg.does_item_exist("scan_status_text"):
                             dpg.set_value("scan_status_text", completion_text)
                         if dpg.does_item_exist("scan_progress_bar"):
-                            dpg.set_value("scan_progress_bar", 1.0)
+                            if not was_cancelled:
+                                dpg.set_value("scan_progress_bar", 1.0)
                         if dpg.does_item_exist("scan_elapsed_time"):
                             dpg.set_value("scan_elapsed_time", elapsed_text)
                         if dpg.does_item_exist("scan_threat_count"):
@@ -1043,17 +1304,18 @@ def _ensure_api_server_started():
         except Exception:
             pass
 
+        port = int(os.environ.get("SERVER_PORT", "5001"))
+
         def _srv_worker():
             try:
                 host = os.environ.get("SERVER_HOST", "0.0.0.0")
-                port = int(os.environ.get("SERVER_PORT", "5001"))
                 srv_mod.app.run(host=host, port=port, threaded=True, use_reloader=False, debug=False)
             except Exception as e:
                 print(f"[API Server] Failed to start: {e}")
 
         t = threading.Thread(target=_srv_worker, daemon=True)
         t.start()
-        print(f"[API Server] Started (background thread). Mobile alerts available at http://<host>:5000/api/alerts/stream")
+        print(f"[API Server] Started (background thread). Mobile alerts available at http://<host>:{port}/api/alerts/stream")
     except Exception as e:
         print(f"[API Server] Init error (continuing): {e}")
         _api_server_started = False

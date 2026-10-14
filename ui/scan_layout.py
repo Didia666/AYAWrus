@@ -29,7 +29,7 @@ READY_TOP_SPACER = 6
 READY_ICON_SIZE = 44
 READY_ICON_GAP = 2
 READY_HEADING_GAP = 6
-HEADING_WATCH_SECONDS = 0.05   # how often the heading is re-checked for a text change
+HEADING_WATCH_SECONDS = 0.25   # how often the heading is re-checked for a text change
 HEADING_FALLBACK_CHAR_WIDTH = 14   # only used if DPG can't measure the heading text
 
 BUTTON_WIDTH = 180

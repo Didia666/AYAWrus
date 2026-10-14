@@ -11,7 +11,8 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 import system.notifications.telegram as tg
-from system.mobile_pairing import generate_pairing_payload, mobile_status_payload, SYSTEM_ID
+from system.mobile_pairing import mobile_status_payload, SYSTEM_ID
+from system.network import WifiAddressUnavailable, get_active_wifi_ipv4
 import time
 import traceback
 from datetime import datetime
@@ -497,12 +498,12 @@ def get_active_local_address():
 
 def _generate_qr_file_and_payload():
     import qrcode
-    host = get_active_local_address()
     port = int(os.environ.get("SERVER_PORT", "5001"))
-    api_url = f"http://127.0.0.1:{port}/api/mobile/qr?{urlencode({'host': host, 'port': port})}"
+    api_url = f"http://127.0.0.1:{port}/api/mobile/qr?{urlencode({'port': port})}"
     with urlopen(api_url, timeout=3) as response:
         api_payload = json.loads(response.read().decode("utf-8"))
     payload = json.loads(api_payload["qr_payload"])
+    host = api_payload["host"]
     payload["apk_url"] = f"http://{host}:{port}/mobile/download"
     setup_url = f"http://{host}:{port}/mobile/setup"
     qr_value = f"{setup_url}?{urlencode({'pairing_token': payload['pairing_token'], 'port': payload['port'], 'system_id': payload['system_id']})}"
@@ -725,7 +726,11 @@ def _build_mobile_card(fonts, icons):
                         dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
                     with dpg.table_row():
                         _info_cell("System Name", socket.gethostname(), "mobile_name_value")
-                        _info_cell("Local Address", f"{get_active_local_address()}:{_server_port()}",
+                        try:
+                            local_address = get_active_local_address()
+                        except WifiAddressUnavailable:
+                            local_address = "Wi-Fi unavailable"
+                        _info_cell("Local Address", f"{local_address}:{_server_port()}",
                                    "mobile_address_value", copy=True)
                         _info_cell("System ID", SYSTEM_ID, "mobile_id_value", copy=True)
 

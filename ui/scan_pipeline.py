@@ -310,17 +310,35 @@ def _sync_text_widths():
 
 
 def _ticker_loop():
-    last = time.time()
+    last = time.monotonic()
+    last_text_sync = 0.0
+
     while True:
-        time.sleep(ANIM_FRAME_SECONDS)
-        now = time.time()
+        animating = _s["animating"]
+
+        # High frequency only while animating.
+        interval = (
+            ANIM_FRAME_SECONDS if animating
+            else 0.50
+        )
+
+        time.sleep(interval)
+
+        now = time.monotonic()
         dt = min(ANIM_MAX_DT, now - last)
         last = now
+
         try:
             with dpg.mutex():
-                _sync_text_widths()
+
+                # Check text sizes twice per second.
+                if now - last_text_sync >= 0.50:
+                    _sync_text_widths()
+                    last_text_sync = now
+
                 if _s["animating"]:
                     _tick(dt)
+
         except Exception:
             import traceback
             traceback.print_exc()

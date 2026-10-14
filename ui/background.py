@@ -4,12 +4,12 @@ import dearpygui.dearpygui as dpg
 from ui.layout import register_resize
 
 # background.py
-# A soft glow + edge vignette drawn as a see-through image on the FRONT viewport layer (same trick as ui/toast.py).
+# A soft glow + edge vignette drawn as a see-through image behind the UI.
 # Clicks pass straight through it. The old flat look stays underneath, this only tints it.
-# (A real "behind everything" background didn't draw on this DPG setup, which is why it's an overlay.)
+# The viewport drawlist sits behind widgets so it cannot cover their text.
 # Set BG_ENABLED = False to get the old look back.
 
-BG_ENABLED = True              # False = old flat look
+BG_ENABLED = False              # False = old flat look
 
 # ---- Glow (tune here) ----
 GLOW_COLOR = (56, 130, 246)    # the blue the glow tints toward (same as accent_blue)
@@ -102,7 +102,7 @@ def init_background():
         pixels = _make_pixels()
         with dpg.texture_registry():
             dpg.add_static_texture(TEX_W, TEX_H, pixels, tag=BG_TEX)
-        with dpg.viewport_drawlist(front=True, tag=BG_LAYER):
+        with dpg.viewport_drawlist(front=False, tag=BG_LAYER):
             dpg.draw_image(BG_TEX, (0, 0), (1600, 900), tag=BG_IMAGE)
     except Exception:
         traceback.print_exc()

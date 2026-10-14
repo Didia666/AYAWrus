@@ -5,7 +5,6 @@ import uuid
 import sqlite3
 import hashlib
 import time
-import socket
 import requests
 import threading
 from datetime import datetime, timedelta
@@ -27,6 +26,7 @@ from system.mobile_pairing import (
     SESSION_TTL_SECONDS,
     SYSTEM_ID,
 )
+from system.network import get_active_wifi_ipv4
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -91,40 +91,7 @@ def _broadcast_alert(alert):
 
 
 def _get_active_local_ip():
-    candidates = []
-    try:
-        addrs = socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM)
-        for item in addrs:
-            ip = item[4][0]
-            if ip and ip != "127.0.0.1":
-                candidates.append(ip)
-    except Exception:
-        pass
-    try:
-        for intf in socket.if_nameindex():
-            name = intf[1]
-            if not name or name.startswith("lo"):
-                continue
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                    s.connect(("8.8.8.8", 80))
-                    ip = s.getsockname()[0]
-                    if ip and ip != "127.0.0.1":
-                        candidates.append(ip)
-            except Exception:
-                pass
-    except Exception:
-        pass
-    seen = set()
-    ordered = []
-    for ip in candidates:
-        if ip not in seen:
-            seen.add(ip)
-            ordered.append(ip)
-    for ip in ordered:
-        if ip.startswith(("192.168.", "10.", "172.")):
-            return ip
-    return ordered[0] if ordered else "127.0.0.1"
+    return get_active_wifi_ipv4()
 
 
 def _require_mobile_session(f):
@@ -912,7 +879,7 @@ def disconnect_mobile_session():
 
 @app.route("/api/mobile/qr", methods=["GET"])
 def mobile_qr_payload_endpoint():
-    host = request.args.get("host") or _get_active_local_ip()
+    host = _get_active_local_ip()
     port = request.args.get("port", SERVER_PORT)
     try:
         port = int(port)

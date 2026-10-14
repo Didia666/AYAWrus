@@ -272,7 +272,11 @@ def _on_escape(sender=None, app_data=None):
 
 def _ticker_loop():
     while True:
-        time.sleep(FRAME_SECONDS)
+        if _s["mode"] == "open":
+            time.sleep(FRAME_SECONDS)
+        else:
+            time.sleep(0.10)
+
         if _s["mode"] != "open":
             continue
         try:
