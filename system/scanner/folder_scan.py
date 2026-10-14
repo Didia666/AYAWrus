@@ -266,7 +266,11 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                     details=(
                         f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
                         f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
-                    )
+                    ),
+                    behavior_confidence=behavior_probability,
+                    behavior_type=behavior_type,
+                    behavior_types=behavior_types,
+                    behavior_result=behavior_result,
                 )
 
                 
