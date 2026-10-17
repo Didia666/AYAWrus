@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 #layout.py
 
 # ---- Layout constants (tune here) ----
-LAYOUT_DEBUG = True        # prints sizes to the terminal on every resize; set False once we're happy
+LAYOUT_DEBUG = False        # prints sizes to the terminal on every resize; set False once we're happy
 
 SIDEBAR_WIDTH = 220        # must match the sidebar child_window width in sidebar.py
 PAGE_CHROME_X = 40         # horizontal space eaten by window padding, item spacing, page padding
