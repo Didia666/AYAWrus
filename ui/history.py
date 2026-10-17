@@ -10,9 +10,10 @@ from ui.layout import register_resize
 from ui.scan_layout import _get_themes, _center_indent, PAGE_LEFT_PAD
 from ui.scan_pipeline import _row_width
 from ui.scan_threats import (_themes as _threat_themes, _flat_button_theme, PILL_ROUNDING,
-                             PILL_BG_ALPHA, PILL_BORDER_ALPHA, ROW_PAD_X)
+                             PILL_BG_ALPHA, PILL_BORDER_ALPHA, ROW_PAD_X, GUTTER_W)
 from ui.table_style import (TABLE_ROW_HEIGHT, TABLE_PILL_HEIGHT, TABLE_CELL_MUTED_COLOR,
                             TABLE_FONT_KEY, apply_table_font)
+from ui.table_text import fit_text, text_width
 
 #history
 
@@ -28,7 +29,7 @@ except Exception as e:
     get_batch = None
 
 # ---- TEMP test switch (set to False, then delete _fake_files / _fake_batches and the call in _build_batches_from_backend) ----
-HISTORY_DEBUG_FAKE = True      # adds 6 FAKE batches (with fake file lists) at the top. UI only, nothing is saved
+HISTORY_DEBUG_FAKE = False      # adds 6 FAKE batches (with fake file lists) at the top. UI only, nothing is saved
 
 # ---- Page layout (tune here) ----
 HISTORY_HEADER_HEIGHT = 110    # title + subtitle block above the list (same estimate as Quarantine)
@@ -69,6 +70,11 @@ TYPE_DOT_RADIUS = 5
 TYPE_DOT_BOX_H = 24
 TYPE_DOT_NUDGE_Y = 1           # raise/lower the dot if it doesn't line up with the title
 TARGET_FALLBACK = "No target recorded"
+
+# ---- Ellipsis (long paths end in "...", the full path stays in the tooltip) ----
+ELLIPSIS_ENABLED = True        # False = old hard clipping
+MEASURE_MIN_FRAME = 40         # DPG can't measure text before this frame, so cards drawn earlier are left untrimmed
+PATH_TEXT_MARGIN = 8           # room kept inside the path button so the text never touches its right edge. Raise if "..." touches the edge
 
 # ---- Card colors ----
 CARD_BG = COLORS["bg_card"]
@@ -131,11 +137,22 @@ DETAIL_ICON_NUDGE_Y = max(0, (TABLE_ROW_HEIGHT - DETAIL_ICON_SIZE) // 2 - ITEM_S
 DETAIL_COL_ICON_W = DETAIL_ICON_SIZE + 2 * ROW_PAD_X
 DETAIL_COL_NAME_WEIGHT = 2.0
 DETAIL_COL_LOCATION_WEIGHT = 3.0
-DETAIL_COL_RESULT_W = 170      # raise if the QUARANTINED pill clips
-DETAIL_COL_CONF_W = 140
-DETAIL_COL_EXPLAIN_W = 100
-DETAIL_COL_BEHAVIOR_CONF_W = 115
-DETAIL_COL_TYPE_W = 150
+DETAIL_COL_RESULT_W = 150      # was 170. GUESS: "QUARANTINED" is the widest pill. Raise if it clips
+DETAIL_COL_CONF_W = 100        # was 140 (same as Scan). Raise if the "Confidence" header clips
+DETAIL_COL_EXPLAIN_W = 75      # was 100 (same as Scan)
+DETAIL_COL_BEHAVIOR_CONF_W = 110   # was 115. The header is now "Behavior %". Raise if it clips
+DETAIL_COL_TYPE_W = 150        # long types end in "..." (full text in the tooltip)
+
+# ---- Detail table: narrow mode (window below the breakpoint) ----
+DETAIL_NARROW_BREAKPOINT = 1150    # content width below which Location is left out and the two behavior columns merge
+DETAIL_COL_BEHAVIOR_W_NARROW = 150 # the merged "85% | Ransomware" column (same as Scan)
+DETAIL_BEHAVIOR_MARGIN = 16        # room kept inside the merged cell so "..." never touches the border
+DETAIL_ICON_SIZE_NARROW = 16       # smaller result icon on narrow
+DETAIL_COL_ICON_W_NARROW = 32      # raise if the icon clips
+DETAIL_PANEL_PAD_X = 8             # the panel's own left/right padding
+DETAIL_TABLE_SCROLLBAR_W = 16      # room kept for the table's scrollbar. Raise if "..." touches the next column
+DETAIL_EXTRA_PX_WIDE = 148         # padding the wide table's fixed columns add on top of their widths. Measured at card_w 1251: budget lands 5-9px under the real cell
+DETAIL_EXTRA_PX_NARROW = 124       # same for the narrow table. Measured at card_w 852: budget lands 10px under the real cell
 
 # ---- Detail view: result -> (color, icon keys tried in order) ----
 RESULT_STYLE = {
@@ -177,7 +194,9 @@ def _detail_mid_w(card_w):
 _state = {
     "fonts": None, "row_w": HISTORY_START_W, "panel_h": HISTORY_START_H,
     "card_w": HISTORY_START_W - CARD_W_TRIM, "mid_w": _mid_width(HISTORY_START_W - CARD_W_TRIM),
-    "hover": None, "attention": {},
+    "hover": None, "attention": {}, "summary_target": "",   # summary_target = full path of the open batch, re-trimmed on resize
+    "narrow": False, "table_narrow": False,   # narrow = what the window says now, table_narrow = what the CURRENT detail table was built with
+    "detail_files": [], "detail_cells": [],   # files shown in the detail table (for rebuilds) + (name btn, name, loc btn, path) for re-trimming
 }
 
 
@@ -535,6 +554,16 @@ def _chips_for(batch):
 # Batch cards
 # ---------------------------------------------------------------------------
 
+def _fit_path(btn, full_text, width):
+    """Shortens a path button's label to its width ("D:/Games/Ang..."). The full path stays in the tooltip."""
+    if not ELLIPSIS_ENABLED or not full_text or dpg.get_frame_count() < MEASURE_MIN_FRAME:
+        return
+    if not dpg.does_item_exist(btn):
+        return
+    font = (_state["fonts"] or {}).get(TABLE_FONT_KEY)
+    dpg.set_item_label(btn, fit_text(full_text, width - PATH_TEXT_MARGIN, font))
+
+
 def _batch_row(batch, index, icons):
     tag = f"batch_row_{index}"
     own = _themes()
@@ -610,6 +639,7 @@ def _batch_row(batch, index, icons):
                 if target:
                     with dpg.tooltip(target_btn):
                         dpg.add_text(target, color=TIP_COLOR)
+                _fit_path(target_btn, target, _state["mid_w"])
 
                 with dpg.group(horizontal=True):                      # row 3: stat chips
                     for label, theme_key in chips:
@@ -642,6 +672,7 @@ def _apply_card_widths():
         dpg.configure_item(tag, width=card_w)
         if dpg.does_item_exist(f"{tag}_target"):
             dpg.configure_item(f"{tag}_target", width=mid_w)
+            _fit_path(f"{tag}_target", str(_BATCH_ROW_MAP[tag].get("target") or ""), mid_w)
         if dpg.does_item_exist(f"{tag}_right"):
             dpg.configure_item(f"{tag}_right", pos=[right_x, RIGHT_TOP])
 
@@ -819,6 +850,8 @@ def _build_summary(batch, icons):
                 if target:
                     with dpg.tooltip(target_btn):
                         dpg.add_text(target, color=TIP_COLOR)
+                _state["summary_target"] = target
+                _fit_path(target_btn, target, _detail_mid_w(card_w))
 
                 with dpg.group(horizontal=True):                      # row 3: stat chips
                     for label, theme_key in chips:
@@ -849,23 +882,85 @@ def _build_summary(batch, icons):
         dpg.bind_item_font(f"{tag}_summary", table_font)
 
 
+def _detail_label_widths():
+    """(File Name, Location) pixel budget for the text inside the cells. An estimate from the column constants.
+    Narrow table: no Location, the name gets everything."""
+    narrow = _state["table_narrow"]
+    if narrow:
+        fixed = (2 * GUTTER_W + DETAIL_COL_ICON_W_NARROW + DETAIL_COL_EXPLAIN_W + DETAIL_COL_RESULT_W
+                 + DETAIL_COL_CONF_W + DETAIL_COL_BEHAVIOR_W_NARROW)
+        extra = DETAIL_EXTRA_PX_NARROW
+    else:
+        fixed = (2 * GUTTER_W + DETAIL_COL_ICON_W + DETAIL_COL_EXPLAIN_W + DETAIL_COL_RESULT_W
+                 + DETAIL_COL_CONF_W + DETAIL_COL_BEHAVIOR_CONF_W + DETAIL_COL_TYPE_W)
+        extra = DETAIL_EXTRA_PX_WIDE
+    table_w = _state["card_w"] - 2 * DETAIL_PANEL_PAD_X - DETAIL_TABLE_SCROLLBAR_W
+    avail = max(0, table_w - fixed - extra)
+    if narrow:
+        return int(avail - 2 * ROW_PAD_X), 0
+    total = DETAIL_COL_NAME_WEIGHT + DETAIL_COL_LOCATION_WEIGHT
+    return (int(avail * DETAIL_COL_NAME_WEIGHT / total - 2 * ROW_PAD_X),
+            int(avail * DETAIL_COL_LOCATION_WEIGHT / total - 2 * ROW_PAD_X))
+
+
+def _fit_detail_cell(name_btn, name, loc_btn, path, widths):
+    """Shortens File Name and Location to their budget. The full text stays in the tooltips."""
+    if not ELLIPSIS_ENABLED or dpg.get_frame_count() < MEASURE_MIN_FRAME:
+        return
+    font = (_state["fonts"] or {}).get(TABLE_FONT_KEY)
+    if dpg.does_item_exist(name_btn):
+        dpg.set_item_label(name_btn, fit_text(name, widths[0], font))
+    if loc_btn is not None and dpg.does_item_exist(loc_btn):
+        dpg.set_item_label(loc_btn, fit_text(path, widths[1], font))
+
+
+def _refit_detail_cells():
+    if not _state["detail_cells"]:
+        return
+    widths = _detail_label_widths()
+    for cell in list(_state["detail_cells"]):
+        _fit_detail_cell(*cell, widths)
+
+
+def _merged_behavior_label(entry, font):
+    """Narrow table: 'conf | type' in one cell, like the Scan page. The type is trimmed by pixel width."""
+    confidence, _, _ = _behavior_fields(entry)
+    try:
+        conf_txt = f"{float(confidence):.0%}" if confidence is not None else None
+    except (TypeError, ValueError):
+        conf_txt = None
+    type_txt = _behavior_type_text(entry)
+    if type_txt == "-":
+        return conf_txt or "-"
+    prefix = f"{conf_txt} | " if conf_txt else ""
+    if not ELLIPSIS_ENABLED:
+        return prefix + type_txt
+    room = DETAIL_COL_BEHAVIOR_W_NARROW - DETAIL_BEHAVIOR_MARGIN - text_width(prefix, font)
+    return prefix + fit_text(type_txt, room, font)
+
+
 def _detail_file_row(entry, icons):
+    """Draws one row. The cells must match the columns the table was BUILT with (table_narrow)."""
     tt = _threat_themes()
     own = _themes()
+    narrow = _state["table_narrow"]
+    font = (_state["fonts"] or {}).get(TABLE_FONT_KEY)
     res = str(entry.get("result") or entry.get("verdict") or "CLEAN").upper()
     color, icon_keys = RESULT_STYLE.get(res, RESULT_DEFAULT)
     tex = _first_icon(icons, icon_keys)
     path = str(entry.get("file_path") or entry.get("fileName") or "Unknown")
     name = os.path.basename(path) or path
     extra = entry.get("details") or entry.get("detail") or ""
+    icon_size = DETAIL_ICON_SIZE_NARROW if narrow else DETAIL_ICON_SIZE
+    icon_nudge = max(0, (TABLE_ROW_HEIGHT - icon_size) // 2 - ITEM_SPACING_Y)
 
     with dpg.table_row(parent="history_detail_table"):
         dpg.add_spacer(width=1)   # left gutter cell
 
         with dpg.group():         # icon cell (a group, so the nudge spacer and the icon share ONE cell)
-            dpg.add_spacer(height=DETAIL_ICON_NUDGE_Y)
+            dpg.add_spacer(height=icon_nudge)
             if tex:
-                dpg.add_image(tex, width=DETAIL_ICON_SIZE, height=DETAIL_ICON_SIZE, tint_color=color)
+                dpg.add_image(tex, width=icon_size, height=icon_size, tint_color=color)
 
         explain = dpg.add_button(
             label="Explain",
@@ -880,13 +975,19 @@ def _detail_file_row(entry, icons):
         dpg.bind_item_theme(name_btn, tt["name"])
         with dpg.tooltip(name_btn):
             dpg.add_text(name, color=COLORS["text_primary"])
+            if narrow:   # Location is hidden, so its path moves here
+                dpg.add_text(path, color=TIP_COLOR)
             if extra:
                 dpg.add_text(str(extra), color=TIP_COLOR, wrap=DETAIL_TIP_WRAP)
 
-        loc_btn = dpg.add_button(label=path, width=-1, height=TABLE_ROW_HEIGHT)
-        dpg.bind_item_theme(loc_btn, own["muted_text"])
-        with dpg.tooltip(loc_btn):
-            dpg.add_text(path, color=TIP_COLOR)
+        loc_btn = None
+        if not narrow:
+            loc_btn = dpg.add_button(label=path, width=-1, height=TABLE_ROW_HEIGHT)
+            dpg.bind_item_theme(loc_btn, own["muted_text"])
+            with dpg.tooltip(loc_btn):
+                dpg.add_text(path, color=TIP_COLOR)
+        _state["detail_cells"].append((name_btn, name, loc_btn, path))
+        _fit_detail_cell(name_btn, name, loc_btn, path, _detail_label_widths())
 
         pill = dpg.add_button(label=res, width=-1, height=TABLE_PILL_HEIGHT)
         dpg.bind_item_theme(pill, own.get(f"result_{res}", own["result_OTHER"]))
@@ -899,52 +1000,62 @@ def _detail_file_row(entry, icons):
         else:
             dpg.bind_item_theme(conf, own["muted_text"])
 
-        behavior_conf = dpg.add_button(
-            label=_behavior_conf_text(entry),
-            width=-1,
-            height=TABLE_ROW_HEIGHT,
-        )
         behavior_conf_value, _, _ = _behavior_fields(entry)
-        dpg.bind_item_theme(
-            behavior_conf,
-            tt["behavior"] if behavior_conf_value is not None else own["muted_text"],
-        )
-
         behavior_type_text = _behavior_type_text(entry)
-        behavior_type = dpg.add_button(
-            label=behavior_type_text,
-            width=-1,
-            height=TABLE_ROW_HEIGHT,
-        )
-        dpg.bind_item_theme(
-            behavior_type,
-            tt["behavior"] if behavior_type_text != "-" else own["muted_text"],
-        )
-        if behavior_type_text != "-":
-            with dpg.tooltip(behavior_type):
-                dpg.add_text(behavior_type_text, color=TIP_COLOR)
+        has_behavior = behavior_conf_value is not None or behavior_type_text != "-"
+
+        if narrow:
+            merged = dpg.add_button(label=_merged_behavior_label(entry, font), width=-1, height=TABLE_ROW_HEIGHT)
+            dpg.bind_item_theme(merged, tt["behavior"] if has_behavior else own["muted_text"])
+            if has_behavior:
+                with dpg.tooltip(merged):
+                    dpg.add_text(f"Behavior confidence: {_behavior_conf_text(entry)}", color=TIP_COLOR)
+                    dpg.add_text(f"Type: {behavior_type_text}", color=TIP_COLOR)
+        else:
+            behavior_conf = dpg.add_button(label=_behavior_conf_text(entry), width=-1, height=TABLE_ROW_HEIGHT)
+            dpg.bind_item_theme(behavior_conf,
+                                tt["behavior"] if behavior_conf_value is not None else own["muted_text"])
+
+            type_label = behavior_type_text
+            if ELLIPSIS_ENABLED and behavior_type_text != "-":
+                type_label = fit_text(behavior_type_text, DETAIL_COL_TYPE_W - 2 * ROW_PAD_X, font)
+            behavior_type = dpg.add_button(label=type_label, width=-1, height=TABLE_ROW_HEIGHT)
+            dpg.bind_item_theme(behavior_type,
+                                tt["behavior"] if behavior_type_text != "-" else own["muted_text"])
+            if behavior_type_text != "-":
+                with dpg.tooltip(behavior_type):
+                    dpg.add_text(behavior_type_text, color=TIP_COLOR)
 
         dpg.add_spacer(width=1)   # right gutter cell
 
 
 def _build_files_table(files, icons, panel_h):
+    """Builds the file table inside the detail panel. Location + the second behavior column only exist
+    in the wide table (show=False is ignored by this DPG build, so the narrow one is built without them)."""
     tt = _threat_themes()
-    with dpg.table(tag="history_detail_table", header_row=True, row_background=True,
+    narrow = _state["narrow"]
+    _state["table_narrow"] = narrow
+    _state["detail_files"] = files        # kept so the table can rebuild itself when the width crosses the breakpoint
+    _state["detail_cells"].clear()
+    with dpg.table(parent="history_detail_panel", tag="history_detail_table", header_row=True, row_background=True,
                    borders_innerH=False, borders_outerH=False,
                    borders_innerV=False, borders_outerV=False,
                    scrollY=True, freeze_rows=1, width=-1,
                    height=max(1, panel_h - DETAIL_TABLE_CHROME)):
-        from ui.scan_threats import GUTTER_W
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
-        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=DETAIL_COL_ICON_W)
+        dpg.add_table_column(label="", width_fixed=True,
+                             init_width_or_weight=DETAIL_COL_ICON_W_NARROW if narrow else DETAIL_COL_ICON_W)
         dpg.add_table_column(label="Explain", width_fixed=True, init_width_or_weight=DETAIL_COL_EXPLAIN_W)
         dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=DETAIL_COL_NAME_WEIGHT)
-        dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=DETAIL_COL_LOCATION_WEIGHT)
+        if not narrow:
+            dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=DETAIL_COL_LOCATION_WEIGHT)
         dpg.add_table_column(label="Result", width_fixed=True, init_width_or_weight=DETAIL_COL_RESULT_W)
         dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=DETAIL_COL_CONF_W)
-        dpg.add_table_column(label="Behavior confidence", width_fixed=True,
-                             init_width_or_weight=DETAIL_COL_BEHAVIOR_CONF_W)
-        dpg.add_table_column(label="Type", width_fixed=True, init_width_or_weight=DETAIL_COL_TYPE_W)
+        if narrow:
+            dpg.add_table_column(label="Behavior", width_fixed=True, init_width_or_weight=DETAIL_COL_BEHAVIOR_W_NARROW)
+        else:
+            dpg.add_table_column(label="Behavior %", width_fixed=True, init_width_or_weight=DETAIL_COL_BEHAVIOR_CONF_W)
+            dpg.add_table_column(label="Type", width_fixed=True, init_width_or_weight=DETAIL_COL_TYPE_W)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("history_detail_table", tt["table"])
     apply_table_font("history_detail_table", _state["fonts"])   # shared table font (ui/table_style.py)
@@ -955,6 +1066,12 @@ def _build_files_table(files, icons, panel_h):
             traceback.print_exc()
 
 
+def _rebuild_detail_table():
+    """Rebuilds the open detail table (with or without Location). Runs only when the window crosses the breakpoint."""
+    if not dpg.does_item_exist("history_detail_table"):
+        return
+    dpg.delete_item("history_detail_table")
+    _build_files_table(_state["detail_files"], GLOBAL_ICONS or {}, _detail_panel_h())
 def _build_empty_detail(icons):
     base = _get_themes()
     fonts = _state["fonts"] or {}
@@ -981,10 +1098,12 @@ def _apply_detail_layout():
         dpg.configure_item("history_detail_summary", width=card_w)
     if dpg.does_item_exist("history_detail_target"):
         dpg.configure_item("history_detail_target", width=_detail_mid_w(card_w))
+        _fit_path("history_detail_target", _state["summary_target"], _detail_mid_w(card_w))
     if dpg.does_item_exist("history_detail_panel"):
         dpg.configure_item("history_detail_panel", width=card_w, height=ph)
     if dpg.does_item_exist("history_detail_table"):
         dpg.configure_item("history_detail_table", height=max(1, ph - DETAIL_TABLE_CHROME))
+        _refit_detail_cells()
     if dpg.does_item_exist("history_detail_empty_top"):
         dpg.configure_item("history_detail_empty_top",
                            height=max(0, ph // 2 - EMPTY_BLOCK_HEIGHT // 2 - EMPTY_BLOCK_BIAS))
@@ -1332,6 +1451,10 @@ def _resize_history(content_w, content_h):
         dpg.configure_item("history_scroll", width=row_w, height=panel_h)
     _apply_card_widths()
     _apply_empty_layout()
+    narrow = content_w < DETAIL_NARROW_BREAKPOINT
+    if narrow != _state["narrow"]:   # only fires when the window crosses the breakpoint, not on every pixel of a drag
+        _state["narrow"] = narrow
+        _rebuild_detail_table()
     _apply_detail_layout()
 
 
