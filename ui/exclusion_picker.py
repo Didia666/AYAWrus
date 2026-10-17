@@ -48,7 +48,10 @@ def _layout():
         return
     w, h, x, y = _geometry()
     dpg.configure_item(EXPICK, width=w, height=h)
-    dpg.set_item_pos(EXPICK, [x, y])
+    try:
+        dpg.set_item_pos(EXPICK, [x, y])
+    except Exception:
+        traceback.print_exc()   # if this DPG build won't move the dialog, it keeps its own position
 
 
 # ---------------------------------------------------------------------------

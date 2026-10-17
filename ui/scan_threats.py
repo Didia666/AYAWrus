@@ -5,6 +5,7 @@ from ui.layout import register_resize
 from ui.scan_layout import _get_themes
 from ui.scan_pipeline import _row_width
 from ui.table_style import TABLE_ROW_HEIGHT, TABLE_PILL_HEIGHT, TABLE_CELL_MUTED_COLOR, apply_table_font
+from ui.table_text import fit_text, text_width
 
 # scan_threats.py
 
@@ -13,16 +14,21 @@ THREATS_PANEL_HEIGHT = 420     # fixed; the table scrolls inside
 THREATS_TABLE_CHROME = 140     # table height = panel height - this (title + footer + padding). Raise if the footer gets cut off
 THREATS_TITLE_GAP = 8
 THREATS_FOOTER_GAP = 10
-NARROW_BREAKPOINT = 1200       # content width below which the Location column hides (about a 1360px window)
+NARROW_BREAKPOINT = 1200       # content width below which the Location column is left out (the full path stays in the File Name tooltip)
 
-# ---- Columns (fixed ones in px, stretch ones as weights) ----
-COL_SELECT_W = 65              # widened for the bigger table font (the "Select" header would clip at 64)
-COL_EXPLAIN_W = 85
-COL_CONF_W = 105              # "Confidence" header needs room at the table font size
-COL_BEHAVIOR_W = 165          # include the behavioral score plus the inferred behavior label
-COL_VERDICT_W = 110               # retired: the type is folded into the behavior cell
+# ---- Columns (fixed ones in px INCLUDING cell padding, stretch ones as weights) ----
+COL_SELECT_W = 55              # "Select" header at the table font size. Raise if the header clips
+COL_EXPLAIN_W = 75             # the "Explain" button
+COL_CONF_W = 100               # "Confidence" header. Raise if it clips
+COL_BEHAVIOR_W = 150           # score + inferred behavior label ("85% | Ransomware"). Raise if the label clips
+COL_VERDICT_W = 125            # the "SUSPICIOUS" pill. Raise if the pill text touches the edges
 COL_NAME_WEIGHT = 2.0
 COL_LOCATION_WEIGHT = 3.0
+ELLIPSIS_ENABLED = True        # False = old hard clipping
+PANEL_PAD_X = 8                # the panel's own left/right padding
+TABLE_SCROLLBAR_W = 16         # room kept for the table's scrollbar. Raise if "..." touches the next column
+FIXED_COL_EXTRA_PX = 115       # padding the 7 fixed columns add on top of their widths. MEASURED at a 1275px panel, so re-check at the minimum
+BEHAVIOR_TEXT_MARGIN = 16      # room kept inside the Behavior cell so the text never touches its edges. Raise if "..." touches the border
 
 # ---- Rows ----
 ROW_PAD_X = 10                 # table cell padding
@@ -37,14 +43,25 @@ HEADER_BG = (40, 52, 78)                # lighter than the rows so the header re
 HEADER_TEXT = COLORS["text_secondary"]  # muted header labels
 GUTTER_W = 14                           # empty columns on the far left and right (moves content off the walls)
 
+# ---- Empty state (shown instead of the table when there are no threats) ----
+EMPTY_TITLE = "No threats detected"
+EMPTY_SUBTITLE = "Nothing suspicious was found in this scan"
+EMPTY_TOP_SPACER = 90          # pushes the message down so it sits in the middle of the table area. Raise = lower
+EMPTY_TITLE_HEIGHT = 30
+EMPTY_SUB_HEIGHT = 24
+
 # ---- Footer ----
 FOOTER_BUTTON_HEIGHT = 36
-SELECT_BUTTON_WIDTH = 130
-QUARANTINE_BUTTON_WIDTH = 200
+SELECT_BUTTON_WIDTH = 120
+QUARANTINE_BUTTON_WIDTH = 190
 COUNT_WIDTH = 140
 
 _T = {}
-_state = {"narrow": False, "chk": {}, "fonts": None}
+# narrow       = what the window width says right now
+# table_narrow = what the CURRENT table was built with (rows must match its columns, so rows read this one)
+# rows         = every row handed to add_threat_row, so the table can rebuild itself when the width crosses the breakpoint
+_state = {"narrow": False, "table_narrow": False, "chk": {}, "fonts": None, "rows": [], "empty": False,
+          "cells": [], "row_w": 900}   # cells = (name button, full name, location button, full path), re-trimmed on resize
 
 
 # ---------------------------------------------------------------------------
@@ -114,75 +131,40 @@ def _themes():
 # ---------------------------------------------------------------------------
 
 def build_threats_table(parent):
-    """Creates the (empty) table with its header and columns. Rows are added later."""
+    """Creates the (empty) table with its header and columns. Rows are added later.
+    The Location column only exists when the window is wide enough (show=False is ignored by this DPG build,
+    so a narrow table is simply built without it)."""
     t = _themes()
+    narrow = _state["narrow"]
+    _state["table_narrow"] = narrow
+    _state["empty"] = False
+    if dpg.does_item_exist("threats_empty"):
+        dpg.configure_item("threats_empty", show=False)
+
     with dpg.table(parent=parent, tag="threats_table", header_row=True, row_background=True,
                    borders_innerH=False, borders_outerH=False,
                    borders_innerV=False, borders_outerV=False,
                    scrollY=True, freeze_rows=1, width=-1,
                    height=THREATS_PANEL_HEIGHT - THREATS_TABLE_CHROME):
-        dpg.add_table_column(
-            label="",
-            width_fixed=True,
-            init_width_or_weight=GUTTER_W
-        )
-
-        dpg.add_table_column(
-            label="Select",
-            width_fixed=True,
-            init_width_or_weight=COL_SELECT_W
-        )
-
-        dpg.add_table_column(
-            label="Explain",
-            width_fixed=True,
-            init_width_or_weight=COL_EXPLAIN_W
-        )
-
-        dpg.add_table_column(
-            label="File Name",
-            width_stretch=True,
-            init_width_or_weight=COL_NAME_WEIGHT
-        )
-
-        dpg.add_table_column(
-            label="Location",
-            width_stretch=True,
-            init_width_or_weight=COL_LOCATION_WEIGHT,
-            tag="threat_col_location",
-            show=not _state["narrow"]
-        )
-
-        dpg.add_table_column(
-            label="Confidence",
-            width_fixed=True,
-            init_width_or_weight=COL_CONF_W
-        )
-
-        dpg.add_table_column(
-            label="Behavior",
-            width_fixed=True,
-            init_width_or_weight=COL_BEHAVIOR_W
-        )
-
-        dpg.add_table_column(
-            label="Verdict",
-            width_fixed=True,
-            init_width_or_weight=COL_VERDICT_W
-        )
-
-        dpg.add_table_column(
-            label="",
-            width_fixed=True,
-            init_width_or_weight=GUTTER_W
-        )
+        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
+        dpg.add_table_column(label="Select", width_fixed=True, init_width_or_weight=COL_SELECT_W)
+        dpg.add_table_column(label="Explain", width_fixed=True, init_width_or_weight=COL_EXPLAIN_W)
+        dpg.add_table_column(label="File Name", width_stretch=True, init_width_or_weight=COL_NAME_WEIGHT)
+        if not narrow:
+            dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=COL_LOCATION_WEIGHT)
+        dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=COL_CONF_W)
+        dpg.add_table_column(label="Behavior", width_fixed=True, init_width_or_weight=COL_BEHAVIOR_W)
+        dpg.add_table_column(label="Verdict", width_fixed=True, init_width_or_weight=COL_VERDICT_W)
+        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("threats_table", t["table"])
     apply_table_font("threats_table", _state["fonts"])   # shared table font; scan.py rebuilds this table, so it re-applies every time
 
 
 def reset_threat_rows():
-    """Forget the old checkboxes (call before the table is rebuilt)."""
+    """Forget the old checkboxes and rows (scan.py calls this before it rebuilds the table)."""
     _state["chk"].clear()
+    _state["rows"].clear()
+    _state["cells"].clear()
 
 
 def _percent_button(value, theme_key):
@@ -244,10 +226,6 @@ def _behavior_score_button(threat):
     if labels:
         primary = labels[0]
 
-        # Prevent exceptionally long names from
-        # overflowing the fixed-width column.
-        if len(primary) > 13:
-            primary = primary[:12] + "..."
 
         extra = len(labels) - 1
 
@@ -269,10 +247,15 @@ def _behavior_score_button(threat):
         score_text = None
         theme_key = "dash"
 
-    if labels and score_text:
-        button_label = f"{score_text} | {short_label}"
-    elif labels:
-        button_label = short_label
+    if labels:
+        font = (_state["fonts"] or {}).get("table")
+        prefix = f"{score_text} | " if score_text else ""
+        suffix = f" +{len(labels) - 1}" if len(labels) > 1 else ""
+        if ELLIPSIS_ENABLED:
+            room = COL_BEHAVIOR_W - BEHAVIOR_TEXT_MARGIN - text_width(prefix + suffix, font)
+            button_label = prefix + fit_text(labels[0], room, font) + suffix
+        else:
+            button_label = prefix + labels[0] + suffix
     else:
         button_label = "-"
 
@@ -331,8 +314,8 @@ def _behavior_score_button(threat):
     return btn
 
 
-def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
-    """One row. Callbacks come from scan.py, so the selection / quarantine logic stays there."""
+def _draw_threat_row(table, threat, selected, toggle_cb, explain_cb):
+    """Draws one row. The cells must match the columns the table was BUILT with (table_narrow)."""
     t = _themes()
     base = _get_themes()
     path = threat.get("file_path", "")
@@ -350,10 +333,16 @@ def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
         name_btn = dpg.add_button(label=name, width=-1, height=ROW_ITEM_HEIGHT)
         dpg.bind_item_theme(name_btn, t["name"])
         with dpg.tooltip(name_btn):
-            dpg.add_text(path, color=COLORS["text_secondary"])
+            dpg.add_text(path, color=COLORS["text_secondary"])   # the full path lives here, so hiding Location loses nothing
 
-        loc_btn = dpg.add_button(label=path, width=-1, height=ROW_ITEM_HEIGHT)
-        dpg.bind_item_theme(loc_btn, t["path"])
+        loc_btn = None
+        if not _state["table_narrow"]:
+            loc_btn = dpg.add_button(label=path, width=-1, height=ROW_ITEM_HEIGHT)
+            dpg.bind_item_theme(loc_btn, t["path"])
+            with dpg.tooltip(loc_btn):
+                dpg.add_text(path, color=COLORS["text_secondary"])
+        _state["cells"].append((name_btn, name, loc_btn, path))
+        _fit_cell(name_btn, name, loc_btn, path, _label_widths())
 
         _percent_button(threat.get("probability"), "conf")
         _behavior_score_button(threat)
@@ -364,22 +353,66 @@ def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
         dpg.add_spacer(width=1)   # right gutter cell
 
 
+def _label_widths():
+    """(File Name, Location) pixel budget for the text inside the cells. An estimate from the column constants."""
+    fixed = 2 * GUTTER_W + COL_SELECT_W + COL_EXPLAIN_W + COL_CONF_W + COL_BEHAVIOR_W + COL_VERDICT_W
+    table_w = _state["row_w"] - 2 * PANEL_PAD_X - TABLE_SCROLLBAR_W
+    avail = max(0, table_w - fixed - FIXED_COL_EXTRA_PX)
+    weights = COL_NAME_WEIGHT + (0 if _state["table_narrow"] else COL_LOCATION_WEIGHT)
+    name_w = avail * COL_NAME_WEIGHT / weights - 2 * ROW_PAD_X
+    loc_w = avail * COL_LOCATION_WEIGHT / weights - 2 * ROW_PAD_X
+    return int(name_w), int(loc_w)
+
+
+def _fit_cell(name_btn, name, loc_btn, path, widths):
+    """Shortens the two text cells to their budget ("game name h..."). The full text stays in the tooltips."""
+    if not ELLIPSIS_ENABLED:
+        return
+    font = (_state["fonts"] or {}).get("table")
+    if dpg.does_item_exist(name_btn):
+        dpg.set_item_label(name_btn, fit_text(name, widths[0], font))
+    if loc_btn is not None and dpg.does_item_exist(loc_btn):
+        dpg.set_item_label(loc_btn, fit_text(path, widths[1], font))
+
+
+
+def _refit_cells():
+    widths = _label_widths()
+    for cell in list(_state["cells"]):
+        _fit_cell(*cell, widths)
+
+def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
+    """One row. Callbacks come from scan.py, so the selection / quarantine logic stays there.
+    The arguments are remembered (references only) so the table can rebuild itself on a width change."""
+    _state["rows"].append((threat, selected, toggle_cb, explain_cb))
+    _draw_threat_row(table, threat, selected, toggle_cb, explain_cb)
+
+
 def add_empty_row(table):
-    with dpg.table_row(parent=table):
-        dpg.add_text("")  # Gutter
-        dpg.add_text("")  # Select
-        dpg.add_text("")  # Explain
+    """Kept under its old name so scan.py needs no change. It no longer adds a fake row:
+    it hides the table and shows a centered message instead."""
+    _state["empty"] = True
+    if dpg.does_item_exist(table):
+        dpg.configure_item(table, show=False)
+    if dpg.does_item_exist("threats_empty"):
+        dpg.configure_item("threats_empty", show=True)
 
-        dpg.add_text(
-            "No threats detected",
-            color=COLORS["text_secondary"]
-        )
 
-        dpg.add_text("")  # Location
-        dpg.add_text("")  # Confidence
-        dpg.add_text("")  # Behavior
-        dpg.add_text("")  # Verdict
-        dpg.add_text("")  # Right gutter
+def _build_empty_block():
+    """The centered 'No threats detected' message. Hidden until add_empty_row shows it.
+    Centered with full-width invisible buttons (same trick as the Exclusions empty state)."""
+    base = _get_themes()
+    fonts = _state["fonts"] or {}
+    with dpg.child_window(tag="threats_empty", show=False, width=-1,
+                          height=THREATS_PANEL_HEIGHT - THREATS_TABLE_CHROME, border=False,
+                          no_scrollbar=True, no_scroll_with_mouse=True):
+        dpg.add_spacer(height=EMPTY_TOP_SPACER)
+        dpg.add_button(label=EMPTY_TITLE, width=-1, height=EMPTY_TITLE_HEIGHT, tag="threats_empty_title")
+        dpg.add_button(label=EMPTY_SUBTITLE, width=-1, height=EMPTY_SUB_HEIGHT, tag="threats_empty_sub")
+    dpg.bind_item_theme("threats_empty_title", base["label_on"])
+    dpg.bind_item_theme("threats_empty_sub", base["sub"])
+    if fonts.get("subheading") is not None:
+        dpg.bind_item_font("threats_empty_title", fonts["subheading"])
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +452,7 @@ def build_threats_panel(fonts, quarantine_cb, select_all_cb):
         dpg.add_spacer(height=THREATS_TITLE_GAP)
 
         with dpg.group(tag="threats_table_holder"):
-            pass
+            _build_empty_block()   # lives next to the table (inside the holder); only the table is deleted on a rebuild
 
         dpg.add_spacer(height=THREATS_FOOTER_GAP)
         with dpg.group(horizontal=True, tag="threats_footer"):
@@ -438,10 +471,32 @@ def build_threats_panel(fonts, quarantine_cb, select_all_cb):
     register_resize("scan_threats", _resize_threats)
 
 
+def _rebuild_for_width():
+    """Rebuilds the table (with or without Location) and re-adds the rows it already had.
+    Runs only when the window crosses NARROW_BREAKPOINT, not on every pixel of a drag."""
+    if not dpg.does_item_exist("threats_table"):
+        return
+    rows = list(_state["rows"])
+    was_empty = _state["empty"]
+    _state["chk"].clear()
+    _state["cells"].clear()
+    dpg.delete_item("threats_table")
+    build_threats_table("threats_table_holder")
+    for threat, selected, toggle_cb, explain_cb in rows:
+        try:
+            _draw_threat_row("threats_table", threat, selected, toggle_cb, explain_cb)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+    if was_empty and not rows:
+        add_empty_row("threats_table")
+
+
 def _apply_narrow(narrow):
+    if narrow == _state["narrow"]:
+        return
     _state["narrow"] = narrow
-    if dpg.does_item_exist("threat_col_location"):
-        dpg.configure_item("threat_col_location", show=not narrow)
+    _rebuild_for_width()
 
 
 def _resize_threats(content_w, content_h):
@@ -451,4 +506,6 @@ def _resize_threats(content_w, content_h):
         dpg.configure_item("threats_container", width=row_w, height=THREATS_PANEL_HEIGHT)
     if dpg.does_item_exist("threats_table"):
         dpg.configure_item("threats_table", height=THREATS_PANEL_HEIGHT - THREATS_TABLE_CHROME)
+    _state["row_w"] = row_w
     _apply_narrow(content_w < NARROW_BREAKPOINT)
+    _refit_cells()
