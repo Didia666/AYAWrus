@@ -6,6 +6,7 @@ from ui.scan_pipeline import _row_width
 from ui.scan_threats import (_themes as _threat_themes, _flat_button_theme, PILL_ROUNDING,
                              PILL_BG_ALPHA, PILL_BORDER_ALPHA, GUTTER_W, ROW_PAD_X)
 from ui.table_style import TABLE_ROW_HEIGHT, TABLE_PILL_HEIGHT, TABLE_CELL_MUTED_COLOR, apply_table_font
+from ui.table_text import fit_text
 from ui.confirm_dialog import init_confirm, ask_confirm
 from ui.toast import init_toast, show_toast
 import sys
@@ -55,6 +56,22 @@ RESTORE_BTN_W = 96
 DELETE_BTN_W = 88
 ACTION_BTN_GAP = 8
 COL_ACTIONS_W = RESTORE_BTN_W + DELETE_BTN_W + ACTION_BTN_GAP + 2 * ROW_PAD_X + 8   # +8 = safety so buttons never clip
+
+# ---- Narrow mode (window below the breakpoint): Location is left out and the other columns get tighter ----
+QUAR_NARROW_BREAKPOINT = 1100  # content width below which the table is rebuilt without the Location column (full path moves into the name tooltip)
+LOCK_ICON_SIZE_NARROW = 16     # smaller lock. It stays visible because the orange "missing" warning matters at a glance
+COL_ICON_W_NARROW = 32         # lock column. Raise if the lock gets clipped
+COL_DATE_W_NARROW = 185        # "2026-10-17 20:57:48" measures about 160px. Raise if the date clips
+RESTORE_BTN_W_NARROW = 84
+DELETE_BTN_W_NARROW = 76
+COL_ACTIONS_W_NARROW = RESTORE_BTN_W_NARROW + DELETE_BTN_W_NARROW + ACTION_BTN_GAP + 2 * ROW_PAD_X + 4   # +4 safety (wide mode uses +8)
+
+# ---- Ellipsis (long names end in "...", the full text stays in the tooltip) ----
+ELLIPSIS_ENABLED = True        # False = old hard clipping
+MEASURE_MIN_FRAME = 40         # DPG can't measure text before this frame, so rows drawn earlier are left untrimmed
+PANEL_PAD_X = 8                # the panel's own left/right padding (DPG default)
+TABLE_SCROLLBAR_W = 16         # room kept for the table's scrollbar. Raise if "..." touches the next column
+FIXED_COL_EXTRA_PX = 96        # padding the 6 fixed columns add on top of their widths. Measured at 924 and 1324: estimate lands 2-10px under the real cell, so text never overflows
 
 # ---- Risk levels ----
 RISK_SEVERE_MIN = 0.9          # probability at or above this = SEVERE
@@ -117,7 +134,11 @@ RESULT_DELETED = "Deleted"
 RESULT_FAILED_PREFIX = "Failed"
 
 _T = {}
-_state = {"panel_w": QUAR_PANEL_START_W, "panel_h": QUAR_PANEL_START_H, "icons": None, "fonts": None}
+# narrow       = what the window width says right now
+# table_narrow = what the CURRENT table was built with (rows must match its columns, so rows read this one)
+# cells        = (name button, full name, location button or None, full path), re-trimmed on resize
+_state = {"panel_w": QUAR_PANEL_START_W, "panel_h": QUAR_PANEL_START_H, "icons": None, "fonts": None,
+          "narrow": False, "table_narrow": False, "cells": []}
 _row_info = {}   # dest_path -> {"name", "missing"}; filled when rows are built, read by the toast messages
 
 
@@ -277,21 +298,66 @@ def _ask_delete(sender, app_data, user_data):
 # Table
 # ---------------------------------------------------------------------------
 
+def _col_widths(narrow):
+    """(lock column, date column, actions column) for the wide or narrow table."""
+    if narrow:
+        return COL_ICON_W_NARROW, COL_DATE_W_NARROW, COL_ACTIONS_W_NARROW
+    return COL_ICON_W, COL_DATE_W, COL_ACTIONS_W
+
+
+def _label_widths():
+    """(Threat Name, Location) pixel budget for the text inside the cells. An estimate from the column constants.
+    Narrow table: no Location, the name gets everything."""
+    narrow = _state["table_narrow"]
+    icon_w, date_w, actions_w = _col_widths(narrow)
+    fixed = 2 * GUTTER_W + icon_w + date_w + COL_RISK_W + actions_w
+    table_w = _state["panel_w"] - 2 * PANEL_PAD_X - TABLE_SCROLLBAR_W
+    avail = max(0, table_w - fixed - FIXED_COL_EXTRA_PX)
+    if narrow:
+        return int(avail - 2 * ROW_PAD_X), 0
+    total = COL_NAME_WEIGHT + COL_LOCATION_WEIGHT
+    return (int(avail * COL_NAME_WEIGHT / total - 2 * ROW_PAD_X),
+            int(avail * COL_LOCATION_WEIGHT / total - 2 * ROW_PAD_X))
+
+
+def _fit_cell(name_btn, name, loc_btn, path, widths):
+    """Shortens the text cells to their budget. The full text stays in the tooltips."""
+    if not ELLIPSIS_ENABLED or dpg.get_frame_count() < MEASURE_MIN_FRAME:
+        return
+    font = (_state["fonts"] or {}).get("table")
+    if dpg.does_item_exist(name_btn):
+        dpg.set_item_label(name_btn, fit_text(name, widths[0], font))
+    if loc_btn is not None and dpg.does_item_exist(loc_btn):
+        dpg.set_item_label(loc_btn, fit_text(path, widths[1], font))
+
+
+def _refit_cells():
+    widths = _label_widths()
+    for cell in list(_state["cells"]):
+        _fit_cell(*cell, widths)
+
+
+
 def _build_table():
-    """Creates a fresh, empty table with its columns. Theme and font are re-bound every time."""
+    """Creates a fresh, empty table with its columns. Theme and font are re-bound every time.
+    The Location column only exists in the wide table (show=False is ignored by this DPG build)."""
     tt = _threat_themes()
+    narrow = _state["narrow"]
+    _state["table_narrow"] = narrow
+    icon_w, date_w, actions_w = _col_widths(narrow)
     with dpg.table(parent="quarantine_container", tag="quarantine_table", header_row=True, row_background=True,
                    borders_innerH=False, borders_outerH=False,
                    borders_innerV=False, borders_outerV=False,
                    scrollY=True, freeze_rows=1, width=-1,
                    height=max(1, _state["panel_h"] - QUAR_TABLE_CHROME)):
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
-        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=COL_ICON_W)
+        dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=icon_w)
         dpg.add_table_column(label="Threat Name", width_stretch=True, init_width_or_weight=COL_NAME_WEIGHT)
-        dpg.add_table_column(label="Original Location", width_stretch=True, init_width_or_weight=COL_LOCATION_WEIGHT)
-        dpg.add_table_column(label="Date Detected", width_fixed=True, init_width_or_weight=COL_DATE_W)
+        if not narrow:
+            dpg.add_table_column(label="Original Location", width_stretch=True, init_width_or_weight=COL_LOCATION_WEIGHT)
+        dpg.add_table_column(label="Date Detected", width_fixed=True, init_width_or_weight=date_w)
         dpg.add_table_column(label="Risk", width_fixed=True, init_width_or_weight=COL_RISK_W)
-        dpg.add_table_column(label="Actions", width_fixed=True, init_width_or_weight=COL_ACTIONS_W)
+        dpg.add_table_column(label="Actions", width_fixed=True, init_width_or_weight=actions_w)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("quarantine_table", tt["table"])
     apply_table_font("quarantine_table", _state["fonts"])   # shared table font (ui/table_style.py)
@@ -308,28 +374,39 @@ def _add_row(entry):
     missing = SHOW_MISSING_HINT and not entry.get("_exists", True)
     label, prob = _risk_for(entry.get("probability"))
     _row_info[dest] = {"name": name, "missing": not entry.get("_exists", True)}   # read by the toast messages
+    narrow = _state["table_narrow"]   # the table's mode, so the cells always match its columns
+    lock_size = LOCK_ICON_SIZE_NARROW if narrow else LOCK_ICON_SIZE
+    lock_nudge = max(0, (QUAR_ROW_HEIGHT - lock_size) // 2 - ROW_ITEM_SPACING_Y)
+    restore_w = RESTORE_BTN_W_NARROW if narrow else RESTORE_BTN_W
+    delete_w = DELETE_BTN_W_NARROW if narrow else DELETE_BTN_W
 
     with dpg.table_row(parent="quarantine_table"):
         dpg.add_spacer(width=1)   # left gutter cell
 
         with dpg.group():         # lock icon cell (a group, so the nudge spacer and the icon share ONE cell)
-            dpg.add_spacer(height=LOCK_NUDGE_Y)
+            dpg.add_spacer(height=lock_nudge)
             lock = icons.get("lock") if icons else None
             if lock:
-                dpg.add_image(lock, width=LOCK_ICON_SIZE, height=LOCK_ICON_SIZE,
+                dpg.add_image(lock, width=lock_size, height=lock_size,
                               tint_color=LOCK_COLOR_MISSING if missing else LOCK_COLOR)
 
         name_btn = dpg.add_button(label=name, width=-1, height=QUAR_ROW_HEIGHT)
         dpg.bind_item_theme(name_btn, tt["name"])
         with dpg.tooltip(name_btn):
             dpg.add_text(name, color=COLORS["text_primary"])
+            if narrow:   # Location is hidden, so its path moves here
+                dpg.add_text(path, color=TIP_COLOR)
             if missing:
                 dpg.add_text(TIP_MISSING, color=COLORS["accent_orange"])
 
-        loc_btn = dpg.add_button(label=path, width=-1, height=QUAR_ROW_HEIGHT)
-        dpg.bind_item_theme(loc_btn, ct["cell_muted"])
-        with dpg.tooltip(loc_btn):
-            dpg.add_text(path, color=TIP_COLOR)
+        loc_btn = None
+        if not narrow:
+            loc_btn = dpg.add_button(label=path, width=-1, height=QUAR_ROW_HEIGHT)
+            dpg.bind_item_theme(loc_btn, ct["cell_muted"])
+            with dpg.tooltip(loc_btn):
+                dpg.add_text(path, color=TIP_COLOR)
+        _state["cells"].append((name_btn, name, loc_btn, path))
+        _fit_cell(name_btn, name, loc_btn, path, _label_widths())
 
         date_btn = dpg.add_button(label=str(entry.get("timestamp", "Unknown")), width=-1, height=QUAR_ROW_HEIGHT)
         dpg.bind_item_theme(date_btn, ct["cell_muted"])
@@ -339,12 +416,12 @@ def _add_row(entry):
             dpg.add_text(TIP_NO_SCORE if prob is None else TIP_SCORE.format(score=prob), color=TIP_COLOR)
 
         with dpg.group(horizontal=True):
-            restore = dpg.add_button(label="Restore", width=RESTORE_BTN_W, height=QUAR_ROW_HEIGHT,
+            restore = dpg.add_button(label="Restore", width=restore_w, height=QUAR_ROW_HEIGHT,
                                      callback=_restore_file, user_data=dest)
             dpg.bind_item_theme(restore, base["btn_secondary"])
             with dpg.tooltip(restore):
                 dpg.add_text(TIP_RESTORE, color=TIP_COLOR)
-            delete = dpg.add_button(label="Delete", width=DELETE_BTN_W, height=QUAR_ROW_HEIGHT,
+            delete = dpg.add_button(label="Delete", width=delete_w, height=QUAR_ROW_HEIGHT,
                                     callback=_ask_delete, user_data=(dest, name))
             dpg.bind_item_theme(delete, base["btn_cancel"])
             with dpg.tooltip(delete):
@@ -365,6 +442,7 @@ def _rebuild_quarantine_table():
     if dpg.does_item_exist("quarantine_table"):
         dpg.delete_item("quarantine_table")
     _row_info.clear()   # rows are rebuilt below; the callbacks read this BEFORE they trigger a rebuild
+    _state["cells"].clear()
     _build_table()
 
     entries = []
@@ -397,6 +475,11 @@ def _resize_quarantine(content_w, content_h):
         dpg.configure_item("quarantine_container", width=row_w, height=panel_h)
     if dpg.does_item_exist("quarantine_table"):
         dpg.configure_item("quarantine_table", height=max(1, panel_h - QUAR_TABLE_CHROME))
+    narrow = content_w < QUAR_NARROW_BREAKPOINT
+    if narrow != _state["narrow"]:   # only fires when the window crosses the breakpoint, not on every pixel of a drag
+        _state["narrow"] = narrow
+        _rebuild_quarantine_table()
+    _refit_cells()
     if dpg.does_item_exist("quarantine_empty_top"):
         dpg.configure_item("quarantine_empty_top",
                            height=max(0, panel_h // 2 - EMPTY_BLOCK_HEIGHT // 2 - EMPTY_BLOCK_BIAS))
