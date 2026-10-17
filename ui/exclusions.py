@@ -6,6 +6,7 @@ from ui.scan_layout import _get_themes, _center_indent, PAGE_LEFT_PAD, CHILD_PAD
 from ui.scan_pipeline import _row_width
 from ui.scan_threats import _themes as _threat_themes, _flat_button_theme, PILL_BG_ALPHA, GUTTER_W, ROW_PAD_X
 from ui.table_style import TABLE_ROW_HEIGHT, TABLE_PILL_HEIGHT, TABLE_CELL_MUTED_COLOR, apply_table_font
+from ui.table_text import fit_text
 from ui.quarantine import _pill_theme   # same pill look as Quarantine (used for the chip and the status pills)
 from ui.confirm_dialog import init_confirm, ask_confirm
 from ui.toast import init_toast, show_toast
@@ -85,6 +86,13 @@ COL_STATUS_W = 170
 REMOVE_BTN_W = 96
 COL_ACTIONS_W = REMOVE_BTN_W + 2 * ROW_PAD_X + 8   # +8 = safety so the button never clips
 
+# ---- Ellipsis (long names end in "...", the full text stays in the tooltip) ----
+ELLIPSIS_ENABLED = True        # False = old hard clipping
+MEASURE_MIN_FRAME = 40         # DPG can't measure text before this frame, so rows drawn earlier are left untrimmed
+PANEL_PAD_X = 8               # the list panel's own left/right padding (DPG default)
+TABLE_SCROLLBAR_W = 16         # room kept for the table's scrollbar. Raise if "..." touches the next column
+FIXED_COL_EXTRA_PX = 80        # padding the 5 fixed columns add on top of their widths. Measured at 924 and 1324: estimate lands 0-9px under the real cell, so text never overflows
+
 # ---- Status (is the folder still on disk?) ----
 CHECK_PATHS_EXIST = True       # False = skip the disk check, every row shows ACTIVE
 SKIP_CHECK_FOR_UNC = True      # network paths (\\server\share) can freeze the UI when offline, so don't check them
@@ -143,7 +151,8 @@ EMPTY_BLOCK_HEIGHT = EMPTY_ICON_SIZE + EMPTY_GAP + EMPTY_TITLE_HEIGHT + EMPTY_SU
 EMPTY_BLOCK_BIAS = 20          # raises the block slightly above the exact center
 
 _T = {}
-_state = {"row_w": ADD_CARD_START_W, "panel_h": LIST_PANEL_START_H, "icons": None, "fonts": None}
+_state = {"row_w": ADD_CARD_START_W, "panel_h": LIST_PANEL_START_H, "icons": None, "fonts": None,
+          "cells": []}   # cells = (folder button, full name, location button, full parent path), re-trimmed on resize
 
 
 # ---------------------------------------------------------------------------
@@ -329,6 +338,34 @@ def _folder_picked(sender, app_data):
 # Table
 # ---------------------------------------------------------------------------
 
+def _label_widths():
+    """(Folder, Location) pixel budget for the text inside the cells. An estimate from the column constants."""
+    fixed = 2 * GUTTER_W + COL_ICON_W + COL_STATUS_W + COL_ACTIONS_W
+    table_w = _state["row_w"] - 2 * PANEL_PAD_X - TABLE_SCROLLBAR_W
+    avail = max(0, table_w - fixed - FIXED_COL_EXTRA_PX)
+    total = COL_NAME_WEIGHT + COL_LOCATION_WEIGHT
+    name_w = avail * COL_NAME_WEIGHT / total - 2 * ROW_PAD_X
+    loc_w = avail * COL_LOCATION_WEIGHT / total - 2 * ROW_PAD_X
+    return int(name_w), int(loc_w)
+
+
+def _fit_cell(name_btn, name, loc_btn, parent, widths):
+    """Shortens the two text cells to their budget. The full text stays in the tooltips."""
+    if not ELLIPSIS_ENABLED or dpg.get_frame_count() < MEASURE_MIN_FRAME:
+        return
+    font = (_state["fonts"] or {}).get("table")
+    if dpg.does_item_exist(name_btn):
+        dpg.set_item_label(name_btn, fit_text(name, widths[0], font))
+    if dpg.does_item_exist(loc_btn):
+        dpg.set_item_label(loc_btn, fit_text(parent, widths[1], font))
+
+
+def _refit_cells():
+    widths = _label_widths()
+    for cell in list(_state["cells"]):
+        _fit_cell(*cell, widths)
+
+
 def _build_table():
     """Creates a fresh, empty table with its columns. Theme and font are re-bound every time."""
     tt = _threat_themes()
@@ -376,6 +413,8 @@ def _add_row(path):
         dpg.bind_item_theme(loc_btn, t["cell_muted"])
         with dpg.tooltip(loc_btn):
             dpg.add_text(parent, color=TIP_COLOR)
+        _state["cells"].append((name_btn, name, loc_btn, parent))
+        _fit_cell(name_btn, name, loc_btn, parent, _label_widths())
 
         pill = dpg.add_button(label=status, width=-1, height=PILL_HEIGHT)
         dpg.bind_item_theme(pill, t[f"status_{status}"])
@@ -401,6 +440,7 @@ def _rebuild_list():
     """Deletes and rebuilds the table (theme and font get re-bound in _build_table)."""
     if not dpg.does_item_exist("exclusions_container"):
         return
+    _state["cells"].clear()
     if dpg.does_item_exist("exclusions_table"):
         dpg.delete_item("exclusions_table")
     _build_table()
@@ -449,6 +489,7 @@ def _resize_exclusions(content_w, content_h):
         dpg.configure_item("exclusions_container", width=row_w, height=panel_h)
     if dpg.does_item_exist("exclusions_table"):
         dpg.configure_item("exclusions_table", height=max(1, panel_h - LIST_TABLE_CHROME))
+    _refit_cells()
     if dpg.does_item_exist("exclusions_empty_top"):
         dpg.configure_item("exclusions_empty_top",
                            height=max(0, panel_h // 2 - EMPTY_BLOCK_HEIGHT // 2 - EMPTY_BLOCK_BIAS))
