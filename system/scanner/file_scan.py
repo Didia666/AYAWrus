@@ -7,6 +7,8 @@ from system.security.allowed import allow_threat
 from system.scanner.extractor import get_extractor
 from system.scanner.pe_statistics import record_pe_statistics
 from system.history.logs import add_log_entry
+import hashlib
+from system.security.hash_detection import load_malware_hashes
 from system.model_load import (
     model,
     selected_feature_indices,
@@ -23,26 +25,58 @@ from system.utils.utility import categorize_threat
 from system.notifications import enqueue_threat_notification
 from system.xai.engine import xai_engine
 
+
 def classify_file(file_path):
-    ext = os.path.splitext(file_path)[1].lower()
+    """
+    Classify using the real Windows PE header.
+
+    Returns:
+        ("pe", header, file_size)
+        ("skip", None, file_size)
+        ("error", None, 0)
+
+    File extensions are not trusted.
+    """
     try:
         file_size = os.path.getsize(file_path)
-    except Exception:
-        return ("error", None, 0)
 
-    if ext in KNOWN_SKIP_EXTS:
-        return ("skip", None, file_size)   # no open(), no read() at all
+        # Minimum size needed for DOS header + PE signature.
+        if file_size < 64:
+            return ("skip", None, file_size)
 
-    try:
         with open(file_path, "rb") as f:
             header = f.read(HEADER_PEEK_SIZE)
-    except Exception:
+
+            # Check DOS MZ signature.
+            if header[:2] != b"MZ":
+                return ("skip", None, file_size)
+
+            # e_lfanew is at offset 0x3C (60).
+            pe_offset = int.from_bytes(
+                header[0x3C:0x40],
+                byteorder="little"
+            )
+
+            # Reject impossible PE header locations.
+            if (
+                pe_offset < 64
+                or pe_offset > file_size - 24
+                or pe_offset > 1024 * 1024
+            ):
+                return ("skip", None, file_size)
+
+            # Check the actual PE signature.
+            f.seek(pe_offset)
+            signature = f.read(4)
+
+            if signature != b"PE\x00\x00":
+                return ("skip", None, file_size)
+
+            return ("pe", header, file_size)
+
+    except OSError as exc:
+        print(f"[PE Check] Cannot read {file_path}: {exc}")
         return ("error", None, 0)
-
-    if header[:2] == b'MZ':
-        return ("pe", header, file_size)
-
-    return ("skip", None, file_size)
 
 def _prepare_model_features(features):
     X = np.asarray(features, dtype=np.float32)
@@ -69,16 +103,42 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
     extractor = get_extractor()   #
     
     if is_excluded(file_path, excluded_roots):
-        return {"result": "EXCLUDED", "probability": 0, "file_path": file_path}
+        return {
+            "result": "EXCLUDED",
+            "probability": None,
+            "file_path": file_path
+        }
+
     
+
+    # No hash match: existing PE/Random Forest pipeline
+    # continues below.
     try:
-        # First check if it's a PE file
         kind, header, file_size = classify_file(file_path)
 
         if kind == "error":
-            return {"result": "ERROR", "probability": 0, "file_path": file_path}
-        if kind == "skip":
-            return {"result": "CLEAN", "probability": 0, "file_path": file_path}
+            return {
+                "result": "ERROR",
+                "probability": None,
+                "file_path": file_path
+            }
+
+        # CRITICAL: Stop all analysis for non-PE files.
+        if kind != "pe":
+            return {
+                "result": "SKIPPED",
+                "probability": None,
+                "file_path": file_path
+            }
+
+
+        if file_size > 500 * 1024 * 1024:
+            return {
+                "result": "TOO_LARGE",
+                "probability": None,
+                "file_path": file_path
+            }
+
         
         # Skip very large files (optional, adjust limit as needed)
         if file_size > 500 * 1024 * 1024:  # 500MB limit
@@ -94,6 +154,42 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     file_bytes = f.read()
             except Exception as e:
                 return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
+
+                # SHA-256: reuse bytes already loaded for ML.
+        # Skip hashing when the signature database is empty.
+        known_hashes = load_malware_hashes()
+
+        if known_hashes:
+            digest = hashlib.sha256(file_bytes).hexdigest()
+
+            if digest in known_hashes:
+                add_log_entry(
+                    file_path,
+                    result="MALICIOUS",
+                    details=f"Known SHA-256: {digest}"
+                )
+
+                DETECTED_MALWARE.append(file_path)
+
+                quarantine_status = None
+
+                if auto_quarantine:
+                    quarantine_status = quarantine_file(file_path)
+
+                return {
+                    "result": "MALICIOUS",
+                    "probability": None,
+                    "file_path": file_path,
+                    "category": "Known Malware Signature",
+                    "detection_method": "SHA256_SIGNATURE",
+                    "sha256": digest,
+                    "signature_match": True,
+                    "quarantine_status": quarantine_status,
+                }
+
+        # Existing save_pe_statistics() and feature
+        # extraction continue below.
+
 
         def save_pe_statistics(verdict, probability=None, category=None):
             try:
@@ -280,10 +376,9 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 pass
 
             if auto_quarantine:
-                if prob >= 0.90:
-                    quarantine_file(file_path)
-                else:
-                    allow_threat(file_path, category, "MALICIOUS")
+                if prediction == 1:
+                    if auto_quarantine:
+                        quarantine_result = quarantine_file(file_path)
             return {
                 "result": "MALICIOUS",
                 "probability": prob,

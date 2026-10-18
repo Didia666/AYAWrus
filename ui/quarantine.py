@@ -246,6 +246,24 @@ def _risk_badge(risk):
 # Actions (the real logic: unchanged)
 # ---------------------------------------------------------------------------
 
+def _ask_restore(sender, app_data, user_data):
+    dest_path, name = user_data
+
+    ask_confirm(
+        "Restore Quarantined File",
+        (
+            f"Are you sure you want to restore '{name}'?\n\n"
+            "AYAWrus detected this file as potentially malicious.\n"
+            "Restoring it may expose your device to threats.\n\n"
+            "Only continue if you trust the file."
+        ),
+        on_confirm=_restore_file,
+        user_data=dest_path,
+        confirm_label="Restore Anyway",
+        danger=True,
+    )
+
+
 def _restore_file(sender, app_data, user_data):
     dest_path = user_data
     info = _row_info.get(dest_path, {})   # toast only
@@ -253,7 +271,10 @@ def _restore_file(sender, app_data, user_data):
 
     result = None   # toast only: stays None if the backend isn't loaded
     if BACKEND_AVAILABLE:
-        result = qq.restore_file(dest_path)
+        result = qq.restore_file(
+            dest_path,
+            confirmed=True
+        )
         print(f"Restore result: {result}")
     _toast_restore(result, info)   # toast only
 
@@ -368,7 +389,16 @@ def _add_row(entry):
     ct = _themes()
     base = _get_themes()
     icons = _state["icons"]
-    path = entry.get("original_path", "Unknown")
+    path = entry.get("original_path") or "Unknown"
+
+    name = (
+        entry.get("original_name")
+        or os.path.basename(path)
+        or "Unknown File"
+    )
+
+    # Internal storage path: never use as display name
+    dest = entry.get("dest_path")
     name = os.path.basename(path) or path
     dest = entry.get("dest_path")
     missing = SHOW_MISSING_HINT and not entry.get("_exists", True)
@@ -416,8 +446,13 @@ def _add_row(entry):
             dpg.add_text(TIP_NO_SCORE if prob is None else TIP_SCORE.format(score=prob), color=TIP_COLOR)
 
         with dpg.group(horizontal=True):
-            restore = dpg.add_button(label="Restore", width=restore_w, height=QUAR_ROW_HEIGHT,
-                                     callback=_restore_file, user_data=dest)
+            restore = dpg.add_button(
+                label="Restore",
+                width=restore_w,
+                height=QUAR_ROW_HEIGHT,
+                callback=_ask_restore,
+                user_data=(dest, name),
+            )
             dpg.bind_item_theme(restore, base["btn_secondary"])
             with dpg.tooltip(restore):
                 dpg.add_text(TIP_RESTORE, color=TIP_COLOR)
