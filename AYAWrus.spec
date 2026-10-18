@@ -25,38 +25,37 @@ certificate_files = [
     for certificate_path in mscerts_dir.glob("*.pem")
 ]
 model_files = [
-    (str(project_root / "rf_ember_model.pkl"), "."),
-    (str(project_root / "selected_features.pkl"), "system"),
-    (str(project_root / "system" / "rf_ember_model.onnx"), "system"),
     (
-        str(project_root / "Model_Behavior" / "rf_ember_model.pkl"),
-        "Model_Behavior",
-    ),
+        str(project_root / "Model_Malware" / filename),
+        "Model_Malware",
+    )
+    for filename in (
+        "rf_ember_model_malware.onnx",
+        "rf_ember_model_malware.pkl",
+        "selected_features.pkl",
+    )
+] + [
     (
-        str(project_root / "Model_Behavior" / "selected_features.pkl"),
+        str(project_root / "Model_Behavior" / filename),
         "Model_Behavior",
-    ),
+    )
+    for filename in (
+        "behavior_label_map.json",
+        "behavior_label_mapping.json",
+        "behavior_model_metadata.json",
+        "model_metrics.json",
+        "rf_ember_model.onnx",
+        "rf_ember_model.pkl",
+        "selected_features.pkl",
+    )
 ]
 config_path = project_root / "system" / "config.json"
 if not config_path.is_file():
     raise FileNotFoundError(f"API configuration file not found: {config_path}")
 
-with config_path.open(encoding="utf-8") as config_file:
-    user_config = json.load(config_file)
-
-api_key = user_config.get("ai_api_key")
-api_url = user_config.get("ai_api_url")
-if not isinstance(api_key, str) or not api_key.strip():
-    raise ValueError("Set ai_api_key in system/config.json before building.")
-if not isinstance(api_url, str) or not api_url.strip():
-    raise ValueError("Set ai_api_url in system/config.json before building.")
-
 packaged_config_dir = Path(tempfile.mkdtemp(prefix="ayawrus-build-"))
 packaged_config_path = packaged_config_dir / "config.json"
-packaged_config_path.write_text(
-    json.dumps({"ai_api_key": api_key, "ai_api_url": api_url}),
-    encoding="utf-8",
-)
+packaged_config_path.write_text(json.dumps({}), encoding="utf-8")
 atexit.register(shutil.rmtree, packaged_config_dir, ignore_errors=True)
 config_files = [(str(packaged_config_path), "system")]
 

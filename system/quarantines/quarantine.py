@@ -1,110 +1,288 @@
 import os
 import json
-import shutil
 import stat
+import hashlib
+import secrets
+import tempfile
+import threading
+from pathlib import Path
 from datetime import datetime
-from system.config import QUARANTINE_INDEX_FILE, QUARANTINE_DIR, _normalize_path, DETECTED_MALWARE, DETECTED_SUSPICIOUS
-from system.history.logs import load_log, add_log_entry
+
+from system.config import (
+    QUARANTINE_INDEX_FILE,
+    QUARANTINE_DIR,
+    _normalize_path,
+    DETECTED_MALWARE,
+    DETECTED_SUSPICIOUS,
+)
+
+from system.history.logs import (
+    load_log,
+    add_log_entry,
+)
+
+_QUARANTINE_LOCK = threading.RLock()
+
+QUARANTINE_ROOT = Path(QUARANTINE_DIR).resolve()
+INDEX_PATH = Path(QUARANTINE_INDEX_FILE)
+
+QUARANTINE_ROOT.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+
+def _sha256(file_path):
+    digest = hashlib.sha256()
+
+    with open(file_path, "rb") as file:
+        for chunk in iter(
+            lambda: file.read(1024 * 1024),
+            b""
+        ):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+def _reject_symlink(path):
+    if Path(path).is_symlink():
+        raise ValueError(
+            "Symbolic links are not permitted"
+        )
+
+
+def _require_quarantine_path(path):
+    candidate = Path(
+        os.path.abspath(os.fspath(path))
+    )
+
+    _reject_symlink(candidate)
+
+    if candidate.parent != QUARANTINE_ROOT:
+        raise ValueError(
+            "Path is outside the quarantine directory"
+        )
+
+    if not candidate.is_file():
+        raise FileNotFoundError(candidate)
+
+    return candidate
+
+
 
 
 def _load_quarantine_index():
-    if not os.path.exists(QUARANTINE_INDEX_FILE):
-        with open(QUARANTINE_INDEX_FILE, "w") as f:
-            json.dump([], f, indent=4)
-    with open(QUARANTINE_INDEX_FILE, "r") as f:
-        return json.load(f)
+    if not INDEX_PATH.exists():
+        return []
+
+    with INDEX_PATH.open(
+        "r", encoding="utf-8"
+    ) as file:
+        data = json.load(file)
+
+    if not isinstance(data, list):
+        raise ValueError("Invalid quarantine index")
+
+    return data
+
 
 def _save_quarantine_index(entries):
-    with open(QUARANTINE_INDEX_FILE, "w") as f:
-        json.dump(entries, f, indent=4)
+    """
+    Save through a temporary file, then atomically
+    replace the current JSON index.
+    """
+    fd, temp_path = tempfile.mkstemp(
+        prefix=".quarantine-index-",
+        suffix=".tmp",
+        dir=QUARANTINE_ROOT,
+    )
+
+    try:
+        with os.fdopen(
+            fd, "w", encoding="utf-8"
+        ) as file:
+            json.dump(entries, file, indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temp_path, INDEX_PATH)
+
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
 
 def quarantine_file(file_path):
-    print(f"Starting quarantine for: {file_path}")
-    try:
-        # First check if already in quarantine index!
-        idx = _load_quarantine_index()
-        normalized_file_path = _normalize_path(file_path)
-        for entry in idx:
-            if _normalize_path(entry.get("original_path")) == normalized_file_path:
-                print(f"Already in quarantine: {file_path}")
-                return f"{file_path} -> ALREADY IN QUARANTINE"
-        
-        file_name = os.path.basename(file_path)
-        safe_name = file_name + ".quarantine"
-        dest_path = os.path.join(QUARANTINE_DIR, safe_name)
-        counter = 1
-        while os.path.exists(dest_path):
-            safe_name = f"{file_name}_{counter}.quarantine"
-            dest_path = os.path.join(QUARANTINE_DIR, safe_name)
-            counter += 1
+    with _QUARANTINE_LOCK:
+        original = Path(os.path.abspath(file_path))
 
-        # Move file to quarantine if it exists at original location!
-        if os.path.exists(file_path):
-            print(f"Moving {file_path} to {dest_path}")
-
-            print("Source exists:", os.path.exists(file_path))
-            print("Destination exists before move:", os.path.exists(dest_path))
-
-            new_path = shutil.move(file_path, dest_path)
-            
-            print("shutil.move returned:", new_path)
-            print("Destination exists after move:", os.path.exists(dest_path))
-            print("Source exists after move:", os.path.exists(file_path))
-
-            # Verify the move actually happened
-            if os.path.exists(file_path):
-                raise RuntimeError(
-                    f"File still exists at original location after move: {file_path}"
-                )
-
-            if not os.path.exists(dest_path):
-                raise RuntimeError(
-                    f"File was not found in quarantine after move: {dest_path}"
-                )
-        else:
-            # Check if file is already in quarantine (maybe from auto scan)
-            possible_quarantined_files = os.listdir(QUARANTINE_DIR) if os.path.exists(QUARANTINE_DIR) else []
-            for f in possible_quarantined_files:
-                if f == safe_name or (file_name in f and f.endswith('.quarantine')):
-                    dest_path = os.path.join(QUARANTINE_DIR, f)
-                    print(f"Found already quarantined at: {dest_path}")
-                    break
-        
-        if os.path.exists(dest_path):
-            os.chmod(dest_path, stat.S_IREAD)  # Read-only
-        
-        # capture metadata from history log
-        prob = None
-        result = None
         try:
-            hist = load_log()
-            for e in reversed(hist):
-                if e.get("file_path") == file_path:
-                    prob = e.get("probability")
-                    result = e.get("result")
-                    break
-        except Exception:
-            pass
+            _reject_symlink(original)
 
-        entry = {
-            "dest_path": dest_path,
-            "original_path": file_path,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "size": os.path.getsize(dest_path) if os.path.exists(dest_path) else 0,
-            "result": result,
-            "probability": prob,
-        }
-        idx.append(entry)
-        _save_quarantine_index(idx)
-        
-        # Log quarantine action!
-        add_log_entry(file_path, "QUARANTINED", prob, f"Quarantined to {dest_path}")
+            if not original.is_file():
+                return (
+                    f"Failed to quarantine {file_path}: "
+                    "Source file does not exist"
+                )
 
-        print(f"Successfully quarantined: {file_path}")
-        return f"{file_path} -> MOVED TO QUARANTINE"
-    except Exception as e:
-        print(f"Error quarantining {file_path}: {e}")
-        return f"Failed to quarantine {file_path}: {e}"
+            if (
+                original == QUARANTINE_ROOT
+                or QUARANTINE_ROOT in original.parents
+            ):
+                raise ValueError(
+                    "Cannot quarantine a quarantine file"
+                )
+
+            entries = _load_quarantine_index()
+
+            normalized = _normalize_path(str(original))
+
+            for entry in entries:
+                if (
+                    _normalize_path(
+                        entry.get("original_path", "")
+                    ) == normalized
+                ):
+                    return (
+                        f"{file_path} -> "
+                        "ALREADY IN QUARANTINE"
+                    )
+
+            original_stat = original.stat()
+            original_hash = _sha256(original)
+
+            # Generate an unpredictable ID.
+            quarantine_id = secrets.token_hex(16)
+            random_name = (
+                f"{quarantine_id}.quarantine"
+            )
+
+            dest = QUARANTINE_ROOT / random_name
+
+            # Exclusive creation prevents accidental
+            # overwriting of another quarantine object.
+            try:
+                with original.open("rb") as source:
+                    with dest.open("xb") as target:
+                        for chunk in iter(
+                            lambda: source.read(1024 * 1024),
+                            b""
+                        ):
+                            target.write(chunk)
+
+                        target.flush()
+                        os.fsync(target.fileno())
+
+                copied_hash = _sha256(dest)
+
+                # Detect a file that changed while
+                # being copied.
+                source_hash_after = _sha256(original)
+
+                if (
+                    copied_hash != original_hash
+                    or source_hash_after != original_hash
+                ):
+                    raise RuntimeError(
+                        "File changed during quarantine"
+                    )
+
+                if dest.stat().st_size != original_stat.st_size:
+                    raise RuntimeError(
+                        "File size changed during quarantine"
+                    )
+
+                os.chmod(dest, stat.S_IREAD)
+
+                # Preserve existing detection metadata.
+                probability = None
+                result = None
+
+                try:
+                    history = load_log()
+
+                    for log in reversed(history):
+                        if (
+                            log.get("file_path")
+                            == str(original)
+                        ):
+                            probability = log.get(
+                                "probability"
+                            )
+                            result = log.get("result")
+                            break
+
+                except Exception:
+                    pass
+
+                entry = {
+                    "id": quarantine_id,
+                    "dest_path": str(dest),
+                    "original_path": str(original),
+                    "original_name": original.name,
+                    "timestamp": datetime.now().isoformat(),
+                    "size": original_stat.st_size,
+                    "sha256": original_hash,
+                    "original_mode": stat.S_IMODE(
+                        original_stat.st_mode
+                    ),
+                    "result": result,
+                    "probability": probability,
+                    "status": "PENDING_REMOVAL",
+                }
+
+                entries.append(entry)
+                _save_quarantine_index(entries)
+
+            except Exception:
+                # Original file is still present.
+                # Do not leave a partial payload.
+                if dest.exists():
+                    os.chmod(dest, stat.S_IWRITE)
+                    dest.unlink()
+
+                raise
+
+            # Only remove the source after the
+            # quarantined copy has been verified.
+            try:
+                original.unlink()
+
+            except OSError as exc:
+                # Retain the verified copy and index.
+                # Never claim full quarantine succeeded.
+                return (
+                    f"Failed to fully quarantine "
+                    f"{file_path}: original file "
+                    f"could not be removed ({exc})"
+                )
+
+            entry["status"] = "QUARANTINED"
+            _save_quarantine_index(entries)
+
+            try:
+                add_log_entry(
+                    str(original),
+                    "QUARANTINED",
+                    probability,
+                    f"SHA-256: {original_hash}",
+                )
+            except Exception as exc:
+                print(
+                    f"Quarantine logging failed: {exc}"
+                )
+
+            return (
+                f"{file_path} -> MOVED TO QUARANTINE"
+            )
+
+        except Exception as exc:
+            return (
+                f"Failed to quarantine "
+                f"{file_path}: {exc}"
+            )
+
     
 def process_quarantine():
     if not DETECTED_MALWARE:
@@ -164,81 +342,196 @@ def is_quarantined(file_path: str) -> bool:
     normalized_fp = _normalize_path(file_path)
     return any(_normalize_path(e.get("original_path")) == normalized_fp for e in entries)
 
-def restore_file(dest_path):
-    print(f"Restoring file from {dest_path}")
-    entries = _load_quarantine_index()
-    normalized_dest = _normalize_path(dest_path)
-    for i, e in enumerate(entries):
-        entry_dest = e.get("dest_path", "")
-        if _normalize_path(entry_dest) == normalized_dest:
-            original = e.get("original_path")
-            prob = e.get("probability")
-            # Check if dest_path exists; if not, try QUARANTINE_DIR
-            actual_dest = dest_path
-            if not os.path.exists(dest_path):
-                fname = os.path.basename(entry_dest)
-                actual_dest = os.path.join(QUARANTINE_DIR, fname)
-                if not os.path.exists(actual_dest):
-                    return "File not found in quarantine"
-            
+
+def restore_file(dest_path, confirmed=False):
+    if not confirmed:
+        return "Restore requires explicit confirmation"
+
+    with _QUARANTINE_LOCK:
+        try:
+            entries = _load_quarantine_index()
+            normalized = _normalize_path(dest_path)
+
+            entry = next(
+                (
+                    e for e in entries
+                    if _normalize_path(
+                        e.get("dest_path", "")
+                    ) == normalized
+                ),
+                None,
+            )
+
+            if entry is None:
+                return "Quarantine record not found"
+
+            if entry.get("status") != "QUARANTINED":
+                return "Quarantine record is not finalized"
+
+            if not entry.get("sha256"):
+                return (
+                    "Legacy record: integrity hash "
+                    "is unavailable"
+                )
+
+            source = _require_quarantine_path(
+                entry["dest_path"]
+            )
+
+            original = Path(
+                os.path.abspath(
+                    entry["original_path"]
+                )
+            )
+
+            _reject_symlink(original)
+            _reject_symlink(original.parent)
+
+            # Check quarantine integrity.
+            current_hash = _sha256(source)
+
+            if current_hash != entry["sha256"]:
+                return (
+                    "RESTORE BLOCKED: "
+                    "SHA-256 integrity mismatch"
+                )
+
+            if source.stat().st_size != entry["size"]:
+                return (
+                    "RESTORE BLOCKED: "
+                    "File size mismatch"
+                )
+
+            # Refuse overwrites.
+            if original.exists() or original.is_symlink():
+                return (
+                    "RESTORE BLOCKED: "
+                    "Destination already exists"
+                )
+
+            # Do not create arbitrary destination
+            # directories automatically.
+            if not original.parent.is_dir():
+                return (
+                    "RESTORE BLOCKED: "
+                    "Original directory is missing"
+                )
+
+            # Exclusive creation ensures an existing
+            # destination file is not overwritten.
+            with source.open("rb") as src:
+                with original.open("xb") as target:
+                    for chunk in iter(
+                        lambda: src.read(1024 * 1024),
+                        b""
+                    ):
+                        target.write(chunk)
+
+                    target.flush()
+                    os.fsync(target.fileno())
+
+            restored_hash = _sha256(original)
+
+            if restored_hash != entry["sha256"]:
+                original.unlink()
+                return (
+                    "RESTORE FAILED: "
+                    "Restored hash mismatch"
+                )
+
+            # Keep restoration restrictive.
+            os.chmod(original, stat.S_IREAD)
+
+            entry["status"] = "RESTORED_PENDING_CLEANUP"
+            _save_quarantine_index(entries)
+
+            # Remove quarantined copy.
+            os.chmod(source, stat.S_IWRITE)
+            source.unlink()
+
+            entries.remove(entry)
+            _save_quarantine_index(entries)
+
             try:
-                os.makedirs(os.path.dirname(original), exist_ok=True)
+                add_log_entry(
+                    str(original),
+                    "RESTORED",
+                    entry.get("probability"),
+                    "Restored after SHA-256 verification",
+                )
+            except Exception as exc:
+                print(f"Restore logging failed: {exc}")
 
-                # Remove the read-only attribute
-                os.chmod(actual_dest, stat.S_IWRITE)
+            return f"Restored to {original}"
 
-                shutil.move(actual_dest, original)
+        except Exception as exc:
+            return f"Failed to restore: {exc}"
 
-                # Restore normal permissions on the restored file
-                os.chmod(original, 0o644)
-
-                entries.pop(i)
-                _save_quarantine_index(entries)
-
-                add_log_entry(original, "RESTORED", prob, f"Restored from {actual_dest}")
-
-                print(f"Restored file to: {original}")
-                return f"Restored to {original}"
-
-            except Exception as err:
-                print(f"Error restoring: {err}")
-                return f"Failed to restore: {err}"           
 
 def delete_file(dest_path):
-    try:
-        # Get original path from index first for logging!
-        original_path = None
-        prob = None
-        entries = _load_quarantine_index()
-        normalized_dest = _normalize_path(dest_path)
-        found_idx = -1
-        for i, e in enumerate(entries):
-            if _normalize_path(e.get("dest_path")) == normalized_dest:
-                original_path = e.get("original_path")
-                prob = e.get("probability")
-                found_idx = i
-                break
-        
-        # Try deleting the file
-        actual_dest = dest_path
-        if not os.path.exists(dest_path) and found_idx >= 0:
-            # Try alternative path
-            entry_dest = entries[found_idx].get("dest_path", "")
-            fname = os.path.basename(entry_dest)
-            actual_dest = os.path.join(QUARANTINE_DIR, fname)
-        
-        if os.path.exists(actual_dest):
-            os.remove(actual_dest)
-        
-        # Remove from index
-        if found_idx >= 0:
-            entries.pop(found_idx)
+    with _QUARANTINE_LOCK:
+        try:
+            entries = _load_quarantine_index()
+            normalized = _normalize_path(dest_path)
+
+            entry = next(
+                (
+                    e for e in entries
+                    if _normalize_path(
+                        e.get("dest_path", "")
+                    ) == normalized
+                ),
+                None,
+            )
+
+            if entry is None:
+                return (
+                    "Deletion blocked: "
+                    "No matching quarantine record"
+                )
+
+            if entry.get("status") != "QUARANTINED":
+                return (
+                    "Deletion blocked: "
+                    "Quarantine operation is incomplete"
+                )
+
+            target = _require_quarantine_path(
+                entry["dest_path"]
+            )
+
+            # Only operate on a verified registered file.
+            expected_hash = entry.get("sha256")
+
+            if not expected_hash:
+                return (
+                    "Deletion blocked: "
+                    "Missing integrity metadata"
+                )
+
+            if _sha256(target) != expected_hash:
+                return (
+                    "Deletion blocked: "
+                    "Quarantine file has changed"
+                )
+
+            os.chmod(target, stat.S_IWRITE)
+            target.unlink()
+
+            entries.remove(entry)
             _save_quarantine_index(entries)
-        
-        # Log deletion!
-        if original_path:
-            add_log_entry(original_path, "DELETED", prob, f"Deleted from quarantine at {actual_dest}")
-        
-        return "Deleted"
-    except Exception as err:
-        return f"Failed to delete: {err}"
+
+            try:
+                add_log_entry(
+                    entry["original_path"],
+                    "DELETED",
+                    entry.get("probability"),
+                    "Quarantined file deleted",
+                )
+            except Exception as exc:
+                print(f"Deletion log failed: {exc}")
+
+            return "Deleted"
+
+        except Exception as exc:
+            return f"Failed to delete: {exc}"

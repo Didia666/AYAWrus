@@ -26,6 +26,7 @@ from system.scanner.xai_scheduler import (
     get_xai_report,
     get_xai_status,
 )
+from system.scanner.file_scan import classify_file
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _api_server_started = False
@@ -792,50 +793,33 @@ def _update_scan_progress():
             #     _set_discovered_total(total_files)
 
             
+            
             def scan_path(path):
                 """
-                Runs inside the ThreadPoolExecutor.
-
-                Performs file analysis without updating UI progress
-                counters or sending notifications.
+                Worker thread:
+                - Check cancellation
+                - Check exclusions
+                - Delegate PE validation and analysis to backend
                 """
-
                 if SCAN_CANCEL_REQUESTED:
                     return None
 
                 try:
-                    ext = os.path.splitext(path)[1].lower()
-
-                    # Skip known extensions.
-                    if ext in cfg.KNOWN_SKIP_EXTS:
-                        return None
-
-                    # Skip excluded files.
                     if se.is_excluded(path):
-                        return None
-
-                    # Skip files larger than 500 MB.
-                    try:
-                        file_size = os.path.getsize(path)
-
-                        if file_size > 500 * 1024 * 1024:
-                            return None
-
-                    except OSError:
                         return None
 
                     if SCAN_CANCEL_REQUESTED:
                         return None
 
-                    # Execute actual malware analysis.
                     return sf.scan_file(
                         path,
                         auto_quarantine=False
                     )
 
-                except Exception as e:
-                    print(f"[Scan Worker] {path}: {e}")
+                except Exception as exc:
+                    print(f"[Scan Worker] {path}: {exc}")
                     return None
+
 
 
             def handle_scan_result(path, result):
@@ -859,6 +843,13 @@ def _update_scan_progress():
                     return
 
                 _bump_threats_found()
+
+                print(
+                    "[THREAT DEBUG]",
+                    "original_path =", path,
+                    "result_path =", result.get("file_path"),
+                    "original_name =", result.get("original_name"),
+                )
                 DETECTED_THREATS.append(result)
 
                 # Desktop/mobile notification

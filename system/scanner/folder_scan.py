@@ -121,6 +121,29 @@ def chunked(iterator, size):
 def process_batch_results(batch_results, pe_candidates, excluded_roots):
     for item in batch_results:
         kind, f = item[0], item[1]
+        if kind == "hash_malicious":
+            digest = item[2]
+
+            add_log_entry(
+                f,
+                result="MALICIOUS",
+                details=f"SHA-256 signature match: {digest}"
+            )
+
+            DETECTED_MALWARE.append(f)
+
+            try:
+                quarantine_result = quarantine_file(f)
+                print(
+                    f"[SHA256] {f}: {quarantine_result}"
+                )
+            except Exception as exc:
+                print(
+                    f"[SHA256] Quarantine failed: {exc}"
+                )
+
+            continue
+
 
         if kind == "pe":
             features = item[2]

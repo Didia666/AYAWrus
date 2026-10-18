@@ -41,3 +41,18 @@ __pycache__/
 # PyInstaller
 dist/
 build/
+
+# Compressed archives
+*.zip
+*.rar
+*.7z
+
+# Large malware hash database
+system/security/malware_hashes.txt
+
+# Temporary files
+*.tmp
+
+# Build outputs
+build/
+dist/
