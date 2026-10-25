@@ -24,6 +24,7 @@ from ui.quarantine import _pill_theme   # same pill look as Quarantine / Exclusi
 from ui.toast import init_toast, show_toast
 from ui.settings_dialogs import init_settings_dialogs, open_qr_dialog, open_instruction_dialog
 from ui.boot import get_boot_mode, set_boot_mode
+from system.system_updates import UpdateCheckError, check_for_system_update
 
 #settings.py
 # Add parent directory to path to import Malware_System
@@ -164,7 +165,8 @@ SERVER_PORT_DEFAULT = 5001
 
 _T = {}
 _state = {"row_w": CARD_START_W, "expires_ts": None, "expiry_shown": None,
-          "ticker_started": False, "icons": None, "fonts": None}
+          "ticker_started": False, "icons": None, "fonts": None,
+          "update_checking": False}
 
 
 def _themes():
@@ -830,6 +832,8 @@ def _resize_settings(content_w, content_h):
                  - QR_TO_INFO_GAP - INFO_WIDTH_TRIM)
     if dpg.does_item_exist("mobile_card"):
         dpg.configure_item("mobile_card", width=row_w)
+    if dpg.does_item_exist("system_update_card"):
+        dpg.configure_item("system_update_card", width=row_w)
     if dpg.does_item_exist("mobile_status_pill"):
         dpg.configure_item("mobile_status_pill",
                            pos=(row_w - STATUS_PILL_W - STATUS_RIGHT_MARGIN, STATUS_PILL_Y))
@@ -840,6 +844,53 @@ def _resize_settings(content_w, content_h):
     _resize_ai(row_w)
     if dpg.does_item_exist("intro_card"):
         dpg.configure_item("intro_card", width=row_w)
+
+
+def _finish_system_update_check(update, error):
+    _state["update_checking"] = False
+    if dpg.does_item_exist("system_update_button"):
+        dpg.configure_item("system_update_button", enabled=True)
+
+    if error:
+        show_toast(str(error), "error")
+    elif update is None:
+        show_toast("AYAWrus is up to date", "success")
+    else:
+        try:
+            if webbrowser.open(update.release_url):
+                show_toast(
+                    f"System update {'.'.join(map(str, update.version))} is available",
+                    "info",
+                )
+            else:
+                show_toast("Couldn't open the system update page", "error")
+        except Exception:
+            traceback.print_exc()
+            show_toast("Couldn't open the system update page (see terminal)", "error")
+
+
+def check_system_update(sender=None, app_data=None, user_data=None):
+    if _state["update_checking"]:
+        return
+    _state["update_checking"] = True
+    dpg.configure_item("system_update_button", enabled=False)
+    show_toast("Checking for system updates...", "info", persistent=True)
+
+    def check_in_background():
+        try:
+            update = check_for_system_update()
+            error = None
+        except UpdateCheckError as exc:
+            update = None
+            error = str(exc)
+        except Exception as exc:
+            traceback.print_exc()
+            update = None
+            error = f"System update check failed: {exc}"
+
+        dpg.run_callbacks([(lambda: _finish_system_update_check(update, error),)])
+
+    threading.Thread(target=check_in_background, daemon=True).start()
 
 
 def show_instruction_modal(sender=None, app_data=None, user_data=None):
@@ -863,6 +914,31 @@ def build_settings(parent, fonts, icons):
             dpg.add_spacer(height=15)
 
             _build_mobile_card(fonts, icons)
+
+            dpg.add_spacer(height=20)
+
+            with dpg.child_window(
+                width=CARD_START_W,
+                height=96,
+                tag="system_update_card",
+                no_scrollbar=True,
+                no_scroll_with_mouse=True,
+            ):
+                dpg.add_text("System Update", color=COLORS["text_primary"],
+                             indent=CARD_SIDE_PAD)
+                with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+                    dpg.add_text(
+                        "Check GitHub for a published AYAWrus system installer",
+                        color=COLORS["text_secondary"],
+                    )
+                    dpg.add_button(
+                        label="Check for Update",
+                        tag="system_update_button",
+                        width=BTN_W,
+                        height=BTN_H,
+                        callback=check_system_update,
+                    )
+            dpg.bind_item_theme("system_update_card", _themes()["card"])
 
             dpg.add_spacer(height=20)
 

@@ -211,16 +211,32 @@ def _quarantine_selected(sender, app_data):
         pass
 
     def _worker():
+        succeeded = set()
+        failed = {}
         for file_path in items_to_quarantine:
             try:
                 result = qq.quarantine_file(file_path)
-                print(f"Quarantined {file_path}: {result}")
-            except Exception as e:
-                print(f"Error quarantining {file_path}: {e}")
+                print(f"Quarantine result for {file_path}: {result}")
+                if isinstance(result, str) and (
+                    result.endswith(" -> MOVED TO QUARANTINE")
+                    or result.endswith(" -> ALREADY IN QUARANTINE")
+                ):
+                    succeeded.add(file_path)
+                else:
+                    failed[file_path] = str(result)
+            except Exception as exc:
+                failed[file_path] = str(exc)
+                print(f"Error quarantining {file_path}: {exc}")
 
+        # Retain all failures in the threat list and selected set for retry.
         global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
-        DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] not in items_to_quarantine]
-        SELECTED_QUARANTINE_ITEMS = set()
+        DETECTED_THREATS = [
+            t for t in DETECTED_THREATS
+            if t["file_path"] not in succeeded
+        ]
+        SELECTED_QUARANTINE_ITEMS = set(failed)
+        for path, reason in failed.items():
+            print(f"QUARANTINE FAILED (still in threat list): {path}: {reason}")
 
         def _after_ui():
             try:

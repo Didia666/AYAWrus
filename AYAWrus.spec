@@ -53,6 +53,28 @@ config_path = project_root / "system" / "config.json"
 if not config_path.is_file():
     raise FileNotFoundError(f"API configuration file not found: {config_path}")
 
+mobile_apk_path = (
+    project_root
+    / "AYAWRusMobile"
+    / "app"
+    / "build"
+    / "outputs"
+    / "apk"
+    / "debug"
+    / "app-debug.apk"
+)
+if not mobile_apk_path.is_file():
+    raise FileNotFoundError(
+        f"AYAWrus Mobile APK not found: {mobile_apk_path}. "
+        "Build it with AYAWRusMobile\\gradlew.bat assembleDebug first."
+    )
+mobile_apk_files = [
+    (
+        str(mobile_apk_path),
+        "AYAWRusMobile/app/build/outputs/apk/debug",
+    )
+]
+
 packaged_config_dir = Path(tempfile.mkdtemp(prefix="ayawrus-build-"))
 packaged_config_path = packaged_config_dir / "config.json"
 packaged_config_path.write_text(json.dumps({}), encoding="utf-8")
@@ -63,7 +85,14 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=font_files + icon_files + certificate_files + model_files + config_files,
+    datas=(
+        font_files
+        + icon_files
+        + certificate_files
+        + model_files
+        + config_files
+        + mobile_apk_files
+    ),
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

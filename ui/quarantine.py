@@ -77,7 +77,7 @@ FIXED_COL_EXTRA_PX = 96        # padding the 6 fixed columns add on top of their
 RISK_SEVERE_MIN = 0.9          # probability at or above this = SEVERE
 RISK_HIGH_MIN = 0.7
 RISK_MEDIUM_MIN = 0.4          # anything below this = LOW
-RISK_MISSING_LABEL = "HIGH"    # label for records with no confidence score ("UNKNOWN" is the honest alternative)
+RISK_MISSING_LABEL = "UNKNOWN"  # Missing evidence must not be displayed as HIGH
 SEVERE_BG_ALPHA = 90           # SEVERE pill is more solid than the others
 RISK_STYLE = {                 # label -> (color, background alpha)
     "SEVERE": (COLORS["accent_red"], SEVERE_BG_ALPHA),
@@ -156,6 +156,8 @@ def _toast_restore(result, info):
         show_toast(MSG_NO_BACKEND, "warning")
     elif result is None:
         show_toast(MSG_RESTORE_GONE.format(name=name), "warning")   # the backend returns None when the record isn't in its list
+    elif text.startswith(RESULT_RESTORED_PREFIX) and "WARNING:" in text:
+        show_toast(text, "warning")
     elif text.startswith(RESULT_RESTORED_PREFIX):
         show_toast(MSG_RESTORED.format(name=name), "success")
     elif text == RESULT_NOT_FOUND:
@@ -255,11 +257,12 @@ def _ask_restore(sender, app_data, user_data):
             f"Are you sure you want to restore '{name}'?\n\n"
             "AYAWrus detected this file as potentially malicious.\n"
             "Restoring it may expose your device to threats.\n\n"
-            "Only continue if you trust the file."
+            "Choosing Restore & Trust also excludes this file from future scans.\n"
+            "Only continue if you have independently verified that it is safe."
         ),
         on_confirm=_restore_file,
         user_data=dest_path,
-        confirm_label="Restore Anyway",
+        confirm_label="Restore & Trust (Exclude)",
         danger=True,
     )
 
@@ -273,7 +276,8 @@ def _restore_file(sender, app_data, user_data):
     if BACKEND_AVAILABLE:
         result = qq.restore_file(
             dest_path,
-            confirmed=True
+            confirmed=True,
+            add_to_exclusions=True,
         )
         print(f"Restore result: {result}")
     _toast_restore(result, info)   # toast only

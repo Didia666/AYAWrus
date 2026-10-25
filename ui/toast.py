@@ -5,6 +5,7 @@ Use from any tab:
     from ui.toast import init_toast, show_toast
     init_toast()                          # once, in the tab's build function
     show_toast("Saved", "success")        # kinds: "success", "warning", "error", "info"
+    show_toast("Working...", "info", persistent=True)  # stays until another toast replaces it
 
 It never blocks clicks. It fades in, stays a few seconds, fades out. A new toast replaces the current one.
 show_toast only stores the message; a ticker thread does all the drawing, so calling it from a callback is safe.
@@ -79,7 +80,8 @@ GLOW_TOP = "toast_glow_top"
 GLOW_BOTTOM = "toast_glow_bottom"
 
 _s = {"ready": False, "pending": None, "mode": "idle", "t0": 0.0,
-      "text": " ", "kind": "info", "tw": 0.0, "th": 20.0}
+      "text": " ", "kind": "info", "persistent": False,
+      "tw": 0.0, "th": 20.0}
 
 _toast_wakeup = threading.Event()
 
@@ -138,7 +140,7 @@ def _measure(text):
     return len(text) * TOAST_FALLBACK_CHAR_W, TOAST_FALLBACK_LINE_H
 
 
-def _load(text, kind):
+def _load(text, kind, persistent):
     """Takes over a new message: shortens it if it would not fit, and measures it."""
     vw = dpg.get_viewport_client_width()
     avail = vw - SIDEBAR_WIDTH - 2 * TOAST_SIDE_MARGIN - 2 * TOAST_PAD_X - 2 * TOAST_DOT_RADIUS - TOAST_DOT_GAP
@@ -146,7 +148,9 @@ def _load(text, kind):
     while tw > avail and len(text) > TOAST_MIN_CHARS:
         text = text[:-4].rstrip() + "..."
         tw, th = _measure(text)
-    _s["text"], _s["kind"], _s["tw"], _s["th"] = text, kind, tw, th
+    _s["text"], _s["kind"], _s["persistent"], _s["tw"], _s["th"] = (
+        text, kind, persistent, tw, th
+    )
 
 
 def _tail_len(box_w, frac, lo, hi):
@@ -191,7 +195,7 @@ def _step():
     pending = _s["pending"]
     if pending is not None:
         _s["pending"] = None
-        _load(pending[0], pending[1])
+        _load(*pending)
         if _s["mode"] == "idle":
             _s["mode"] = "in"            # nothing on screen: fade in
         else:
@@ -207,7 +211,7 @@ def _step():
             _s["mode"], _s["t0"] = "hold", now
     elif mode == "hold":
         a = 1.0
-        if t >= TOAST_SECONDS:
+        if t >= TOAST_SECONDS and not _s["persistent"]:
             _s["mode"], _s["t0"] = "out", now
     else:                                # "out"
         p = min(1.0, t / TOAST_FADE_OUT)
@@ -292,12 +296,12 @@ def init_toast():
     threading.Thread(target=_ticker_loop, daemon=True).start()
 
 
-def show_toast(message, kind="info"):
+def show_toast(message, kind="info", persistent=False):
     if not _s["ready"]:
         print(f"[toast] not initialised, message dropped: {message}")
         return
 
-    _s["pending"] = (str(message), kind)
+    _s["pending"] = (str(message), kind, persistent)
 
     # Wake the ticker immediately.
     _toast_wakeup.set()

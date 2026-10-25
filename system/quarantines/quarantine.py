@@ -204,8 +204,8 @@ def quarantine_file(file_path):
 
                     for log in reversed(history):
                         if (
-                            log.get("file_path")
-                            == str(original)
+                            _normalize_path(log.get("file_path"))
+                            == normalized
                         ):
                             probability = log.get(
                                 "probability"
@@ -343,7 +343,7 @@ def is_quarantined(file_path: str) -> bool:
     return any(_normalize_path(e.get("original_path")) == normalized_fp for e in entries)
 
 
-def restore_file(dest_path, confirmed=False):
+def restore_file(dest_path, confirmed=False, add_to_exclusions=False):
     if not confirmed:
         return "Restore requires explicit confirmation"
 
@@ -452,6 +452,15 @@ def restore_file(dest_path, confirmed=False):
             entries.remove(entry)
             _save_quarantine_index(entries)
 
+            exclusion_error = None
+            if add_to_exclusions:
+                # This is an explicit user trust decision, never automatic.
+                try:
+                    from system.security.exclusions import add_exclusion
+                    add_exclusion(str(original))
+                except Exception as exc:
+                    exclusion_error = str(exc)
+
             try:
                 add_log_entry(
                     str(original),
@@ -462,6 +471,9 @@ def restore_file(dest_path, confirmed=False):
             except Exception as exc:
                 print(f"Restore logging failed: {exc}")
 
+            if exclusion_error:
+                return (f"Restored to {original} (WARNING: could not add exclusion: "
+                        f"{exclusion_error}; the file may be detected again)")
             return f"Restored to {original}"
 
         except Exception as exc:
