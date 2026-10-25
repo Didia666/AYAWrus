@@ -8,11 +8,10 @@ import socket
 import tempfile
 import webbrowser
 from urllib.parse import urlencode
-from urllib.request import urlopen
 
 import system.notifications.telegram as tg
-from system.mobile_pairing import mobile_status_payload, SYSTEM_ID
-from system.network import WifiAddressUnavailable, get_active_wifi_ipv4
+from system.mobile_pairing import mobile_status_payload, qr_payload, SYSTEM_ID
+from system.network import LocalAddressUnavailable, get_active_local_ipv4
 import time
 import traceback
 from datetime import datetime
@@ -468,44 +467,14 @@ def _build_ai_card(fonts, icons):
 
 
 def get_active_local_address():
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route_socket:
-            route_socket.connect(("8.8.8.8", 80))
-            route_ip = route_socket.getsockname()[0]
-            if route_ip and route_ip != "127.0.0.1":
-                return route_ip
-    except OSError:
-        pass
-
-    candidates = []
-    try:
-        addrs = socket.getaddrinfo(socket.gethostname(), None, type=socket.SOCK_DGRAM)
-        for item in addrs:
-            ip = item[4][0]
-            if ip and ip != "127.0.0.1":
-                candidates.append(ip)
-    except Exception:
-        pass
-    seen = set()
-    uniq = []
-    for ip in candidates:
-        if ip not in seen:
-            seen.add(ip)
-            uniq.append(ip)
-    for ip in uniq:
-        if ip.startswith(("192.168.", "10.", "172.")):
-            return ip
-    return uniq[0] if uniq else "127.0.0.1"
+    return get_active_local_ipv4()
 
 
 def _generate_qr_file_and_payload():
     import qrcode
-    port = int(os.environ.get("SERVER_PORT", "5001"))
-    api_url = f"http://127.0.0.1:{port}/api/mobile/qr?{urlencode({'port': port})}"
-    with urlopen(api_url, timeout=3) as response:
-        api_payload = json.loads(response.read().decode("utf-8"))
-    payload = json.loads(api_payload["qr_payload"])
-    host = api_payload["host"]
+    port = _server_port()
+    host = get_active_local_address()
+    payload = json.loads(qr_payload(host=host, port=port))
     payload["apk_url"] = f"http://{host}:{port}/mobile/download"
     setup_url = f"http://{host}:{port}/mobile/setup"
     qr_value = f"{setup_url}?{urlencode({'pairing_token': payload['pairing_token'], 'port': payload['port'], 'system_id': payload['system_id']})}"
@@ -730,8 +699,8 @@ def _build_mobile_card(fonts, icons):
                         _info_cell("System Name", socket.gethostname(), "mobile_name_value")
                         try:
                             local_address = get_active_local_address()
-                        except WifiAddressUnavailable:
-                            local_address = "Wi-Fi unavailable"
+                        except LocalAddressUnavailable:
+                            local_address = "Network unavailable"
                         _info_cell("Local Address", f"{local_address}:{_server_port()}",
                                    "mobile_address_value", copy=True)
                         _info_cell("System ID", SYSTEM_ID, "mobile_id_value", copy=True)

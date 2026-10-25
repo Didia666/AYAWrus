@@ -13,6 +13,10 @@ class WifiAddressUnavailable(RuntimeError):
     """Raised when no usable IPv4 address belongs to an active Wi-Fi adapter."""
 
 
+class LocalAddressUnavailable(RuntimeError):
+    """Raised when no usable local IPv4 address can be determined."""
+
+
 class _SocketAddress(ctypes.Structure):
     _fields_ = [
         ("sockaddr", ctypes.c_void_p),
@@ -137,3 +141,35 @@ def _select_wifi_ipv4(adapters):
 def get_active_wifi_ipv4():
     """Return an IPv4 address from an operational 802.11 adapter, never Ethernet."""
     return _select_wifi_ipv4(_windows_ipv4_adapters())
+
+
+def get_active_local_ipv4():
+    """Return the IPv4 address selected by the system's active network route."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route_socket:
+            route_socket.connect(("8.8.8.8", 80))
+            route_ip = route_socket.getsockname()[0]
+            parsed = ipaddress.IPv4Address(route_ip)
+            if not (parsed.is_loopback or parsed.is_link_local or parsed.is_unspecified or parsed.is_multicast):
+                return str(parsed)
+    except OSError:
+        pass
+
+    candidates = []
+    try:
+        addresses = socket.getaddrinfo(
+            socket.gethostname(), None, family=socket.AF_INET, type=socket.SOCK_DGRAM
+        )
+        for address in addresses:
+            ip = ipaddress.IPv4Address(address[4][0])
+            if not (ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast):
+                candidates.append(ip)
+    except OSError:
+        pass
+
+    private_addresses = [ip for ip in candidates if ip.is_private]
+    if private_addresses:
+        return str(private_addresses[0])
+    if candidates:
+        return str(candidates[0])
+    raise LocalAddressUnavailable("No active network interface with a usable IPv4 address was found.")

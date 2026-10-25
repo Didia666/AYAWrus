@@ -26,7 +26,7 @@ from system.mobile_pairing import (
     SESSION_TTL_SECONDS,
     SYSTEM_ID,
 )
-from system.network import get_active_wifi_ipv4
+from system.network import get_active_local_ipv4
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -91,7 +91,7 @@ def _broadcast_alert(alert):
 
 
 def _get_active_local_ip():
-    return get_active_wifi_ipv4()
+    return get_active_local_ipv4()
 
 
 def _require_mobile_session(f):
