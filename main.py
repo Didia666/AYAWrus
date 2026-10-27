@@ -1,6 +1,8 @@
 import dearpygui.dearpygui as dpg
+import threading
 import traceback
 
+from system.model_load import load_models
 from ui.theme import apply_global_theme
 from ui.sidebar import build_sidebar
 from ui.dashboard import build_dashboard
@@ -71,6 +73,11 @@ set_background_clear_color()
 dpg.show_viewport()
 dpg.set_primary_window("primary_window", True)
 init_layout()
+threading.Thread(
+    target=load_models,
+    name="AYAWrusModelLoader",
+    daemon=True,
+).start()
 
 dpg.start_dearpygui()
 dpg.destroy_context()

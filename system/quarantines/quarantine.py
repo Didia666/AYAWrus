@@ -287,11 +287,20 @@ def quarantine_file(file_path):
 def process_quarantine():
     if not DETECTED_MALWARE:
         print("\nNo malware detected.")
+        if DETECTED_SUSPICIOUS:
+            print("\n=== SUSPICIOUS FILES ===")
+            for file_path in DETECTED_SUSPICIOUS:
+                print(f" - {file_path}")
         return
 
     print("\n=== MALWARE DETECTED ===")
     for i, file in enumerate(DETECTED_MALWARE):
         print(f"[{i}] {file}")
+
+    if DETECTED_SUSPICIOUS:
+        print("\n=== SUSPICIOUS FILES ===")
+        for file_path in DETECTED_SUSPICIOUS:
+            print(f" - {file_path}")
 
     print("\nChoose files to quarantine:")
     print("Example: 0,2,3  or  'all'")
@@ -303,10 +312,6 @@ def process_quarantine():
             print(quarantine_file(file))
         return
     
-    if DETECTED_SUSPICIOUS:
-        print("\n=== SUSPICIOUS FILES ===")
-        for f in DETECTED_SUSPICIOUS:
-            print(f" - {f}")
     try:
         indexes = [int(x) for x in choice.split(",")]
         for idx in indexes:

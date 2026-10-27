@@ -17,21 +17,21 @@ _post_executor = ThreadPoolExecutor(
     thread_name_prefix="AYAWrusPost"
 )
 _post_slots = BoundedSemaphore(4)
-from system.config import SKIP_DIRS, HEADER_PEEK_SIZE, DETECTED_MALWARE
+from system.config import (
+    SKIP_DIRS,
+    HEADER_PEEK_SIZE,
+    DETECTED_MALWARE,
+    DETECTED_SUSPICIOUS,
+)
 from system.security.exclusions import list_exclusions
-from system.security.allowed import allow_threat
 from system.scanner.file_scan import scan_text
 from system.scanner.workers import *
 from system.scanner.pe_statistics import record_pe_statistics
 from system.history.logs import add_log_entry
-from system.model_load import (
-    model,
-    selected_feature_indices,
-    expected_input_dim,
-    get_behavior_prediction_summary,
-)
+from system import model_load
+from system.model_load import get_behavior_prediction_summary
 from system.quarantines import quarantine_file
-from system.utils import categorize_threat
+from system.utils import categorize_threat, classify_malware_probability
 from system.xai.engine import xai_engine
 from system.xai.display import display_xai_explanation
 MAX_PENDING = 8
@@ -171,6 +171,10 @@ def process_batch_results(batch_results, pe_candidates, excluded_roots):
             pass
 
 def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_size=32):
+    model_load.load_models()
+    model = model_load.model
+    selected_feature_indices = model_load.selected_feature_indices
+    expected_input_dim = model_load.expected_input_dim
     pending = []
     post_futures = []
     excluded_roots = [os.path.abspath(e).lower() for e in list_exclusions()]  # loaded ONCE
@@ -227,9 +231,8 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
 
         for (f, features), prob in zip(chunk, probs):
             prob = float(prob)
-            pred = 1.0 if prob >= 0.5 else 0.0
+            result_str = classify_malware_probability(prob)
             category = categorize_threat(prob)
-            result_str = "MALICIOUS" if pred == 1 else "CLEAN"
             _record_pe_statistics(
                 f,
                 result_str,
@@ -237,7 +240,7 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                 category=category,
             )
 
-            if pred == 1:
+            if result_str != "CLEAN":
                 behavior_probability = 0.0
                 behavior_result = "NOT_EVALUATED"
                 behavior_types = []
@@ -281,10 +284,14 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                     behavior_types = []
                     behavior_type = None
 
-                DETECTED_MALWARE.append(f)
+                if result_str == "MALICIOUS":
+                    DETECTED_MALWARE.append(f)
+                else:
+                    DETECTED_SUSPICIOUS.append(f)
+
                 add_log_entry(
                     f,
-                    result="MALICIOUS",
+                    result=result_str,
                     probability=prob,
                     details=(
                         f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
@@ -299,8 +306,6 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                 
                 def _post_process_malware(
                     file_path=f,
-                    file_prob=prob,
-                    file_category=category,
                 ):
                     """
                     Background security post-processing.
@@ -310,37 +315,22 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                     """
 
                     try:
-                        if file_prob >= 0.90:
-                            # Security action first.
-                            quarantine_result = quarantine_file(file_path)
+                        quarantine_result = quarantine_file(file_path)
 
-                            if not (
-                                isinstance(quarantine_result, str)
-                                and (
-                                    "MOVED TO QUARANTINE" in quarantine_result
-                                    or "ALREADY IN QUARANTINE" in quarantine_result
-                                )
-                            ):
-                                raise RuntimeError(
-                                    f"Quarantine did not succeed: {quarantine_result}"
-                                )
-
-                            print(
-                                f"[Security] Quarantine confirmed: {file_path}"
+                        if not (
+                            isinstance(quarantine_result, str)
+                            and (
+                                "MOVED TO QUARANTINE" in quarantine_result
+                                or "ALREADY IN QUARANTINE" in quarantine_result
+                            )
+                        ):
+                            raise RuntimeError(
+                                f"Quarantine did not succeed: {quarantine_result}"
                             )
 
-                        else:
-                            # Preserves the existing policy.
-                            allow_threat(
-                                file_path,
-                                file_category,
-                                "MALICIOUS"
-                            )
-
-                            print(
-                                f"[Security] Existing allow policy "
-                                f"applied: {file_path}"
-                            )
+                        print(
+                            f"[Security] Quarantine confirmed: {file_path}"
+                        )
 
                         return True
 
@@ -352,12 +342,11 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                         return False
 
 
-                # Submit to the bounded post-processing executor.
-                future = submit_post_process(
-                    _post_process_malware
-                )
-
-                post_futures.append(future)
+                if result_str == "MALICIOUS":
+                    future = submit_post_process(
+                        _post_process_malware
+                    )
+                    post_futures.append(future)
 
     def drain_one_pending():
         """Pull one finished future, process its results, and flush

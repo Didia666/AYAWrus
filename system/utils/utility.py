@@ -3,8 +3,22 @@
 # CATEGORIZING
 # ===========================================
 
+from system.config import (
+    MALWARE_MALICIOUS_THRESHOLD,
+    MALWARE_SUSPICIOUS_THRESHOLD,
+)
+
+
+def classify_malware_probability(prob):
+    if prob >= MALWARE_MALICIOUS_THRESHOLD:
+        return "MALICIOUS"
+    if prob >= MALWARE_SUSPICIOUS_THRESHOLD:
+        return "SUSPICIOUS"
+    return "CLEAN"
+
+
 def categorize_threat(prob):
-    if prob >= 0.90:
+    if prob >= MALWARE_MALICIOUS_THRESHOLD:
         return "SEVERE"
     elif prob >= 0.70:
         return "HIGH"

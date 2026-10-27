@@ -49,10 +49,6 @@ model_files = [
         "selected_features.pkl",
     )
 ]
-config_path = project_root / "system" / "config.json"
-if not config_path.is_file():
-    raise FileNotFoundError(f"API configuration file not found: {config_path}")
-
 mobile_apk_path = (
     project_root
     / "AYAWRusMobile"

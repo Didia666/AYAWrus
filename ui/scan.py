@@ -829,7 +829,7 @@ def _update_scan_progress():
 
                     return sf.scan_file(
                         path,
-                        auto_quarantine=False
+                        auto_quarantine=True
                     )
 
                 except Exception as exc:

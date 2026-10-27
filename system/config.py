@@ -36,6 +36,9 @@ SUS_WRODS = [
 # QUARANTINE
 # ===========================================
 
+MALWARE_SUSPICIOUS_THRESHOLD = 0.50
+MALWARE_MALICIOUS_THRESHOLD = 0.90
+
 QUARANTINE_DIR = os.path.join(BASE_DIR, "Quarantine")
 QUARANTINE_INDEX_FILE = os.path.join(QUARANTINE_DIR, "quarantine_index.json")
 DETECTED_MALWARE = []

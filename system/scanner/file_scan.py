@@ -1,27 +1,28 @@
 import os
 import numpy as np
 import threading
-from system.config import HEADER_PEEK_SIZE, KNOWN_SCRIPT_EXTS, KNOWN_SKIP_EXTS, DETECTED_MALWARE, DETECTED_SUSPICIOUS, SUS_WRODS
+from system.config import (
+    HEADER_PEEK_SIZE,
+    KNOWN_SCRIPT_EXTS,
+    KNOWN_SKIP_EXTS,
+    DETECTED_MALWARE,
+    DETECTED_SUSPICIOUS,
+    SUS_WRODS,
+)
 from system.security.exclusions import is_excluded
-from system.security.allowed import allow_threat
 from system.scanner.extractor import get_extractor
 from system.scanner.pe_statistics import record_pe_statistics
 from system.history.logs import add_log_entry
 import hashlib
 from system.security.hash_detection import load_malware_hashes
-from system.model_load import (
-    model,
-    selected_feature_indices,
-    expected_input_dim,
-    get_behavior_prediction_summary,
-    get_behavior_model_metrics,
-)
+from system import model_load
+from system.model_load import get_behavior_prediction_summary, get_behavior_model_metrics
 from system.scanner.xai_scheduler import (
     schedule_xai,
     new_detection_id,
 )
 from system.quarantines.quarantine import quarantine_file
-from system.utils.utility import categorize_threat
+from system.utils import categorize_threat, classify_malware_probability
 from system.notifications import enqueue_threat_notification
 from system.xai.engine import xai_engine
 
@@ -83,13 +84,13 @@ def _prepare_model_features(features):
     if X.ndim == 1:
         X = X.reshape(1, -1)
 
-    if selected_feature_indices is not None:
-        if X.shape[1] > selected_feature_indices.max():
-            X = X[:, selected_feature_indices]
+    if model_load.selected_feature_indices is not None:
+        if X.shape[1] > model_load.selected_feature_indices.max():
+            X = X[:, model_load.selected_feature_indices]
         else:
             raise ValueError(f"Feature vector too short ({X.shape[1]}) for selected indices")
 
-    expected_dim = getattr(model, "expected_input_dim", expected_input_dim)
+    expected_dim = getattr(model_load.model, "expected_input_dim", model_load.expected_input_dim)
     if expected_dim is not None:
         if X.shape[1] > expected_dim:
             X = X[:, :expected_dim]
@@ -100,6 +101,7 @@ def _prepare_model_features(features):
 
 
 def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
+    model_load.load_models()
     extractor = get_extractor()   #
     
     if is_excluded(file_path, excluded_roots):
@@ -222,7 +224,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             }
         
         # Check if model is available
-        if model is None:
+        if model_load.model is None:
             add_log_entry(file_path, result="UNKNOWN", details="Model not loaded")
             stats = save_pe_statistics("UNKNOWN")
             return {
@@ -248,7 +250,11 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     "details": "Feature schema mismatch — extractor/model version drift",
                     "pe_statistics": stats}
 
-        if X.shape[1] != getattr(model, "expected_input_dim", expected_input_dim or X.shape[1]):
+        if X.shape[1] != getattr(
+            model_load.model,
+            "expected_input_dim",
+            model_load.expected_input_dim or X.shape[1],
+        ):
             add_log_entry(file_path, result="ERROR", details=f"Feature vector shape mismatch ({X.shape[1]})")
             stats = save_pe_statistics("ERROR")
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
@@ -257,8 +263,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
         # Predict malware probability
         try:
-            prob = float(model.predict_proba(X)[0][1])
-            prediction = 1.0 if prob >= 0.5 else 0.0
+            prob = float(model_load.model.predict_proba(X)[0][1])
         except Exception as e:
             add_log_entry(file_path, result="ERROR", details=f"Prediction failed: {e}")
             stats = save_pe_statistics("ERROR")
@@ -275,8 +280,9 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         behavior_types = []
         behavior_type = None
 
-        # Only evaluate behavior when malware is detected.
-        if prediction == 1:
+        # Evaluate behavior for model results at or above the suspicious threshold.
+        result_str = classify_malware_probability(prob)
+        if result_str != "CLEAN":
             try:
                 # Use ORIGINAL EMBER features.
                 # This function applies the behavior model's
@@ -318,23 +324,17 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
         category = categorize_threat(prob)
         stats = save_pe_statistics(
-            "MALICIOUS" if prediction == 1 else "CLEAN",
+            result_str,
             probability=prob,
             category=category,
         )
 
         # Generate XAI explanation asynchronously (without blocking scan)
-        result_str = (
-            "MALICIOUS"
-            if prediction == 1
-            else "CLEAN"
-        )
-
         xai_report = None
         detection_id = None
         xai_job_id = None
 
-        if result_str == "MALICIOUS":
+        if result_str in ("MALICIOUS", "SUSPICIOUS"):
             # Every detection gets an independent identifier.
             detection_id = new_detection_id()
 
@@ -353,15 +353,19 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                         f"[XAI] Scheduling failed: {e}"
                     )
 
-        if prediction == 1:
-            DETECTED_MALWARE.append(file_path)
+        if result_str in ("MALICIOUS", "SUSPICIOUS"):
+            if result_str == "MALICIOUS":
+                DETECTED_MALWARE.append(file_path)
+            else:
+                DETECTED_SUSPICIOUS.append(file_path)
+
             details = (
                 f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
                 f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
             )
             add_log_entry(
                 file_path,
-                result="MALICIOUS",
+                result=result_str,
                 probability=prob,
                 details=details,
                 behavior_confidence=behavior_probability,
@@ -371,16 +375,15 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             )
 
             try:
-                enqueue_threat_notification(file_path, "MALICIOUS", prob, category)
+                enqueue_threat_notification(file_path, result_str, prob, category)
             except Exception:
                 pass
 
-            if auto_quarantine:
-                if prediction == 1:
-                    if auto_quarantine:
-                        quarantine_result = quarantine_file(file_path)
+            quarantine_status = None
+            if auto_quarantine and result_str == "MALICIOUS":
+                quarantine_status = quarantine_file(file_path)
             return {
-                "result": "MALICIOUS",
+                "result": result_str,
                 "probability": prob,
                 "file_path": file_path,
                 "category": category,
@@ -393,6 +396,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "detection_id": detection_id,
                 "xai_job_id": xai_job_id,
                 "xai_report": xai_report,
+                "quarantine_status": quarantine_status,
                 "pe_statistics": stats,
             }
         else:
@@ -470,12 +474,6 @@ def scan_text(file_path, auto_quarantine=True, excluded_roots=None):
             enqueue_threat_notification(file_path, "SUSPICIOUS", 0.7, "Script/Keyword")
         except Exception:
             pass
-
-        if auto_quarantine:
-            try:
-                quarantine_file(file_path)
-            except Exception:
-                pass
 
         return {"result": "SUSPICIOUS", "probability": 0.7, "file_path": file_path, "keywords": found_keywords, "xai_report": xai_report}
         

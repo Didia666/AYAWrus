@@ -1,6 +1,7 @@
 import json
-import multiprocessing
 import os
+import threading
+import time
 import joblib
 import numpy as np
 from thrember.features import PEFeatureExtractor
@@ -33,13 +34,23 @@ behavior_label_thresholds = {}
 behavior_model_metrics = {}
 _behavior_metadata_loaded = False
 
+_models_load_lock = threading.Lock()
+_models_loaded = threading.Event()
+
 
 class _ONNXClassifier:
     def __init__(self, model_path):
+        session_options = rt.SessionOptions()
+        session_options.intra_op_num_threads = 2
+        session_options.inter_op_num_threads = 1
+
+        started = time.perf_counter()
         self.session = rt.InferenceSession(
             model_path,
+            sess_options=session_options,
             providers=["CPUExecutionProvider"],
         )
+        self.load_seconds = time.perf_counter() - started
         self.input_name = self.session.get_inputs()[0].name
         self.output_names = [output.name for output in self.session.get_outputs()]
         input_shape = self.session.get_inputs()[0].shape
@@ -229,8 +240,7 @@ def get_behavior_prediction_summary(X):
 
 
 def _load_model_once():
-    """Load model, extractor, and selected features exactly once, and only
-    in the main process — worker processes never need the model."""
+    """Load the malware model and its selected features exactly once."""
     global model, selected_feature_indices, expected_input_dim, _model_loaded
 
     if _model_loaded:
@@ -263,7 +273,8 @@ def _load_model_once():
             expected_input_dim = model.n_features_in_
             print(
                 f"Loaded malware ONNX model from {malware_onnx_path} "
-                f"(expects {expected_input_dim} features)"
+                f"(expects {expected_input_dim} features, "
+                f"loaded in {model.load_seconds:.2f}s)"
             )
         except Exception as e:
             print(f"Failed to load malware ONNX model: {e}")
@@ -282,7 +293,8 @@ def _load_model_once():
             expected_input_dim = model.n_features_in_
             print(
                 f"Loaded legacy malware ONNX model from {legacy_onnx_path} "
-                f"(expects {expected_input_dim} features)"
+                f"(expects {expected_input_dim} features, "
+                f"loaded in {model.load_seconds:.2f}s)"
             )
         except Exception as e:
             print(f"Failed to load legacy malware ONNX model: {e}")
@@ -327,7 +339,8 @@ def _load_behavior_model_once():
             behavior_expected_input_dim = behavior_model.n_features_in_
             print(
                 f"Loaded behavior ONNX model from {behavior_onnx_path} "
-                f"(expects {behavior_expected_input_dim} features)"
+                f"(expects {behavior_expected_input_dim} features, "
+                f"loaded in {behavior_model.load_seconds:.2f}s)"
             )
         except Exception as e:
             print(f"Failed to load behavior ONNX model: {e}")
@@ -449,8 +462,14 @@ def score_behavior_probability(X):
     return 0.0
 
 
-# Only load in the main process — spawned workers importing this module
-# will skip this entirely and stay lightweight.
-if multiprocessing.current_process().name == "MainProcess":
-    _load_model_once()
-    _load_behavior_model_once()
+def load_models():
+    """Load both models once; concurrent callers wait for the same load."""
+    if _models_loaded.is_set():
+        return
+
+    with _models_load_lock:
+        if _models_loaded.is_set():
+            return
+        _load_model_once()
+        _load_behavior_model_once()
+        _models_loaded.set()
