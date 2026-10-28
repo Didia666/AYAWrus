@@ -160,6 +160,12 @@ INTRO_CARD_HEIGHT = 196
 MSG_INTRO_SET = "Intro set to: {label}"
 MSG_INTRO_FAILED = "Couldn't save the intro setting (see terminal)"
 
+# ---- System Update card ----
+UPDATE_TITLE = "System Update"
+UPDATE_HELPER = "Check GitHub for a published AYAWrus system installer"
+BTN_UPDATE = "Check for Update"
+UPDATE_CARD_HEIGHT = 148       # raise if the button touches the bottom edge, lower if there's a gap
+
 SERVER_PORT_DEFAULT = 5001
 
 _T = {}
@@ -793,6 +799,41 @@ def _build_intro_card(fonts, icons):
     _sync_intro_buttons()
 
 
+def _build_system_update_card(fonts, icons):
+    t = _themes()
+    base = _get_themes()   # shared buttons from ui/scan_layout.py (btn_secondary, btn_start)
+    icon = icons.get("refresh") if icons else None
+
+    with dpg.child_window(width=CARD_START_W, height=UPDATE_CARD_HEIGHT, tag="system_update_card",
+                          no_scrollbar=True, no_scroll_with_mouse=True):
+        dpg.add_spacer(height=CARD_TOP_PAD)
+
+        # ---- header: badge + title + helper ----
+        with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+            with dpg.child_window(width=BADGE_SIZE, height=BADGE_SIZE, tag="system_update_badge",
+                                  no_scrollbar=True, no_scroll_with_mouse=True):
+                if icon:
+                    pad = (BADGE_SIZE - BADGE_ICON) // 2
+                    dpg.add_image(icon, width=BADGE_ICON, height=BADGE_ICON,
+                                  tint_color=COLORS["accent_blue"], pos=(pad, pad))
+            with dpg.group():
+                dpg.add_text(UPDATE_TITLE, color=COLORS["text_primary"], tag="system_update_title")
+                dpg.add_text(UPDATE_HELPER, color=COLORS["text_secondary"])
+
+        dpg.add_spacer(height=HEADER_GAP)
+
+        # ---- button (below the description) ----
+        with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
+            dpg.add_button(label=BTN_UPDATE, tag="system_update_button", width=BTN_W, height=BTN_H,
+                           callback=check_system_update)
+
+    dpg.bind_item_theme("system_update_card", t["card"])
+    dpg.bind_item_theme("system_update_badge", t["badge"])
+    dpg.bind_item_theme("system_update_button", base["btn_start"])
+    if fonts and fonts.get("subheading") is not None:
+        dpg.bind_item_font("system_update_title", fonts["subheading"])
+
+
 def _resize_settings(content_w, content_h):
     """Called by ui/layout.py whenever the window size changes."""
     row_w = _row_width(content_w)   # same edges as every other tab
@@ -886,28 +927,7 @@ def build_settings(parent, fonts, icons):
 
             dpg.add_spacer(height=20)
 
-            with dpg.child_window(
-                width=CARD_START_W,
-                height=96,
-                tag="system_update_card",
-                no_scrollbar=True,
-                no_scroll_with_mouse=True,
-            ):
-                dpg.add_text("System Update", color=COLORS["text_primary"],
-                             indent=CARD_SIDE_PAD)
-                with dpg.group(horizontal=True, indent=CARD_SIDE_PAD):
-                    dpg.add_text(
-                        "Check GitHub for a published AYAWrus system installer",
-                        color=COLORS["text_secondary"],
-                    )
-                    dpg.add_button(
-                        label="Check for Update",
-                        tag="system_update_button",
-                        width=BTN_W,
-                        height=BTN_H,
-                        callback=check_system_update,
-                    )
-            dpg.bind_item_theme("system_update_card", _themes()["card"])
+            _build_system_update_card(fonts, icons)
 
             dpg.add_spacer(height=20)
 
