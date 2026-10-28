@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from system.xai.shap_explainer import generate_shap_explanation
 from ui.theme import COLORS
 from ui.layout import register_resize
+from ui.scan_targets import build_likely_targets_page, on_targets_tab_opened
 from ui.scrollbar_theme import (SCROLL_SIZE, SCROLL_ROUNDING, SCROLL_TRACK,
                                 SCROLL_GRAB, SCROLL_GRAB_HOVER, SCROLL_GRAB_ACTIVE)
 
@@ -36,7 +37,7 @@ BODY_TOP = 84                  # where the page content starts (raise if the sub
 
 # ---- Tabs (they stick out past the popup's right edge) ----
 TAB_OUT_INACTIVE = 44          # how far an inactive tab sticks out
-TAB_OUT_ACTIVE = 150           # how far the active tab sticks out (icon + label)
+TAB_OUT_ACTIVE = 190           # how far the active tab sticks out (icon + label)
 TAB_H = 44
 TAB_GAP = 6
 TAB_TOP_OFFSET = 90            # first tab's distance below the popup's top edge
@@ -72,6 +73,7 @@ TABS = [
     ("shap", "chart_bar", "SHAP Explanation"),
     ("actions", "circle_check", "Actions"),
     ("learn", "chart_bar", "Learn Why"),
+    ("targets", "crosshair", "Likely Targets"),
 ]
 
 POPUP = "xai_popup"
@@ -1033,6 +1035,7 @@ def _build_pages(threat, report):
         lambda: _page_shap(threat, report),
         lambda: _page_actions(report),
         lambda: _page_learn(report),
+        lambda: build_likely_targets_page(threat, _s["fonts"]),
     ]
     for i, build in enumerate(builders):
         with dpg.group(tag=f"xai_page_{i}", parent=CONTENT, show=(i == _s["sel"])):
@@ -1107,6 +1110,8 @@ def _select_tab(i):
     dpg.set_value(VEIL_COLOR, [*PAGE_BG, 255])
     dpg.configure_item(VEIL, show=True)
     _s["veil_t0"] = time.time()
+    if TABS[i][0] == "targets":
+        on_targets_tab_opened(_s.get("shap_file_path"))   # heavy analysis starts HERE, not when Explain opens
 
 
 def _on_tab(sender, app_data, user_data):

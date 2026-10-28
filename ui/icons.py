@@ -43,6 +43,8 @@ ICON_PATHS = {
     "loader_circle": "assets/icons/loader-circle.png",
     "circle_x": "assets/icons/circle-x.png",
     "file_x": "assets/icons/file-x.png",
+    "crosshair": "assets/icons/crosshair.png",            # Likely Targets tab icon
+    "triangle_alert": "assets/icons/triangle-alert.png",  # "predictions, not confirmed" note
 }
 
 def _asset_path(relative_path):
