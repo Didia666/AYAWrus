@@ -481,7 +481,7 @@ def map_verdict(result_str: str) -> str:
         return "Malicious"
     elif upper == "SUSPICIOUS":
         return "Suspicious"
-    elif upper in ("CLEAN", "SAFE", "BENIGN"):
+    elif upper in ("CLEAN", "CLEANED", "SAFE", "BENIGN"):
         return "Clean"
     else:
         return "Clean"

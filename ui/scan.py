@@ -10,11 +10,12 @@ from ui.activity_feed import _rebuild_activity_feed, _rebuild_activity_feed_from
 from ui.dashboard import refresh_dashboard_stats, animate_number
 from ui.history import _rebuild_history
 from ui.scan_layout import (build_scan_card, apply_card_states, register_scan_layout,
-                            build_ready_panel, rebuild_custom_row, reset_ready_state)
+                            build_ready_panel, rebuild_custom_row, reset_ready_state, _get_themes)
 from ui.scan_pipeline import build_pipeline_panel, set_pipeline_step
 from ui.scrollbar_theme import apply_slim_scrollbar
 from ui.scan_explain import init_explain, open_explain
 from ui.scan_picker import init_picker, open_picker
+from ui.toast import show_toast
 from ui.scan_threats import (build_threats_panel, build_threats_table, add_threat_row, add_empty_row,
                              reset_threat_rows, update_selection_ui, apply_selection)
 from concurrent.futures import (
@@ -26,13 +27,14 @@ from system.scanner.xai_scheduler import (
     get_xai_report,
     get_xai_status,
 )
-from system.scanner.file_scan import classify_file
+from system.scanner.file_scan import scan_file
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _api_server_started = False
 
 try:
     import system.quarantines as qq
+    import system.quarantines.repair as qr
     import system.config as cfg
     import system.security.exclusions as se
     import system.scanner.file_scan as sf
@@ -91,6 +93,7 @@ DETECTION_STEPS = [
 
 SELECTED_STEP = 0
 g_icons = None  # Global variable to store icons for step card rebuilding
+g_fonts = None  # Global variable to store fonts
 g_step_elements = []  # List to store (step_card_tag, image_tag, text_tag) for each step
 
 
@@ -193,18 +196,172 @@ def _toggle_select_all(sender, app_data):
         SELECTED_QUARANTINE_ITEMS.update(all_paths)
     apply_selection(SELECTED_QUARANTINE_ITEMS, len(DETECTED_THREATS))
 
-def _quarantine_selected(sender, app_data):
-    global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
-    print(f"Quarantining: {SELECTED_QUARANTINE_ITEMS}")
+def _repair_selected(sender, app_data):
+    global SELECTED_QUARANTINE_ITEMS
     if not SELECTED_QUARANTINE_ITEMS:
-        print("No items selected!")
+        show_toast("Select a detected file first", "warning")
         return
 
-    items_to_quarantine = list(SELECTED_QUARANTINE_ITEMS)
+    if len(SELECTED_QUARANTINE_ITEMS) > 1:
+        show_toast("Please select only one file for repair at a time", "warning")
+        return
+
+    file_path = list(SELECTED_QUARANTINE_ITEMS)[0]
+    _open_repair_dialog(file_path)
+
+
+def _open_repair_dialog(file_path):
+    if dpg.does_item_exist("repair_dialog"):
+        dpg.delete_item("repair_dialog")
+
+    base = _get_themes()
+    fonts = g_fonts or {}
+    
+    # Get threat details
+    threat = next((t for t in DETECTED_THREATS if t["file_path"] == file_path), None)
+    if not threat:
+        show_toast("Threat details not found", "error")
+        return
+
+    eligibility = qr.get_repair_eligibility(threat)
+    
+    with dpg.window(tag="repair_dialog", label="Repair File", modal=True, width=500, height=450, no_resize=True, pos=[(dpg.get_viewport_width()-500)//2, (dpg.get_viewport_height()-450)//2]):
+        title = dpg.add_text("File Repair & Restoration", color=COLORS["text_primary"])
+        if fonts.get("subheading"):
+            dpg.bind_item_font(title, fonts["subheading"])
+            
+        dpg.add_text(f"File: {os.path.basename(file_path)}", color=COLORS["text_secondary"])
+        dpg.add_text(f"Detection: {threat.get('result')} ({threat.get('probability', 0):.1%})", color=COLORS["accent_red"])
+        dpg.add_separator()
+        
+        dpg.add_spacer(height=10)
+        dpg.add_text("Repair Method:", color=COLORS["text_primary"])
+        
+        with dpg.group(horizontal=True):
+            dpg.add_text("1. Restore from Trusted Backup", color=COLORS["text_primary"])
+            btn = dpg.add_button(label="Select Source File...", callback=lambda: dpg.show_item("repair_file_dialog"))
+            dpg.bind_item_theme(btn, base["btn_secondary"])
+        
+        dpg.add_text("Provide a verified clean replacement for this file.", color=COLORS["text_secondary"], wrap=460)
+        
+        dpg.add_spacer(height=5)
+        dpg.add_text("Source File Path:", color=COLORS["text_secondary"])
+        dpg.add_input_text(tag="repair_source_path", readonly=True, width=-1)
+        
+        dpg.add_spacer(height=5)
+        dpg.add_text("Expected SHA-256 Hash:", color=COLORS["text_secondary"])
+        dpg.add_input_text(tag="repair_expected_hash", width=-1, hint="Paste the trusted hash here...")
+        
+        dpg.add_spacer(height=15)
+        dpg.add_text("2. Automated Repair Rules", color=COLORS["text_primary"])
+        if eligibility.get("eligible_rule"):
+            dpg.add_text("Validated repair rules are available for this threat.", color=COLORS["success"])
+            rule_btn = dpg.add_button(label="Apply Repair Rule", callback=lambda: _apply_repair_rule(file_path))
+            dpg.bind_item_theme(rule_btn, base["btn_secondary"])
+        else:
+            dpg.add_text("No automated repair rules are available for this infection type.", color=COLORS["text_secondary"], wrap=460)
+            
+        dpg.add_spacer(height=20)
+        with dpg.group(horizontal=True):
+            start_btn = dpg.add_button(label="Start Repair", width=120, height=35, callback=lambda: _start_repair_from_source(file_path))
+            q_btn = dpg.add_button(label="Quarantine Instead", width=150, height=35, callback=lambda: _fallback_to_quarantine(file_path))
+            c_btn = dpg.add_button(label="Cancel", width=100, height=35, callback=lambda: dpg.delete_item("repair_dialog"))
+            
+            dpg.bind_item_theme(start_btn, base["btn_start"])
+            dpg.bind_item_theme(q_btn, base["btn_secondary"])
+            dpg.bind_item_theme(c_btn, base["btn_secondary"])
+
+    # File dialog for selecting repair source
+    if not dpg.does_item_exist("repair_file_dialog"):
+        with dpg.file_dialog(tag="repair_file_dialog", show=False, callback=_on_repair_source_picked, width=600, height=400):
+            dpg.add_file_extension(".*")
+            dpg.add_file_extension(".exe")
+            dpg.add_file_extension(".dll")
+
+def _on_repair_source_picked(sender, app_data):
+    path = app_data.get("file_path_name", "")
+    if path:
+        dpg.set_value("repair_source_path", path)
+
+def _start_repair_from_source(file_path):
+    source_path = dpg.get_value("repair_source_path")
+    expected_hash = dpg.get_value("repair_expected_hash").strip()
+    
+    if not source_path:
+        show_toast("Please select a trusted source file", "warning")
+        return
+    if not expected_hash:
+        show_toast("Please provide the expected SHA-256 hash", "warning")
+        return
+        
+    dpg.delete_item("repair_dialog")
+    
+    def _worker():
+        try:
+            result = qr.repair_from_trusted_source(file_path, source_path, expected_hash)
+            if result["status"] == "REPAIRED":
+                show_toast(f"Successfully repaired: {os.path.basename(file_path)}", "success")
+                
+                # Re-scan the file to confirm it is now clean
+                new_scan = scan_file(file_path)
+                
+                # Update history and UI
+                global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
+                DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] != file_path]
+                if file_path in SELECTED_QUARANTINE_ITEMS:
+                    SELECTED_QUARANTINE_ITEMS.remove(file_path)
+                
+                # Log success
+                hl.add_log_entry(file_path, "REPAIRED", details=f"Restored from {source_path}. New hash: {result['new_hash']}")
+                
+                with dpg.mutex():
+                    _rebuild_threats_table()
+                    _rebuild_history()
+            else:
+                show_toast(f"Repair failed: {result['detail']}", "error")
+        except Exception as e:
+            show_toast(f"Repair error: {e}", "error")
+            
+    threading.Thread(target=_worker, daemon=True).start()
+
+def _apply_repair_rule(file_path):
+    show_toast("Automated rules are currently in development", "info")
+
+def _fallback_to_quarantine(file_path):
+    dpg.delete_item("repair_dialog")
+    # Trigger normal quarantine for this file
+    def _worker():
+        result = qq.quarantine_file(file_path)
+        if result.endswith(" -> MOVED TO QUARANTINE") or result.endswith(" -> ALREADY IN QUARANTINE"):
+            show_toast(f"Quarantined: {os.path.basename(file_path)}", "success")
+            global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
+            DETECTED_THREATS = [t for t in DETECTED_THREATS if t["file_path"] != file_path]
+            if file_path in SELECTED_QUARANTINE_ITEMS:
+                SELECTED_QUARANTINE_ITEMS.remove(file_path)
+            with dpg.mutex():
+                _rebuild_threats_table()
+                _rebuild_history()
+        else:
+            show_toast(f"Quarantine failed: {result}", "error")
+    
+    threading.Thread(target=_worker, daemon=True).start()
+
+
+def _clean_selected(sender, app_data):
+    global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
+    if not SELECTED_QUARANTINE_ITEMS:
+        show_toast("Select a detected file first", "warning")
+        return
+
+    threats_by_path = {
+        threat["file_path"]: threat
+        for threat in DETECTED_THREATS
+    }
+    items_to_clean = list(SELECTED_QUARANTINE_ITEMS)
 
     try:
         with dpg.mutex():
-            dpg.configure_item("quarantine_btn", enabled=False)
+            dpg.configure_item("clean_btn", enabled=False)
             if dpg.does_item_exist("start_scan_btn"):
                 dpg.configure_item("start_scan_btn", enabled=False)
     except Exception:
@@ -213,20 +370,38 @@ def _quarantine_selected(sender, app_data):
     def _worker():
         succeeded = set()
         failed = {}
-        for file_path in items_to_quarantine:
+        cleaned_count = 0
+        quarantined_count = 0
+        for file_path in items_to_clean:
+            threat = threats_by_path.get(file_path, {})
             try:
-                result = qq.quarantine_file(file_path)
-                print(f"Quarantine result for {file_path}: {result}")
-                if isinstance(result, str) and (
-                    result.endswith(" -> MOVED TO QUARANTINE")
-                    or result.endswith(" -> ALREADY IN QUARANTINE")
-                ):
-                    succeeded.add(file_path)
+                if threat.get("result") == "MALICIOUS":
+                    result = qq.clean_malware_file(
+                        file_path,
+                        expected_sha256=threat.get("sha256"),
+                    )
                 else:
-                    failed[file_path] = str(result)
+                    quarantine_detail = qq.quarantine_file(file_path)
+                    result = {
+                        "status": (
+                            "QUARANTINED"
+                            if quarantine_detail.endswith(
+                                (" -> MOVED TO QUARANTINE", " -> ALREADY IN QUARANTINE")
+                            )
+                            else "FAILED"
+                        ),
+                        "detail": quarantine_detail,
+                    }
+
+                if result["status"] in ("CLEANED", "QUARANTINED"):
+                    succeeded.add(file_path)
+                    cleaned_count += result["status"] == "CLEANED"
+                    quarantined_count += result["status"] == "QUARANTINED"
+                else:
+                    failed[file_path] = result["detail"]
             except Exception as exc:
                 failed[file_path] = str(exc)
-                print(f"Error quarantining {file_path}: {exc}")
+                print(f"Error cleaning {file_path}: {exc}")
 
         # Retain all failures in the threat list and selected set for retry.
         global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
@@ -236,7 +411,36 @@ def _quarantine_selected(sender, app_data):
         ]
         SELECTED_QUARANTINE_ITEMS = set(failed)
         for path, reason in failed.items():
-            print(f"QUARANTINE FAILED (still in threat list): {path}: {reason}")
+            print(f"CLEAN FAILED (still in threat list): {path}: {reason}")
+
+        summary_parts = []
+        if cleaned_count:
+            summary_parts.append(f"Cleaned {cleaned_count} file(s)")
+        if quarantined_count:
+            summary_parts.append(
+                f"Quarantined {quarantined_count} file(s)"
+            )
+        if failed:
+            failed_path, failure_detail = next(iter(failed.items()))
+            failure_detail = failure_detail.replace(
+                failed_path,
+                os.path.basename(failed_path),
+            )
+            if len(failure_detail) > 90:
+                failure_detail = failure_detail[:87] + "..."
+            summary_parts.append(
+                f"{len(failed)} file(s) failed: {failure_detail}"
+            )
+        summary = "; ".join(summary_parts)
+        if cleaned_count or quarantined_count:
+            show_toast(
+                summary,
+                "error" if failed else (
+                    "warning" if quarantined_count else "success"
+                ),
+            )
+        else:
+            show_toast(summary or "No files were cleaned", "error")
 
         def _after_ui():
             try:
@@ -271,6 +475,8 @@ def _quarantine_selected(sender, app_data):
                             title = f"File scanned: {os.path.basename(ef)}"
                         elif er == "QUARANTINED":
                             title = f"File quarantined: {os.path.basename(ef)}"
+                        elif er == "CLEANED":
+                            title = f"Malware cleaned: {os.path.basename(ef)}"
                         elif er == "RESTORED":
                             title = f"File restored: {os.path.basename(ef)}"
                         elif er == "DELETED":
@@ -315,7 +521,7 @@ def _quarantine_selected(sender, app_data):
                         dpg.set_value("threat_score_value", str(threat_score))
                         dpg.set_value("active_threats_value", str(active_threats))
                         dpg.set_value("files_scanned_value", str(files_scanned))
-                    dpg.configure_item("quarantine_btn", enabled=True)
+                    dpg.configure_item("clean_btn", enabled=True)
                     if dpg.does_item_exist("start_scan_btn"):
                         dpg.configure_item("start_scan_btn", enabled=True)
             except Exception as e:
@@ -408,7 +614,30 @@ def _open_xai_panel(sender, app_data, user_data):
             "pe_analysis": {},
         }
 
-    open_explain(threat, report)
+    from ui.scan_explain import open_explain
+    open_explain(threat, report, repair_cb=_repair_from_explain, quarantine_cb=_quarantine_from_explain)
+
+
+def _repair_from_explain(sender, app_data, user_data):
+    threat = user_data
+    file_path = threat.get("file_path")
+    if file_path:
+        # Close the explain panel first
+        from ui.scan_explain import _start_close
+        _start_close()
+        # Open repair dialog
+        _open_repair_dialog(file_path)
+
+
+def _quarantine_from_explain(sender, app_data, user_data):
+    threat = user_data
+    file_path = threat.get("file_path")
+    if file_path:
+        # Close the explain panel first
+        from ui.scan_explain import _start_close
+        _start_close()
+        # Fallback to quarantine
+        _fallback_to_quarantine(file_path)
 
 
 _THREAT_CHUNK_SIZE = 15
@@ -827,10 +1056,7 @@ def _update_scan_progress():
                     if SCAN_CANCEL_REQUESTED:
                         return None
 
-                    return sf.scan_file(
-                        path,
-                        auto_quarantine=True
-                    )
+                    return sf.scan_file(path, auto_quarantine=False)
 
                 except Exception as exc:
                     print(f"[Scan Worker] {path}: {exc}")
@@ -1249,8 +1475,9 @@ def _update_step_description():
 
 
 def build_scan(parent, fonts, icons):
-    global g_icons
+    global g_icons, g_fonts
     g_icons = icons  # Store icons in global variable for later use
+    g_fonts = fonts  # Store fonts in global variable for later use
     dpg.add_spacer(height=20, parent=parent)
     with dpg.handler_registry():
         dpg.add_mouse_click_handler(callback=_handle_click)
@@ -1279,14 +1506,14 @@ def build_scan(parent, fonts, icons):
 
             dpg.add_spacer(height=20)
             # Detected Threats panel (initially hidden) lives in ui/scan_threats.py
-            build_threats_panel(fonts, _quarantine_selected, _toggle_select_all)
+            build_threats_panel(fonts, _clean_selected, _toggle_select_all, _repair_selected)
 
             dpg.add_spacer(height=20)
             # Detection Pipeline lives in ui/scan_pipeline.py
             g_step_elements[:] = build_pipeline_panel(icons, fonts, DETECTION_STEPS, SELECTED_STEP)
 
     # start_scan_btn is themed in ui/scan_layout.py (blue, dimmed when disabled)
-    # quarantine_btn is themed in ui/scan_threats.py (blue, dimmed when disabled)
+    # clean_btn is themed in ui/scan_threats.py (blue, dimmed when disabled)
 
     register_scan_layout()
     init_explain(fonts, icons)

@@ -21,7 +21,7 @@ from system.scanner.xai_scheduler import (
     schedule_xai,
     new_detection_id,
 )
-from system.quarantines.quarantine import quarantine_file
+from system.quarantines.quarantine import clean_malware_file
 from system.utils import categorize_threat, classify_malware_probability
 from system.notifications import enqueue_threat_notification
 from system.xai.engine import xai_engine
@@ -157,13 +157,13 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             except Exception as e:
                 return {"result": "ERROR", "probability": 0, "file_path": file_path, "details": str(e)}
 
-                # SHA-256: reuse bytes already loaded for ML.
+        # Reuse the bytes already loaded for ML to verify remediation later.
+        digest = hashlib.sha256(file_bytes).hexdigest()
+
         # Skip hashing when the signature database is empty.
         known_hashes = load_malware_hashes()
 
         if known_hashes:
-            digest = hashlib.sha256(file_bytes).hexdigest()
-
             if digest in known_hashes:
                 add_log_entry(
                     file_path,
@@ -173,10 +173,13 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
 
                 DETECTED_MALWARE.append(file_path)
 
-                quarantine_status = None
+                remediation_status = None
 
                 if auto_quarantine:
-                    quarantine_status = quarantine_file(file_path)
+                    remediation_status = clean_malware_file(
+                        file_path,
+                        expected_sha256=digest,
+                    )
 
                 return {
                     "result": "MALICIOUS",
@@ -186,7 +189,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     "detection_method": "SHA256_SIGNATURE",
                     "sha256": digest,
                     "signature_match": True,
-                    "quarantine_status": quarantine_status,
+                    "remediation_status": remediation_status,
                 }
 
         # Existing save_pe_statistics() and feature
@@ -379,9 +382,12 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             except Exception:
                 pass
 
-            quarantine_status = None
+            remediation_status = None
             if auto_quarantine and result_str == "MALICIOUS":
-                quarantine_status = quarantine_file(file_path)
+                remediation_status = clean_malware_file(
+                    file_path,
+                    expected_sha256=digest,
+                )
             return {
                 "result": result_str,
                 "probability": prob,
@@ -396,7 +402,8 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "detection_id": detection_id,
                 "xai_job_id": xai_job_id,
                 "xai_report": xai_report,
-                "quarantine_status": quarantine_status,
+                "remediation_status": remediation_status,
+                "sha256": digest,
                 "pe_statistics": stats,
             }
         else:

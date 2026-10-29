@@ -283,7 +283,89 @@ def quarantine_file(file_path):
                 f"{file_path}: {exc}"
             )
 
-    
+
+def clean_malware_file(file_path, expected_sha256=None):
+    """Remove a detected malicious file, quarantining it if removal fails."""
+    original = Path(os.path.abspath(os.fspath(file_path)))
+
+    try:
+        _reject_symlink(original)
+        if not original.is_file():
+            return {
+                "status": "FAILED",
+                "detail": f"File does not exist: {original}",
+            }
+
+        if (
+            original == QUARANTINE_ROOT
+            or QUARANTINE_ROOT in original.parents
+        ):
+            return {
+                "status": "FAILED",
+                "detail": "Cannot clean a file already in quarantine",
+            }
+
+        if expected_sha256:
+            current_hash = _sha256(original)
+            if current_hash.lower() != expected_sha256.lower():
+                return {
+                    "status": "FAILED",
+                    "detail": "File changed since it was scanned; no action taken",
+                }
+
+        try:
+            original.unlink()
+        except OSError as removal_error:
+            quarantine_result = quarantine_file(str(original))
+            if quarantine_result.endswith(" -> MOVED TO QUARANTINE"):
+                return {
+                    "status": "QUARANTINED",
+                    "detail": (
+                        f"Removal failed ({removal_error}); "
+                        f"{quarantine_result}"
+                    ),
+                }
+            if quarantine_result.endswith(" -> ALREADY IN QUARANTINE"):
+                if not original.exists():
+                    return {
+                        "status": "QUARANTINED",
+                        "detail": quarantine_result,
+                    }
+                return {
+                    "status": "FAILED",
+                    "detail": (
+                        f"Removal failed ({removal_error}); "
+                        "a quarantine copy exists but the original remains"
+                    ),
+                }
+            return {
+                "status": "FAILED",
+                "detail": (
+                    f"Removal failed ({removal_error}); "
+                    f"quarantine fallback failed: {quarantine_result}"
+                ),
+            }
+
+        try:
+            add_log_entry(
+                str(original),
+                "CLEANED",
+                details="Malicious file removed",
+            )
+        except Exception as exc:
+            print(f"Cleaning log failed for {original}: {exc}")
+
+        return {
+            "status": "CLEANED",
+            "detail": f"Malicious file removed: {original}",
+        }
+    except (OSError, ValueError) as exc:
+        return {
+            "status": "FAILED",
+            "detail": f"Could not clean {original}: {exc}",
+        }
+
+
 def process_quarantine():
     if not DETECTED_MALWARE:
         print("\nNo malware detected.")
@@ -293,8 +375,32 @@ def process_quarantine():
                 print(f" - {file_path}")
         return
 
+    malware_to_quarantine = []
+    history = load_log()
+    for file_path in DETECTED_MALWARE:
+        if os.path.isfile(file_path):
+            malware_to_quarantine.append(file_path)
+        elif is_quarantined(file_path):
+            print(f"\nAlready quarantined: {file_path}")
+        elif any(
+            _normalize_path(entry.get("file_path", "")) == _normalize_path(file_path)
+            and entry.get("result") == "CLEANED"
+            for entry in reversed(history)
+        ):
+            print(f"\nAlready cleaned: {file_path}")
+        else:
+            print(f"\nFile no longer exists: {file_path}")
+
+    if not malware_to_quarantine:
+        print("\nNo detected malware needs quarantine.")
+        if DETECTED_SUSPICIOUS:
+            print("\n=== SUSPICIOUS FILES ===")
+            for file_path in DETECTED_SUSPICIOUS:
+                print(f" - {file_path}")
+        return
+
     print("\n=== MALWARE DETECTED ===")
-    for i, file in enumerate(DETECTED_MALWARE):
+    for i, file in enumerate(malware_to_quarantine):
         print(f"[{i}] {file}")
 
     if DETECTED_SUSPICIOUS:
@@ -308,15 +414,15 @@ def process_quarantine():
     choice = input("> ")
 
     if choice.lower() == "all":
-        for file in DETECTED_MALWARE:
+        for file in malware_to_quarantine:
             print(quarantine_file(file))
         return
     
     try:
         indexes = [int(x) for x in choice.split(",")]
         for idx in indexes:
-            if 0 <= idx < len(DETECTED_MALWARE):
-                print(quarantine_file(DETECTED_MALWARE[idx]))
+            if 0 <= idx < len(malware_to_quarantine):
+                print(quarantine_file(malware_to_quarantine[idx]))
     except ValueError:
         print("Invalid input. Skipping quarantine.")
 

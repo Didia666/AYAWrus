@@ -144,10 +144,12 @@ def _layout():
     vw, vh, w, h, x, y = _geometry()
     if dpg.does_item_exist(PICKER):
         dpg.configure_item(PICKER, width=w, height=h)
-        try:
-            dpg.set_item_pos(PICKER, [x, y])
-        except Exception:
-            traceback.print_exc()   # if this DPG build won't move the dialog, it keeps its own position
+        # mvFileDialog does not support positioning via pos or set_item_pos
+        if dpg.get_item_info(PICKER)["type"] != "mvAppItemType::mvFileDialog":
+            try:
+                dpg.set_item_pos(PICKER, [x, y])
+            except Exception:
+                pass 
         _x_place()
 
 

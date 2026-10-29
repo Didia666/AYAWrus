@@ -439,7 +439,7 @@ def apply_selection(selected, total):
 # Panel + resize
 # ---------------------------------------------------------------------------
 
-def build_threats_panel(fonts, quarantine_cb, select_all_cb):
+def build_threats_panel(fonts, clean_cb, select_all_cb, repair_cb=None):
     """The hidden 'Detected Threats' panel. Call it where the old threats_container block was."""
     t = _themes()
     base = _get_themes()
@@ -458,13 +458,16 @@ def build_threats_panel(fonts, quarantine_cb, select_all_cb):
         with dpg.group(horizontal=True, tag="threats_footer"):
             dpg.add_button(label="Select All", tag="select_all_btn", width=SELECT_BUTTON_WIDTH,
                            height=FOOTER_BUTTON_HEIGHT, callback=select_all_cb)
-            dpg.add_button(label="Quarantine Selected", tag="quarantine_btn", width=QUARANTINE_BUTTON_WIDTH,
-                           height=FOOTER_BUTTON_HEIGHT, callback=quarantine_cb)
+            dpg.add_button(label="Repair Selected", tag="repair_btn", width=QUARANTINE_BUTTON_WIDTH,
+                           height=FOOTER_BUTTON_HEIGHT, callback=repair_cb)
+            dpg.add_button(label="Clean Selected", tag="clean_btn", width=QUARANTINE_BUTTON_WIDTH,
+                           height=FOOTER_BUTTON_HEIGHT, callback=clean_cb)
             dpg.add_button(label="0 selected", tag="threat_selected_count", width=COUNT_WIDTH,
                            height=FOOTER_BUTTON_HEIGHT)
 
     dpg.bind_item_theme("select_all_btn", base["btn_secondary"])
-    dpg.bind_item_theme("quarantine_btn", base["btn_start"])
+    dpg.bind_item_theme("repair_btn", base["btn_secondary"])
+    dpg.bind_item_theme("clean_btn", base["btn_start"])
     dpg.bind_item_theme("threat_selected_count", t["dash"])
 
     build_threats_table("threats_table_holder")

@@ -31,6 +31,7 @@ ACTIVITY_STATUS_STYLES = {
     "MALICIOUS":   ("octagon_alert", "DANGER",     "accent_red"),
     "SUSPICIOUS":  ("shield_alert",  "WARN",       "accent_orange"),
     "CLEAN":       ("circle_check",  "OK",         "accent_green"),
+    "CLEANED":     ("circle_check",  "CLEANED",    "accent_green"),
     "QUARANTINED": ("shield_cog",    "QUARANTINE", "accent_blue"),
     "RESTORED":    ("refresh",       "RESTORED",   "accent_green"),
     "DELETED":     ("trash",         "DELETED",    "accent_red"),
@@ -194,6 +195,8 @@ def _rebuild_activity_feed(fonts=None, icons=None):
                 title = f"Suspicious file: {os.path.basename(entry_file)}"
             elif entry_result == "CLEAN":
                 title = f"File scanned: {os.path.basename(entry_file)}"
+            elif entry_result == "CLEANED":
+                title = f"Malware cleaned: {os.path.basename(entry_file)}"
             elif entry_result == "QUARANTINED":
                 title = f"File quarantined: {os.path.basename(entry_file)}"
             elif entry_result == "RESTORED":

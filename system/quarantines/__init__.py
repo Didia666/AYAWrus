@@ -1,4 +1,5 @@
 from .quarantine import (
+    clean_malware_file,
     quarantine_file,
     process_quarantine,
     list_quarantine_items,
@@ -8,6 +9,7 @@ from .quarantine import (
 )
 
 __all__ = [
+    "clean_malware_file",
     "quarantine_file",
     "process_quarantine",
     "list_quarantine_items",

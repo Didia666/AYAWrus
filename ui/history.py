@@ -159,6 +159,7 @@ RESULT_STYLE = {
     "MALICIOUS": (COLORS["accent_red"], ("shield_alert", "octagon_alert")),
     "SUSPICIOUS": (COLORS["accent_orange"], ("shield_alert", "octagon_alert")),
     "CLEAN": (COLORS["accent_green"], ("shield_check",)),
+    "CLEANED": (COLORS["accent_green"], ("shield_check",)),
     "SAFE": (COLORS["accent_green"], ("shield_check",)),
     "BENIGN": (COLORS["accent_green"], ("shield_check",)),
     "QUARANTINED": (COLORS["accent_orange"], ("shield_cog",)),

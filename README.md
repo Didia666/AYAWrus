@@ -1,5 +1,14 @@
 # AYAWrus
 
+## Cleaning detected malware
+
+On the desktop Scan page, select detected files and choose **Clean Selected**.
+AYAWrus removes confirmed malicious files and reports the result; if removal is
+blocked, it attempts to move the file to quarantine instead. A file that has
+changed since scanning is left untouched. Suspicious (not confirmed malicious)
+files are quarantined rather than deleted. This clean action removes the whole
+file; it does not repair or disinfect code inside an executable.
+
 ## Building the Windows installer with AYAWrus Mobile
 
 Build the mobile APK before packaging the desktop app. The PyInstaller spec

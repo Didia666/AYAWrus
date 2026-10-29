@@ -248,8 +248,7 @@ def _themes():
             dpg.add_theme_color(dpg.mvThemeCol_Text, c["accent_blue"])
             dpg.add_theme_color(dpg.mvThemeCol_Border, (*c["accent_blue"], 160))
             dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1)
-            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 9)
-            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
     _T["num"] = th
 
     _T["title"] = _flat_theme(c["text_primary"])
@@ -1001,10 +1000,37 @@ def _page_explanation(report):
         dpg.add_text(text, wrap=0, color=COLORS["text_primary"])
 
 
-def _page_actions(report):
+def _page_actions(threat, report, repair_cb=None, quarantine_cb=None):
     recs = (report or {}).get("recommendations") or []
+    
+    dpg.add_text("Recommended Actions", color=COLORS["text_primary"])
+    dpg.add_text("Based on the analysis, AYAWrus suggests the following steps to protect your system.", 
+                 color=COLORS["text_secondary"], wrap=0)
+    dpg.add_spacer(height=10)
+
+    # Add Action Buttons
+    t = _themes()
+    with _card(100):
+        dpg.add_text("Immediate Actions", color=COLORS["text_primary"])
+        with dpg.group(horizontal=True):
+            if repair_cb:
+                repair_btn = dpg.add_button(label="Attempt Repair", width=140, height=35, 
+                                            callback=repair_cb, user_data=threat)
+                dpg.bind_item_theme(repair_btn, t["num"])
+            
+            if quarantine_cb:
+                quarantine_btn = dpg.add_button(label="Quarantine File", width=140, height=35, 
+                                                callback=quarantine_cb, user_data=threat)
+                dpg.bind_item_theme(quarantine_btn, t["close"])
+
+    dpg.add_spacer(height=15)
+    dpg.add_text("Educational Advice", color=COLORS["text_primary"])
+    
     if not recs:
-        return _empty_page("No recommended actions are available for this file.")
+        dpg.add_text("No specific educational recommendations are available for this file.", 
+                     color=COLORS["text_secondary"], wrap=0)
+        return
+
     side = ICON_BULLET + 8
     for rec in recs:
         text = _clean(rec)
@@ -1027,13 +1053,13 @@ def _page_learn(report):
             dpg.add_text(content, wrap=0, color=COLORS["text_secondary"])
 
 
-def _build_pages(threat, report):
+def _build_pages(threat, report, repair_cb=None, quarantine_cb=None):
     builders = [
         lambda: _page_overview(threat, report),
         lambda: _page_steps(report),
         lambda: _page_suspicious(report),
         lambda: _page_shap(threat, report),
-        lambda: _page_actions(report),
+        lambda: _page_actions(threat, report, repair_cb, quarantine_cb),
         lambda: _page_learn(report),
         lambda: build_likely_targets_page(threat, _s["fonts"]),
     ]
@@ -1118,7 +1144,7 @@ def _on_tab(sender, app_data, user_data):
     _select_tab(user_data)
 
 
-def open_explain(threat, report):
+def open_explain(threat, report, repair_cb=None, quarantine_cb=None):
     """Opens the popup for one threat. 'report' is the XAI report dict, or None."""
     print(f"[explain] open_explain called | ready={_s['ready']}")
     if not _s["ready"]:
@@ -1196,7 +1222,7 @@ def open_explain(threat, report):
 
     _s["mode"] = "opening"
     try:
-        _build_pages(threat, report)
+        _build_pages(threat, report, repair_cb, quarantine_cb)
         _style_tabs()
         _layout()
     except Exception:
