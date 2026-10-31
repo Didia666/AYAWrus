@@ -369,11 +369,18 @@ def _remove_thinking_message():
     _refresh_chat_display()
 
 
+def _scroll_chat_to_end(*args):
+    """Jumps the conversation box to its newest message."""
+    if dpg.does_item_exist(_CHAT_CHILD):
+        dpg.set_y_scroll(_CHAT_CHILD, dpg.get_y_scroll_max(_CHAT_CHILD))
+
+
 def _refresh_chat_display():
     """Rebuild the message list from the current messages."""
     try:
         if dpg.does_item_exist(_MESSAGES_CONTAINER):
             dpg.delete_item(_MESSAGES_CONTAINER, children_only=True)
+            dpg.set_frame_callback(dpg.get_frame_count() + 2, _scroll_chat_to_end)
             for role, timestamp, text in _messages:
                 _render_message(role, timestamp, text)
     except Exception:
@@ -574,7 +581,7 @@ def _find_kb_path():
 def _ensure_ai_initialized():
     """Initialize OpenRouter client and AI status."""
     global _AI_CLIENT, _AI_ENABLED
-    if _AI_CLIENT is None:
+    if _AI_CLIENT is None or not _AI_ENABLED:   # keep trying while in local mode, so a key saved in Settings gets picked up
         try:
             _AI_CLIENT = OpenRouterClient()
             _AI_ENABLED = _AI_CLIENT.is_configured()
@@ -715,17 +722,17 @@ def _build_chat_window():
         welcome_extra = ""
         if not _AI_ENABLED:
             welcome_extra = (
-                "\n\nNo API key configured yet. Go to Settings > AI API Settings "
+                "\n\nNo API key configured yet. Go to Settings > AI Assistant "
                 "to add your OpenRouter key. Using local knowledge base mode."
             )
         _add_message("system",
             "Welcome to CyberLearn Assistant!\n\n"
-            "I'm an AI-powered cybersecurity educator. I can explain concepts, "
+            "I'm a cybersecurity learning assistant. I can explain concepts, "
             "describe malware types, teach detection techniques, and more.\n\n"
             "Tips:\n"
-            "\u2022 Type any question and press Enter or click Send\n"
+            "\u2022 Type a question or keyword and press Enter or click Send\n"
             "\u2022 Click suggested questions below to get started\n"
-            "\u2022 Ask follow-up questions - I remember our conversation!\n"
+            "\u2022 With AI online, ask follow-up questions - I remember our conversation!\n"
             "\u2022 Click 'New Chat' to start fresh\n\n"
             "What would you like to learn about?" + welcome_extra
         )

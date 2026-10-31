@@ -22,6 +22,9 @@ except Exception:
 # True = the help bubble (CyberLearn) also works offline, with ready-made questions and no AI key.
 # False = the manual says the bubble needs the AI Assistant settings to answer at all.
 CYBERLEARN_HAS_OFFLINE_MODE = True
+# True once ui/cyberlearn_assistant_dpg.py picks up a newly saved API key without a restart (the fix in this message).
+# False = the manual tells people to restart AYAWrus after saving a key or changing the model.
+CYBERLEARN_PICKS_UP_NEW_KEY_WITHOUT_RESTART = False
 
 # ---- Shared sizes ----
 DEFAULT_WIDTH = 540
@@ -635,9 +638,9 @@ def _models_list():
 def _build_ai(fonts, icons):
     intro = ("The AI Assistant settings let AYAWrus's help bubble (CyberLearn) use an online AI service.")
     if CYBERLEARN_HAS_OFFLINE_MODE:
-        intro += (" Without them the bubble still works offline: you pick from its ready-made questions, such as "
-                  "'What is a trojan?', and it shows the stored answer. With them, it can also answer questions you "
-                  "type yourself, which needs an internet connection.")
+        intro += (" Without them the bubble still works: it looks your question up in its built-in knowledge base, such as "
+                  "'What is a trojan?', and shows the stored answer. With them, it can chat in your own words and remember "
+                  "the conversation, which needs an internet connection.")
     else:
         intro += " The bubble needs them to answer."
     hw.paragraph(intro)
@@ -728,6 +731,13 @@ def build_topic(fonts, icons):
     hw.tip_box("note", "Save before you leave",
                "Opening the Settings tab reloads what was saved, so AI Assistant fields you typed but didn't save "
                "are cleared. The other cards take effect as soon as you press their buttons.", icons)
+    if CYBERLEARN_PICKS_UP_NEW_KEY_WITHOUT_RESTART:
+        restart_text = ("The help bubble (CyberLearn) notices a newly saved key the next time you open it. If you "
+                        "change the key or model later, restart AYAWrus.")
+    else:
+        restart_text = ("The help bubble (CyberLearn) checks for an API key when AYAWrus starts, so restart AYAWrus "
+                        "after saving a new key or changing the model.")
+    hw.tip_box("note", "Restart after changing the AI settings", restart_text, icons)
     hw.tip_box("note", "Your API key is stored as plain text",
                "The key is saved in config.json on this PC. Keep it private, and don't share that file.", icons)
     hw.tip_box("note", "Treat the pairing code like a password",

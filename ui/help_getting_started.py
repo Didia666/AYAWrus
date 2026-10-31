@@ -291,7 +291,7 @@ def build_topic(fonts, icons):
     hw.section_heading("Getting help", fonts)
     if CYBERLEARN_HAS_OFFLINE_MODE:
         bubble = ("The round help bubble in the bottom-right corner opens CyberLearn. Pick one of its ready-made "
-                  "questions for a quick answer. To type your own questions, set up the AI Assistant in Settings.")
+                  "questions or type a keyword for a quick answer. To chat in your own words, set up the AI Assistant in Settings.")
     else:
         bubble = ("The round help bubble in the bottom-right corner opens CyberLearn. It needs the AI Assistant set "
                   "up in Settings to answer.")

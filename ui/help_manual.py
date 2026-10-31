@@ -4,7 +4,7 @@ from ui.theme import COLORS
 from ui.layout import register_resize
 from ui.help_widgets import HELP_CONTENT_PANE_TAG, HELP_INSET_BG, child_card_theme
 from ui import (help_getting_started, help_dashboard, help_scan, help_scan_results, help_explain, help_quarantine,
-                help_history, help_exclusions, help_settings)
+                help_history, help_exclusions, help_settings, help_cyberlearn)
 
 # help_manual.py
 # The Help tab shell: topic list on the left, scrolling content on the right.
@@ -45,6 +45,7 @@ HELP_TOPICS = [
     {"key": "history", "label": "History", "icon": "history", "build": help_history.build_topic},
     {"key": "exclusions", "label": "Exclusions", "icon": "sliders_horizontal", "build": help_exclusions.build_topic},
     {"key": "settings", "label": "Settings", "icon": "settings", "build": help_settings.build_topic},
+    {"key": "cyberlearn", "label": "CyberLearn", "icon": "help_chat", "build": help_cyberlearn.build_topic},
 ]
 
 _current_topic = HELP_DEFAULT_TOPIC
