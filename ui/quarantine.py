@@ -94,7 +94,7 @@ SHOW_MISSING_HINT = True       # orange lock + tooltip line when the quarantined
 
 # ---- Tooltips ----
 TIP_COLOR = COLORS["text_secondary"]
-TIP_RESTORE = "Move this file back to its original location"
+TIP_RESTORE = "Restore this file and add it to Exclusions."
 TIP_DELETE = "Permanently delete the quarantined file"
 TIP_MISSING = "Not found in the quarantine folder when this list was loaded"
 TIP_NO_SCORE = "No confidence score was recorded for this file"

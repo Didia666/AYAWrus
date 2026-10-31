@@ -33,6 +33,7 @@ CONFIRM_TITLE_GAP = 8          # space under the title
 CONFIRM_MSG_GAP = 22           # space between the message and the buttons
 CONFIRM_BTN_W = 130
 CONFIRM_BTN_H = 38
+CONFIRM_BTN_PAD = 24           # extra width around a long confirm label (wider than CONFIRM_BTN_W), so it is never clipped
 CONFIRM_BTN_GAP = 12           # space between Cancel and the confirm button
 
 # ---- Colors ----
@@ -90,6 +91,17 @@ def _measure_height(title, message, wrap_w, font):
         print("[confirm] could not measure the message, using the fallback height")
     h = 2 * CONFIRM_PAD + title_h + CONFIRM_TITLE_GAP + msg_h + CONFIRM_MSG_GAP + CONFIRM_BTN_H + CONFIRM_H_EXTRA
     return max(CONFIRM_MIN_H, int(h))
+
+
+def _confirm_button_width(label, inner_w):
+    """Wide enough for the label. Long ones, like 'Restore & Trust (Exclude)', would be clipped at CONFIRM_BTN_W."""
+    try:
+        size = dpg.get_text_size(label)
+    except Exception:
+        size = None
+    text_w = size[0] if size else len(label) * CONFIRM_FALLBACK_CHAR_W
+    room = inner_w - CONFIRM_BTN_W - CONFIRM_BTN_GAP
+    return int(min(room, max(CONFIRM_BTN_W, text_w + CONFIRM_BTN_PAD)))
 
 
 def _center_pos(w, h):
@@ -172,7 +184,8 @@ def ask_confirm(title, message, on_confirm, user_data=None, confirm_label="Confi
         _s["w"], _s["h"] = w, h
         _s["cb"], _s["user_data"] = on_confirm, user_data
 
-        buttons_w = 2 * CONFIRM_BTN_W + CONFIRM_BTN_GAP
+        confirm_w = _confirm_button_width(confirm_label, inner_w)
+        buttons_w = CONFIRM_BTN_W + CONFIRM_BTN_GAP + confirm_w
         with dpg.window(tag=WIN, modal=True, show=True, no_title_bar=True, no_resize=True,
                         no_move=True, no_collapse=True, no_scrollbar=True, no_scroll_with_mouse=True,
                         width=w, height=h, pos=[x, y], min_size=[8, 8]):
@@ -185,7 +198,7 @@ def ask_confirm(title, message, on_confirm, user_data=None, confirm_label="Confi
             with dpg.group(horizontal=True, indent=max(0, inner_w - buttons_w)):   # buttons sit on the right
                 dpg.add_button(label=cancel_label, width=CONFIRM_BTN_W, height=CONFIRM_BTN_H,
                                tag=CANCEL_BTN, callback=_on_cancel)
-                dpg.add_button(label=confirm_label, width=CONFIRM_BTN_W, height=CONFIRM_BTN_H,
+                dpg.add_button(label=confirm_label, width=confirm_w, height=CONFIRM_BTN_H,
                                tag=OK_BTN, callback=_on_ok)
 
         dpg.bind_item_theme(WIN, _T["danger"] if danger else _T["normal"])

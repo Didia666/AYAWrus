@@ -90,7 +90,7 @@ STATE_STYLE = {
     "running": (("loader_circle", "scan_search"), COLORS["accent_blue"], "This scan is still running"),
     "failed": (("circle_x", "octagon_alert"), COLORS["accent_red"], "This scan failed or was cancelled"),
     "threats": (("shield_alert", "octagon_alert"), COLORS["accent_red"], "Threats were found in this scan"),
-    "empty": (("file_x", "folder_search"), COLORS["text_secondary"], "No files were scanned"),
+    "empty": (("file_x", "folder_search"), COLORS["text_secondary"], "Nothing was flagged in this scan"),
     "clean": (("shield_check",), COLORS["accent_green"], "No threats were found"),
 }
 
@@ -128,8 +128,8 @@ DETAIL_CHROME_H = (DETAIL_BACK_H + DETAIL_BACK_GAP + SUMMARY_H + DETAIL_SECTION_
 DETAIL_TABLE_CHROME = 2 * CARD_PAD_Y + 4   # table height = panel height - this (raise if the table gets cut off at the bottom)
 DETAIL_MAX_FILES = 250         # files shown per batch
 DETAIL_TIP_WRAP = 520          # wrap width of the details tooltip on the file name
-DETAIL_EMPTY_TITLE = "No file details are available for this batch"
-DETAIL_EMPTY_SUBTITLE = "The scan summary was saved, but its file entries weren't found in the history log"
+DETAIL_EMPTY_TITLE = "Nothing was saved for this scan"
+DETAIL_EMPTY_SUBTITLE = "Only flagged files, errors and quarantine actions are kept in History"
 
 # ---- Detail view: file table columns (fixed ones in px INCLUDING cell padding, stretch ones as weights) ----
 DETAIL_ICON_SIZE = 20
@@ -546,7 +546,7 @@ def _chips_for(batch):
     if errors > 0:
         chips.append((f"Errors: {errors}", "chip_grey"))
     if not chips:
-        chips.append(("No files scanned" if total == 0 else f"Results: {total}", "chip_grey"))
+        chips.append(("Nothing flagged" if total == 0 else f"Results: {total}", "chip_grey"))
     return chips
 
 
@@ -591,7 +591,7 @@ def _batch_row(batch, index, icons):
 
     info_parts = []
     if total > 0:
-        info_parts.append(_plural(total, "file"))
+        info_parts.append(_plural(total, "result"))
     if elapsed > 0:
         info_parts.append(_format_elapsed(elapsed))
     info = ("·  " + "  ·  ".join(info_parts)) if info_parts else ""
@@ -1127,7 +1127,7 @@ def _render_batch_detail(batch, icons):
 
         dpg.add_spacer(height=DETAIL_SECTION_GAP)
         with dpg.group(horizontal=True):
-            heading = dpg.add_text(f"Files scanned ({len(files):,})", color=COLORS["text_primary"])
+            heading = dpg.add_text(f"Saved results ({len(files):,})", color=COLORS["text_primary"])
             if fonts.get("subheading") is not None:
                 dpg.bind_item_font(heading, fonts["subheading"])
             if len(files) > DETAIL_MAX_FILES:
@@ -1481,7 +1481,7 @@ def build_history(parent, fonts, icons):
                 dpg.bind_item_font("history_page_title", fonts["heading"])
                 dpg.add_button(label="0 scans", tag="history_count_chip", height=CHIP_HEIGHT)
             dpg.bind_item_theme("history_count_chip", ct["chip"])
-            dpg.add_text("Each scan is one batch. Click a batch to see every file from that run.",
+            dpg.add_text("Each scan is one batch. Click a batch to see the results saved from that run.",
                          color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
 

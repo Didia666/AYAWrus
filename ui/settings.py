@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MOBILE_TITLE = "Mobile Pairing"
 MOBILE_HELPER = "Pair your phone to get scan alerts"
 MOBILE_HINT = "Open AYAWrus Mobile and scan this code. Each code works once and expires after 5 minutes."
-STATUS_NONE = "NO DEVICE PAIRED"
+STATUS_NONE = "NO DEVICE CONNECTED"
 STATUS_ONE = "1 DEVICE CONNECTED"
 STATUS_MANY = "{n} DEVICES CONNECTED"
 EXPIRY_TEXT = "Expires in {time}"

@@ -3,9 +3,9 @@ from ui.theme import COLORS
 from ui.layout import register_resize
 
 # ---- Sidebar layout constants (tune here) ----
-SIDEBAR_SPACER_DEFAULT = 380   # starting height of the gap above "System Protected"
+SIDEBAR_SPACER_DEFAULT = 332   # starting height of the gap above "System Protected"
 SIDEBAR_SPACER_MIN = 20        # the gap never gets smaller than this
-SIDEBAR_FIXED_HEIGHT = 496     # everything else in the sidebar (logo + nav + status). Raise it to move
+SIDEBAR_FIXED_HEIGHT = 544     # everything else in the sidebar (logo + nav + status). Raise it to move
                                # "System Protected" UP, lower it to move it DOWN
 import threading
 import time
@@ -21,6 +21,7 @@ NAV_ITEMS = [
     {"key": "history", "label": "History", "icon": "history"},
     {"key": "exclusions", "label": "Exclusions", "icon": "sliders_horizontal"},
     {"key": "settings", "label": "Settings", "icon": "settings"},
+    {"key": "help", "label": "Help", "icon": "book_open"},
 ]
 
 def pulse_dot(tag):
@@ -83,6 +84,8 @@ def _switch_page(sender, app_data, user_data):
         if CURRENT_PAGE == "settings":
             from ui.settings import refresh_settings
             refresh_settings()
+    if dpg.does_item_exist("page_help"):
+        dpg.configure_item("page_help", show=(CURRENT_PAGE == "help"))
 
 def nav_item(key, label, icon_texture):
     is_active = key == CURRENT_PAGE

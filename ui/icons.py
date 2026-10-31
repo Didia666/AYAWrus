@@ -39,6 +39,7 @@ ICON_PATHS = {
     "refresh": "assets/icons/refresh-cw.png",
     "trash": "assets/icons/trash-2.png",
     "logo": "assets/icons/ayawrus_logo.png",
+"book_open": "assets/icons/book-open.png",
     "help_chat": "assets/icons/message-circle-question-mark.png",
     "loader_circle": "assets/icons/loader-circle.png",
     "circle_x": "assets/icons/circle-x.png",

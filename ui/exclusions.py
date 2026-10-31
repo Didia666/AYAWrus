@@ -27,7 +27,7 @@ except Exception as e:
 # exclusions.py
 
 # ---- Page text ----
-PAGE_SUBTITLE = "Folders skipped during scans and real-time protection, including everything inside them"
+PAGE_SUBTITLE = "Folders skipped during scans, including everything inside them"
 ADD_TITLE = "Add an exclusion"
 ADD_HELPER = "Pick a folder or paste its path below"
 ADD_INPUT_HINT = "Or paste a folder path here..."

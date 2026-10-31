@@ -11,6 +11,7 @@ from ui.quarantine import build_quarantine
 from ui.history import build_history
 from ui.exclusions import build_exclusions
 from ui.settings import build_settings
+from ui.help_manual import build_help
 from ui.threat_chart import create_chart_theme
 from ui.fonts import load_fonts
 from ui.icons import load_icons
@@ -45,6 +46,8 @@ with dpg.window(tag="primary_window", no_scrollbar=True):
                     build_exclusions("page_exclusions", fonts, icons)
                 with dpg.child_window(tag="page_settings", border=False, width=-1, height=-1, show=False):
                     build_settings("page_settings", fonts, icons)
+                with dpg.child_window(tag="page_help", border=False, width=-1, height=-1, show=False):
+                    build_help("page_help", fonts, icons)
 
 # Initialize CyberLearn
 try: 

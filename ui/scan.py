@@ -74,7 +74,7 @@ SCAN_MAX_PENDING = 8
 
 SCAN_TYPES = [
     {"key": "quick", "icon": "zap", "label": "Quick Scan", "subtitle": "Checks common areas"},
-    {"key": "full", "icon": "globe", "label": "Full Scan", "subtitle": "Checks all drives and files"},
+    {"key": "full", "icon": "globe", "label": "Full Scan", "subtitle": "Checks the system drive"},
     {"key": "custom", "icon": "folder_search", "label": "Custom Scan", "subtitle": "Choose specific folders"},
 ]
 
@@ -193,6 +193,15 @@ def _toggle_select_all(sender, app_data):
         SELECTED_QUARANTINE_ITEMS.update(all_paths)
     apply_selection(SELECTED_QUARANTINE_ITEMS, len(DETECTED_THREATS))
 
+def _already_quarantined(file_path):
+    """True when the file was quarantined earlier (for example automatically during the scan): the original is gone, the copy is safe."""
+    try:
+        from system.quarantines.quarantine import is_quarantined
+        return (not os.path.isfile(file_path)) and is_quarantined(file_path)
+    except Exception:
+        return False
+
+
 def _quarantine_selected(sender, app_data):
     global DETECTED_THREATS, SELECTED_QUARANTINE_ITEMS
     print(f"Quarantining: {SELECTED_QUARANTINE_ITEMS}")
@@ -222,6 +231,8 @@ def _quarantine_selected(sender, app_data):
                     or result.endswith(" -> ALREADY IN QUARANTINE")
                 ):
                     succeeded.add(file_path)
+                elif _already_quarantined(file_path):
+                    succeeded.add(file_path)   # auto-quarantined during the scan, so just clear the row
                 else:
                     failed[file_path] = str(result)
             except Exception as exc:
@@ -303,10 +314,7 @@ def _quarantine_selected(sender, app_data):
                                     hs_ += 1
                             except Exception:
                                 pass
-                        threat_score = min(
-                            100,
-                            int((hs_ / max(1, active_threats)) * 100 + active_threats * 5),
-                        )
+                        threat_score = hs_   # plain count of 70%+ files, same as ui/dashboard.py
             except Exception as e:
                 print(f"Quarantine post dashboard preload error: {e}")
             try:
@@ -521,13 +529,7 @@ def _schedule_post_scan_ui_updates():
                                 high_severity += 1
                         except Exception:
                             pass
-                    threat_score = min(
-                        100,
-                        int(
-                            (high_severity / max(1, active_threats)) * 100
-                            + active_threats * 5
-                        ),
-                    )
+                    threat_score = high_severity   # plain count of 70%+ files, same as ui/dashboard.py
         except Exception as e:
             print(f"Post-scan dashboard preload error: {e}")
 
@@ -1048,7 +1050,7 @@ def _update_scan_progress():
 
             if BACKEND_AVAILABLE:
                 try:
-                    flush_log_buffer()
+                    flush_log_buffer(status="CANCELLED" if was_cancelled else "COMPLETED")
                 except Exception as flush_error:
                     print(f"Post-scan history flush error: {flush_error}")
 
