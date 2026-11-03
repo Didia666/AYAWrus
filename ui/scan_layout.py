@@ -353,6 +353,8 @@ def _resize_scan(content_w, content_h):
     # everything below the cards uses the exact same row width, so the edges line up
     row_w = count * card_w + (count - 1) * gap
     _state["panel_w"] = row_w
+    if dpg.does_item_exist("system_resource_monitor"):
+        dpg.configure_item("system_resource_monitor", width=row_w)
     _resize_ready_panel(row_w)
 
 

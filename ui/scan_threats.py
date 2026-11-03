@@ -4,8 +4,7 @@ from ui.theme import COLORS
 from ui.layout import register_resize
 from ui.scan_layout import _get_themes
 from ui.scan_pipeline import _row_width
-from ui.table_style import TABLE_ROW_HEIGHT, TABLE_PILL_HEIGHT, TABLE_CELL_MUTED_COLOR, apply_table_font
-from ui.table_text import fit_text, text_width
+from ui.table_style import TABLE_ROW_HEIGHT, TABLE_CELL_MUTED_COLOR, apply_table_font
 
 # scan_threats.py
 
@@ -20,21 +19,18 @@ NARROW_BREAKPOINT = 1200       # content width below which the Location column i
 COL_SELECT_W = 55              # "Select" header at the table font size. Raise if the header clips
 COL_EXPLAIN_W = 75             # the "Explain" button
 COL_CONF_W = 100               # "Confidence" header. Raise if it clips
-COL_BEHAVIOR_W = 150           # score + inferred behavior label ("85% | Ransomware"). Raise if the label clips
-COL_VERDICT_W = 125            # the "SUSPICIOUS" pill. Raise if the pill text touches the edges
+COL_VERDICT_W = 125            # keeps the longest verdict readable without crowding
 COL_NAME_WEIGHT = 2.0
 COL_LOCATION_WEIGHT = 3.0
-ELLIPSIS_ENABLED = True        # False = old hard clipping
+COL_BEHAVIOR_WEIGHT = 1.5
 PANEL_PAD_X = 8                # the panel's own left/right padding
-TABLE_SCROLLBAR_W = 16         # room kept for the table's scrollbar. Raise if "..." touches the next column
-FIXED_COL_EXTRA_PX = 115       # padding the 7 fixed columns add on top of their widths. MEASURED at a 1275px panel, so re-check at the minimum
-BEHAVIOR_TEXT_MARGIN = 16      # room kept inside the Behavior cell so the text never touches its edges. Raise if "..." touches the border
+TABLE_SCROLLBAR_W = 16         # room kept for the table's scrollbar
+FIXED_COL_EXTRA_PX = 96        # padding the fixed columns add on top of their widths
 
 # ---- Rows ----
 ROW_PAD_X = 10                 # table cell padding
 ROW_PAD_Y = 8                  # more = taller rows
 ROW_ITEM_HEIGHT = TABLE_ROW_HEIGHT   # height of the buttons / text cells inside a row (shared: ui/table_style.py)
-PILL_HEIGHT = TABLE_PILL_HEIGHT      # shared: ui/table_style.py
 PILL_ROUNDING = 13
 PILL_BG_ALPHA = 40
 PILL_BORDER_ALPHA = 160
@@ -61,7 +57,7 @@ _T = {}
 # table_narrow = what the CURRENT table was built with (rows must match its columns, so rows read this one)
 # rows         = every row handed to add_threat_row, so the table can rebuild itself when the width crosses the breakpoint
 _state = {"narrow": False, "table_narrow": False, "chk": {}, "fonts": None, "rows": [], "empty": False,
-          "cells": [], "row_w": 900}   # cells = (name button, full name, location button, full path), re-trimmed on resize
+          "cells": [], "row_w": 900}   # wrapped text cells are resized with the table
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +149,7 @@ def build_threats_table(parent):
         if not narrow:
             dpg.add_table_column(label="Location", width_stretch=True, init_width_or_weight=COL_LOCATION_WEIGHT)
         dpg.add_table_column(label="Confidence", width_fixed=True, init_width_or_weight=COL_CONF_W)
-        dpg.add_table_column(label="Behavior", width_fixed=True, init_width_or_weight=COL_BEHAVIOR_W)
+        dpg.add_table_column(label="Behavior", width_stretch=True, init_width_or_weight=COL_BEHAVIOR_WEIGHT)
         dpg.add_table_column(label="Verdict", width_fixed=True, init_width_or_weight=COL_VERDICT_W)
         dpg.add_table_column(label="", width_fixed=True, init_width_or_weight=GUTTER_W)
     dpg.bind_item_theme("threats_table", t["table"])
@@ -167,16 +163,21 @@ def reset_threat_rows():
     _state["cells"].clear()
 
 
-def _percent_button(value, theme_key):
-    t = _themes()
+def _add_wrapped_cell(label, column, color):
+    widths = _cell_widths()
+    item = dpg.add_text(label, wrap=max(1, widths[column]), color=color)
+    _state["cells"].append((item, column))
+    return item
+
+
+def _percent_cell(value):
     try:
         label = f"{float(value):.1%}"
-        key = theme_key
+        color = COLORS["accent_red"]
     except (TypeError, ValueError):
         label = "-"
-        key = "dash"
-    btn = dpg.add_button(label=label, width=-1, height=ROW_ITEM_HEIGHT)
-    dpg.bind_item_theme(btn, t[key])
+        color = TABLE_CELL_MUTED_COLOR
+    _add_wrapped_cell(label, "confidence", color)
 
 
 def _humanize_behavior_name(name):
@@ -190,133 +191,67 @@ def _humanize_behavior_name(name):
     return label.title()
 
 
-def _format_behavior_type(threat):
-    behavior_types = threat.get("behavior_types") or []
-    if isinstance(behavior_types, str):
-        return behavior_types
-    if behavior_types:
-        labels = [_humanize_behavior_name(item) for item in behavior_types if item]
-        return ", ".join(labels)
-    behavior_type = threat.get("behavior_type")
-    return _humanize_behavior_name(behavior_type) if behavior_type else "-"
-
-
-def _behavior_score_button(threat):
-    t = _themes()
-
+def _behavior_cell(threat):
     behavior_confidence = threat.get("behavior_confidence")
     behavior_types = threat.get("behavior_types") or []
 
     if isinstance(behavior_types, str):
         behavior_types = [behavior_types]
 
+    # Only labels that passed their configured thresholds
+    # are displayed as predicted behaviors.
     labels = [
         _humanize_behavior_name(item)
         for item in behavior_types
-        if item
+        if item and item != "NO_BEHAVIOR_LABEL_PREDICTED"
     ]
 
-    if not labels:
-        single_type = threat.get("behavior_type")
-
-        if single_type:
-            labels = [_humanize_behavior_name(single_type)]
-
-    # Compact behavior label
-    if labels:
-        primary = labels[0]
-
-
-        extra = len(labels) - 1
-
-        if extra > 0:
-            short_label = f"{primary} +{extra}"
-        else:
-            short_label = primary
-    else:
-        short_label = "Not identified"
-
-    # Format confidence
+    top_candidate = threat.get("behavior_type")
+    top_candidate_score = threat.get("behavior_confidence", 0.0)
+    color = COLORS["accent_orange"]
     try:
         score = float(behavior_confidence)
-
         score_text = f"{score:.0%}"
-        theme_key = "behavior"
-
     except (TypeError, ValueError):
-        score_text = None
-        theme_key = "dash"
+        score_text = ""
+        color = TABLE_CELL_MUTED_COLOR
 
     if labels:
-        font = (_state["fonts"] or {}).get("table")
-        prefix = f"{score_text} | " if score_text else ""
-        suffix = f" +{len(labels) - 1}" if len(labels) > 1 else ""
-        if ELLIPSIS_ENABLED:
-            room = COL_BEHAVIOR_W - BEHAVIOR_TEXT_MARGIN - text_width(prefix + suffix, font)
-            button_label = prefix + fit_text(labels[0], room, font) + suffix
-        else:
-            button_label = prefix + labels[0] + suffix
+        content = f"{score_text} | {', '.join(labels)}" if score_text else ", ".join(labels)
     else:
-        button_label = "-"
+        content = "-"
+        if top_candidate:
+            try:
+                candidate_score = float(top_candidate_score)
+                content = (
+                    f"{_humanize_behavior_name(top_candidate)} "
+                    f"(candidate: {candidate_score:.1%})"
+                )
+            except (TypeError, ValueError):
+                pass
 
-    btn = dpg.add_button(
-        label=button_label,
-        width=-1,
-        height=ROW_ITEM_HEIGHT
-    )
-
-    dpg.bind_item_theme(btn, t[theme_key])
-
-    # Full details appear on hover
-    with dpg.tooltip(btn):
-
-        dpg.add_text(
-            "Behavior Analysis",
-            color=COLORS["text_primary"]
-        )
-
+    item = _add_wrapped_cell(content, "behavior", color)
+    with dpg.tooltip(item):
+        dpg.add_text("Behavior Analysis", color=COLORS["text_primary"])
         if score_text:
             dpg.add_text(
                 f"Reported Confidence: {score_text}",
                 color=COLORS["text_secondary"]
             )
-
         dpg.add_separator()
-
         if labels:
-            dpg.add_text(
-                "Predicted Behaviors:",
-                color=COLORS["text_primary"]
-            )
-
+            dpg.add_text("Predicted Behaviors:", color=COLORS["text_primary"])
             for label in labels:
-                dpg.add_text(
-                    f"- {label}",
-                    color=COLORS["text_secondary"]
-                )
+                dpg.add_text(f"- {label}", color=COLORS["text_secondary"])
         else:
             dpg.add_text(
                 "No behavior type was identified.",
                 color=COLORS["text_secondary"]
             )
 
-        behavior_result = threat.get("behavior_result")
-
-        if behavior_result:
-            dpg.add_separator()
-
-            dpg.add_text(
-                str(behavior_result),
-                color=COLORS["text_secondary"],
-                wrap=350
-            )
-
-    return btn
-
 
 def _draw_threat_row(table, threat, selected, toggle_cb, explain_cb):
     """Draws one row. The cells must match the columns the table was BUILT with (table_narrow)."""
-    t = _themes()
     base = _get_themes()
     path = threat.get("file_path", "")
     name = os.path.basename(path) or path
@@ -330,56 +265,53 @@ def _draw_threat_row(table, threat, selected, toggle_cb, explain_cb):
                                  callback=explain_cb, user_data=threat)
         dpg.bind_item_theme(explain, base["btn_secondary"])
 
-        name_btn = dpg.add_button(label=name, width=-1, height=ROW_ITEM_HEIGHT)
-        dpg.bind_item_theme(name_btn, t["name"])
-        with dpg.tooltip(name_btn):
+        name_text = _add_wrapped_cell(name, "name", COLORS["text_primary"])
+        with dpg.tooltip(name_text):
             dpg.add_text(path, color=COLORS["text_secondary"])   # the full path lives here, so hiding Location loses nothing
 
-        loc_btn = None
+        loc_text = None
         if not _state["table_narrow"]:
-            loc_btn = dpg.add_button(label=path, width=-1, height=ROW_ITEM_HEIGHT)
-            dpg.bind_item_theme(loc_btn, t["path"])
-            with dpg.tooltip(loc_btn):
+            loc_text = _add_wrapped_cell(path, "location", TABLE_CELL_MUTED_COLOR)
+            with dpg.tooltip(loc_text):
                 dpg.add_text(path, color=COLORS["text_secondary"])
-        _state["cells"].append((name_btn, name, loc_btn, path))
-        _fit_cell(name_btn, name, loc_btn, path, _label_widths())
 
-        _percent_button(threat.get("probability"), "conf")
-        _behavior_score_button(threat)
+        _percent_cell(threat.get("probability"))
+        _behavior_cell(threat)
 
         result = str(threat.get("result", ""))
-        pill = dpg.add_button(label=result, width=-1, height=PILL_HEIGHT)
-        dpg.bind_item_theme(pill, t.get(f"pill_{result}", t["pill_SUSPICIOUS"]))
+        verdict_color = (
+            COLORS["accent_red"] if result == "MALICIOUS"
+            else COLORS["accent_orange"]
+        )
+        _add_wrapped_cell(result, "verdict", verdict_color)
         dpg.add_spacer(width=1)   # right gutter cell
 
 
-def _label_widths():
-    """(File Name, Location) pixel budget for the text inside the cells. An estimate from the column constants."""
-    fixed = 2 * GUTTER_W + COL_SELECT_W + COL_EXPLAIN_W + COL_CONF_W + COL_BEHAVIOR_W + COL_VERDICT_W
+def _cell_widths():
+    """Estimate inner text widths from the current panel width and column stretch weights."""
+    fixed = 2 * GUTTER_W + COL_SELECT_W + COL_EXPLAIN_W + COL_CONF_W + COL_VERDICT_W
     table_w = _state["row_w"] - 2 * PANEL_PAD_X - TABLE_SCROLLBAR_W
     avail = max(0, table_w - fixed - FIXED_COL_EXTRA_PX)
-    weights = COL_NAME_WEIGHT + (0 if _state["table_narrow"] else COL_LOCATION_WEIGHT)
+    weights = COL_NAME_WEIGHT + COL_BEHAVIOR_WEIGHT
+    if not _state["table_narrow"]:
+        weights += COL_LOCATION_WEIGHT
     name_w = avail * COL_NAME_WEIGHT / weights - 2 * ROW_PAD_X
-    loc_w = avail * COL_LOCATION_WEIGHT / weights - 2 * ROW_PAD_X
-    return int(name_w), int(loc_w)
-
-
-def _fit_cell(name_btn, name, loc_btn, path, widths):
-    """Shortens the two text cells to their budget ("game name h..."). The full text stays in the tooltips."""
-    if not ELLIPSIS_ENABLED:
-        return
-    font = (_state["fonts"] or {}).get("table")
-    if dpg.does_item_exist(name_btn):
-        dpg.set_item_label(name_btn, fit_text(name, widths[0], font))
-    if loc_btn is not None and dpg.does_item_exist(loc_btn):
-        dpg.set_item_label(loc_btn, fit_text(path, widths[1], font))
-
+    loc_w = avail * COL_LOCATION_WEIGHT / weights - 2 * ROW_PAD_X if not _state["table_narrow"] else 1
+    behavior_w = avail * COL_BEHAVIOR_WEIGHT / weights - 2 * ROW_PAD_X
+    return {
+        "name": int(max(1, name_w)),
+        "location": int(max(1, loc_w)),
+        "confidence": max(1, COL_CONF_W - 2 * ROW_PAD_X),
+        "behavior": int(max(1, behavior_w)),
+        "verdict": max(1, COL_VERDICT_W - 2 * ROW_PAD_X),
+    }
 
 
 def _refit_cells():
-    widths = _label_widths()
-    for cell in list(_state["cells"]):
-        _fit_cell(*cell, widths)
+    widths = _cell_widths()
+    for item, column in list(_state["cells"]):
+        if dpg.does_item_exist(item):
+            dpg.configure_item(item, wrap=widths[column])
 
 def add_threat_row(table, threat, selected, toggle_cb, explain_cb):
     """One row. Callbacks come from scan.py, so the selection / quarantine logic stays there.

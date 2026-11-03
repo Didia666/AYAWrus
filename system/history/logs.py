@@ -113,7 +113,9 @@ def add_log_entry(
     result,
     probability=None,
     details=None,
+    behavior_confidence_prob=None,
     behavior_confidence=None,
+    behavior_scores=None,
     behavior_type=None,
     behavior_types=None,
     behavior_result=None,
@@ -133,8 +135,12 @@ def add_log_entry(
         "details": details,
         "batch_id": batch_id,
     }
+    if behavior_confidence_prob is not None:
+        entry["behavior_confidence_prob"] = behavior_confidence_prob
     if behavior_confidence is not None:
         entry["behavior_confidence"] = behavior_confidence
+    if behavior_scores is not None:
+        entry["behavior_scores"] = behavior_scores
     if behavior_type is not None:
         entry["behavior_type"] = behavior_type
     if behavior_types is not None:

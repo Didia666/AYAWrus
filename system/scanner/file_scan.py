@@ -100,9 +100,13 @@ def _prepare_model_features(features):
     return X
 
 
-def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
+def scan_file(file_path, auto_quarantine=True, excluded_roots=None,  analysis_only=False,):
     model_load.load_models()
     extractor = get_extractor()   #
+
+    def log_scan_entry(*args, **kwargs):
+        if not analysis_only:
+            add_log_entry(*args, **kwargs)
     
     if is_excluded(file_path, excluded_roots):
         return {
@@ -161,11 +165,11 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         # Skip hashing when the signature database is empty.
         known_hashes = load_malware_hashes()
 
-        if known_hashes:
+        if known_hashes and not analysis_only:
             digest = hashlib.sha256(file_bytes).hexdigest()
 
             if digest in known_hashes:
-                add_log_entry(
+                log_scan_entry(
                     file_path,
                     result="MALICIOUS",
                     details=f"Known SHA-256: {digest}"
@@ -213,7 +217,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             features = extractor.feature_vector(file_bytes)
         except Exception as e:
             # It had 'MZ' but failed extraction - still log it as ERROR but not spam
-            add_log_entry(file_path, result="ERROR", details=f"PE extraction failed: {str(e)[:50]}")
+            log_scan_entry(file_path, result="ERROR", details=f"PE extraction failed: {str(e)[:50]}")
             stats = save_pe_statistics("ERROR")
             return {
                 "result": "ERROR",
@@ -225,7 +229,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         
         # Check if model is available
         if model_load.model is None:
-            add_log_entry(file_path, result="UNKNOWN", details="Model not loaded")
+            log_scan_entry(file_path, result="UNKNOWN", details="Model not loaded")
             stats = save_pe_statistics("UNKNOWN")
             return {
                 "result": "UNKNOWN",
@@ -244,7 +248,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             # Prepare features for the malware/benign model only.
             X = _prepare_model_features(raw_features)
         except ValueError as e:
-            add_log_entry(file_path, result="ERROR", details=str(e))
+            log_scan_entry(file_path, result="ERROR", details=str(e))
             stats = save_pe_statistics("ERROR")
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
                     "details": "Feature schema mismatch — extractor/model version drift",
@@ -255,7 +259,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             "expected_input_dim",
             model_load.expected_input_dim or X.shape[1],
         ):
-            add_log_entry(file_path, result="ERROR", details=f"Feature vector shape mismatch ({X.shape[1]})")
+            log_scan_entry(file_path, result="ERROR", details=f"Feature vector shape mismatch ({X.shape[1]})")
             stats = save_pe_statistics("ERROR")
             return {"result": "ERROR", "probability": 0, "file_path": file_path,
                     "details": "Feature schema mismatch — extractor/model version drift",
@@ -265,7 +269,7 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
         try:
             prob = float(model_load.model.predict_proba(X)[0][1])
         except Exception as e:
-            add_log_entry(file_path, result="ERROR", details=f"Prediction failed: {e}")
+            log_scan_entry(file_path, result="ERROR", details=f"Prediction failed: {e}")
             stats = save_pe_statistics("ERROR")
             return {
                 "result": "ERROR",
@@ -276,6 +280,8 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             }
 
         behavior_probability = 0.0
+        behavior_confidence = 0.0
+        behavior_scores = {}
         behavior_result = "NOT_EVALUATED"
         behavior_types = []
         behavior_type = None
@@ -291,13 +297,24 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                     raw_features
                 )
 
+                behavior_scores = (
+                    behavior_summary.get("label_scores", {})
+                    if behavior_summary else {}
+                )
+
                 # Reuse the SAME prediction result.
                 behavior_probability = float(
                     behavior_summary.get("mean_probability", 0.0)
                 )
 
-                behavior_types = behavior_summary.get(
-                    "predicted_labels", []
+                behavior_types = (
+                    behavior_summary.get("predicted_labels", [])
+                    if behavior_summary else []
+                )
+
+                behavior_confidence = (
+                    behavior_summary.get("max_score", 0.0)
+                    if behavior_summary else 0.0
                 )
 
                 behavior_type = behavior_summary.get("top_label")
@@ -317,12 +334,37 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 )
 
                 behavior_probability = 0.0
+                behavior_confidence = 0.0
+                behavior_scores = {}
                 behavior_result = "BEHAVIOR_ERROR"
                 behavior_types = []
                 behavior_type = None
 
 
         category = categorize_threat(prob)
+
+        # Analysis-only mode: return fresh predictions without
+        # logging another detection, notifying users, scheduling XAI,
+        # updating detected-threat lists, or quarantining the file.
+        if analysis_only:
+            return {
+                "result": result_str,
+                "probability": prob,
+                "file_path": file_path,
+                "category": category,
+                "behavior_probability": behavior_probability,
+                "behavior_confidence_prob": behavior_probability,
+                "behavior_result": behavior_result,
+                "behavior_types": behavior_types,
+                "behavior_confidence": behavior_confidence,
+                "behavior_type": behavior_type,
+                "behavior_scores": behavior_scores,
+                "behavior_model_metrics": get_behavior_model_metrics(),
+                "quarantine_status": None,
+                "pe_statistics": None,
+                "analysis_only": True,
+            }
+
         stats = save_pe_statistics(
             result_str,
             probability=prob,
@@ -338,20 +380,20 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
             # Every detection gets an independent identifier.
             detection_id = new_detection_id()
 
-            if not auto_quarantine:
-                try:
-                    xai_job_id = schedule_xai(
-                        file_path=file_path,
-                        features=features,
-                        probability=prob,
-                        result=result_str,
-                        detection_id=detection_id
-                    )
+            try:
+                xai_job_id = schedule_xai(
+                    file_path=file_path,
+                    features=features,
+                    probability=prob,
+                    result=result_str,
+                    detection_id=detection_id,
+                    file_bytes=file_bytes,
+                )
 
-                except Exception as e:
-                    print(
-                        f"[XAI] Scheduling failed: {e}"
-                    )
+            except Exception as e:
+                print(
+                    f"[XAI] Scheduling failed: {e}"
+                )
 
         if result_str in ("MALICIOUS", "SUSPICIOUS"):
             if result_str == "MALICIOUS":
@@ -368,10 +410,12 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 result=result_str,
                 probability=prob,
                 details=details,
-                behavior_confidence=behavior_probability,
+                behavior_confidence_prob=behavior_probability,
                 behavior_type=behavior_type,
                 behavior_types=behavior_types,
                 behavior_result=behavior_result,
+                behavior_confidence=behavior_confidence,
+                behavior_scores=behavior_scores,
             )
 
             try:
@@ -388,10 +432,12 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "file_path": file_path,
                 "category": category,
                 "behavior_probability": behavior_probability,
-                "behavior_confidence": behavior_probability,
+                "behavior_confidence_prob": behavior_probability,
                 "behavior_result": behavior_result,
                 "behavior_types": behavior_types,
+                "behavior_confidence": behavior_confidence,
                 "behavior_type": behavior_type,
+                "behavior_scores": behavior_scores,
                 "behavior_model_metrics": get_behavior_model_metrics(),
                 "detection_id": detection_id,
                 "xai_job_id": xai_job_id,
@@ -406,10 +452,12 @@ def scan_file(file_path, auto_quarantine=True, excluded_roots=None):
                 "probability": prob,
                 "file_path": file_path,
                 "behavior_probability": behavior_probability,
-                "behavior_confidence": behavior_probability,
+                "behavior_confidence_prob": behavior_probability,
                 "behavior_result": behavior_result,
                 "behavior_types": behavior_types,
+                "behavior_confidence": behavior_confidence,
                 "behavior_type": behavior_type,
+                "behavior_scores": behavior_scores,
                 "behavior_model_metrics": get_behavior_model_metrics(), 
                 "xai_report": xai_report,
                 "pe_statistics": stats,

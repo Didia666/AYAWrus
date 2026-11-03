@@ -121,16 +121,18 @@ def _analyze(
     file_path,
     features,
     probability,
-    result
+    result,
+    file_bytes=None,
 ):
     try:
-        if not os.path.isfile(file_path):
-            raise FileNotFoundError(
-                f"File unavailable for XAI: {file_path}"
-            )
+        if file_bytes is None:
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(
+                    f"File unavailable for XAI: {file_path}"
+                )
 
-        with open(file_path, "rb") as f:
-            file_bytes = f.read()
+            with open(file_path, "rb") as f:
+                file_bytes = f.read()
 
         engine = XAIExplanationEngine()
 
@@ -178,7 +180,8 @@ def schedule_xai(
     features,
     probability,
     result,
-    detection_id=None
+    detection_id=None,
+    file_bytes=None,
 ):
     """
     Returns:
@@ -217,7 +220,8 @@ def schedule_xai(
                 file_path,
                 features,
                 probability,
-                result
+                result,
+                file_bytes,
             )
 
         except RuntimeError as e:

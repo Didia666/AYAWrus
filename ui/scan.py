@@ -27,6 +27,19 @@ from system.scanner.xai_scheduler import (
     get_xai_status,
 )
 from system.scanner.file_scan import classify_file
+
+from ui.scan_targets import (
+    register_backend_handlers,
+    set_likely_targets_data,
+)
+
+from system.scanner.malware_impact_engine import (
+    analyze_behavior_predictions,
+)
+
+from system.scanner.scan_target_discovery import (
+    discover_likely_targets,
+)
 # Add parent directory to path to import Malware_System
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _api_server_started = False
@@ -42,6 +55,7 @@ try:
     import system.history.logs as hs
     from system.history.logs import begin_log_buffer, flush_log_buffer
     from system.notifications import enqueue_threat_notification
+    
 
     BACKEND_AVAILABLE = True
     BACKEND_LOAD_ERROR = ""
@@ -58,7 +72,10 @@ SELECTED_SCAN = "quick"
 SCAN_IN_PROGRESS = False
 CURRENT_CUSTOM_PATH = ""
 DETECTED_THREATS = []
+LIKELY_TARGETS_CONTEXT = {}
+LIKELY_TARGETS_LOCK = threading.Lock()
 SELECTED_QUARANTINE_ITEMS = set()
+
 
 _PROGRESS_COUNTER_LOCK = threading.Lock()
 _PROGRESS_FILES_SCANNED = 0
@@ -68,6 +85,7 @@ _PROGRESS_TOTAL_FILES = 0
 _PROGRESS_PHASE = "IDLE"
 _PROGRESS_START_TIME = 0.0
 _PROGRESS_TICKER_RUNNING = False
+_RESOURCE_MONITOR_STARTED = False
 
 SCAN_MAX_WORKERS = 4
 SCAN_MAX_PENDING = 8
@@ -94,6 +112,336 @@ g_icons = None  # Global variable to store icons for step card rebuilding
 g_step_elements = []  # List to store (step_card_tag, image_tag, text_tag) for each step
 
 
+def _normalize_target_path(file_path):
+    return os.path.normcase(os.path.abspath(file_path))
+
+def _run_likely_targets(file_path):
+    """Use the saved scan result when the Likely Targets tab opens."""
+    if not file_path:
+        return
+
+    thread = threading.Thread(
+        target=_likely_targets_worker,
+        args=(file_path, False),
+        daemon=True,
+        name="AYAWrusLikelyTargets",
+    )
+    thread.start()
+
+
+def _run_likely_targets_rescan(file_path):
+    """Reclassify the original file, then rediscover likely targets."""
+    if not file_path:
+        return
+
+    thread = threading.Thread(
+        target=_likely_targets_worker,
+        args=(file_path, True),
+        daemon=True,
+        name="AYAWrusLikelyTargetsRescan",
+    )
+    thread.start()
+
+
+def _likely_targets_worker(file_path, rescan=False):
+    """
+    Performs behavior impact analysis and discovers matching files.
+    This worker does not execute, modify, or delete discovered files.
+    """
+
+    key = _normalize_target_path(file_path)
+
+    loading_data = {
+        "sample": os.path.basename(file_path),
+        "state": "loading",
+        "message": (
+            "Rechecking the selected file before searching your folders..."
+            if rescan
+            else "Preparing behavior-based file discovery..."
+        ),
+        "scan_complete": False,
+        "files_scanned": 0,
+        "files_skipped_permission": 0,
+        "at_risk_count": 0,
+        "categories": {},
+        "flagged": [],
+        "by_folder": {},
+        "files": [],
+    }
+
+    with dpg.mutex():
+        set_likely_targets_data(loading_data, file_path)
+
+    with LIKELY_TARGETS_LOCK:
+        threat = LIKELY_TARGETS_CONTEXT.get(key)
+
+    if rescan:
+        if not os.path.isfile(file_path):
+            data = {
+                "sample": os.path.basename(file_path),
+                "state": "unsupported",
+                "message": (
+                    "The original file is unavailable. "
+                    "Restore it from quarantine before rescanning."
+                ),
+                "scan_complete": False,
+                "files_scanned": 0,
+                "files_skipped_permission": 0,
+                "at_risk_count": 0,
+                "categories": {},
+                "flagged": [],
+                "by_folder": {},
+                "files": [],
+            }
+
+            with dpg.mutex():
+                set_likely_targets_data(data, file_path)
+
+            return
+
+        threat = sf.scan_file(
+            file_path,
+            auto_quarantine=False,
+            analysis_only=True,
+        )
+
+        if not threat or threat.get("result") in (
+            "ERROR", "SKIPPED", "EXCLUDED", "TOO_LARGE", "UNKNOWN"
+        ):
+            message = (
+                threat.get("details", "The file could not be reanalyzed.")
+                if threat else "The file could not be reanalyzed."
+            )
+
+            data = {
+                "sample": os.path.basename(file_path),
+                "state": "error",
+                "message": message,
+                "scan_complete": False,
+                "files_scanned": 0,
+                "files_skipped_permission": 0,
+                "at_risk_count": 0,
+                "categories": {},
+                "flagged": [],
+                "by_folder": {},
+                "files": [],
+            }
+
+            with dpg.mutex():
+                set_likely_targets_data(data, file_path)
+
+            return
+
+        with LIKELY_TARGETS_LOCK:
+            LIKELY_TARGETS_CONTEXT[key] = dict(threat)
+
+    if not threat:
+        data = {
+            "sample": os.path.basename(file_path),
+            "state": "unsupported",
+            "message": "Threat information is unavailable for this scan.",
+            "scan_complete": False,
+            "files_scanned": 0,
+            "files_skipped_permission": 0,
+            "at_risk_count": 0,
+            "categories": {},
+            "flagged": [],
+            "by_folder": {},
+            "files": [],
+        }
+
+        with dpg.mutex():
+            set_likely_targets_data(data, file_path)
+
+        return
+    # Reconstruct the behavior summary from the actual scan result.
+    behavior_labels = threat.get("behavior_types") or []
+    behavior_scores = threat.get("behavior_scores") or {}
+
+    prediction_mode = "confirmed"
+    candidate_label = None
+    candidate_score = 0.0
+
+    if not behavior_labels:
+        candidate_label = threat.get("behavior_type")
+
+        if not candidate_label and behavior_scores:
+            candidate_label = max(
+                behavior_scores,
+                key=lambda label: float(behavior_scores[label] or 0.0),
+            )
+
+        if candidate_label:
+            candidate_score = float(
+                behavior_scores.get(
+                    candidate_label,
+                    threat.get("behavior_confidence", 0.0),
+                ) or 0.0
+            )
+
+            behavior_labels = [candidate_label]
+            prediction_mode = "candidate"
+
+    behavior_summary = {
+        "predicted_labels": behavior_labels,
+        "label_scores": behavior_scores,
+        "max_score": threat.get("behavior_confidence", 0.0),
+        "prediction_mode": prediction_mode,
+        "candidate_label": candidate_label,
+        "candidate_score": candidate_score,
+    }
+
+    if not behavior_summary["predicted_labels"]:
+        top_candidate = threat.get("behavior_type")
+        candidate_score = threat.get("behavior_confidence", 0.0)
+
+        if top_candidate:
+            message = (
+                f"No behavior passed its prediction threshold. "
+                f"The top candidate was {top_candidate} "
+                f"({float(candidate_score):.1%}), "
+                "but it was not strong enough to use for target discovery."
+            )
+        else:
+            message = "The behavior model did not return a usable behavior prediction."
+
+        data = {
+            "sample": os.path.basename(file_path),
+            "state": "no_behavior",
+            "message": message,
+            "scan_complete": True,
+            "files_scanned": 0,
+            "files_skipped_permission": 0,
+            "at_risk_count": 0,
+            "categories": {},
+            "flagged": [],
+            "by_folder": {},
+            "files": [],
+        }
+
+        with dpg.mutex():
+            set_likely_targets_data(data, file_path)
+
+        return
+
+    try:
+        # Step 1: Convert predicted behaviors into potential impacts
+        # and associated file categories.
+        impact_result = analyze_behavior_predictions(
+            behavior_summary
+        )
+
+        # Step 2: Search the current user's profile.
+        search_roots = [
+            os.path.expanduser("~")
+        ]
+
+        with dpg.mutex():
+            set_likely_targets_data(
+                {
+                    **loading_data,
+                    "message": (
+                        "Searching your user folder for files with "
+                        "extensions associated with the predicted behaviors. "
+                        "Only file metadata is checked; files are not opened."
+                    ),
+                },
+                file_path,
+            )
+
+        last_progress_at = [0.0]
+
+        def publish_discovery_progress(files_scanned, matched_count):
+            now = time.monotonic()
+            if files_scanned and now - last_progress_at[0] < 0.75:
+                return
+            last_progress_at[0] = now
+
+            with dpg.mutex():
+                set_likely_targets_data(
+                    {
+                        **loading_data,
+                        "message": (
+                            "Searching your user folder by file extension "
+                            f"and metadata: {files_scanned:,} files checked, "
+                            f"{matched_count:,} matches so far. "
+                            "Files are not opened."
+                        ),
+                        "files_scanned": files_scanned,
+                        "at_risk_count": matched_count,
+                    },
+                    file_path,
+                )
+
+        result = discover_likely_targets(
+            impact_result=impact_result,
+            search_roots=search_roots,
+            excluded_roots=[],
+            max_files=100000,
+            timeout=120,
+            progress_callback=publish_discovery_progress,
+        )
+        result["prediction_mode"] = prediction_mode
+        result["candidate_label"] = candidate_label
+        result["candidate_score"] = candidate_score
+
+        # Attach the original suspicious file's name.
+        result["sample"] = os.path.basename(file_path)
+        if prediction_mode == "candidate":
+            result["state"] = "candidate"
+            result["message"] = (
+                f"Unconfirmed behavior candidate: "
+                f"{candidate_label} ({candidate_score:.1%}). "
+                "Matching files are potential targets, not confirmed affected files."
+            )
+
+        # Step 3: Adapt the backend categories to the UI's expected format.
+        category_counts = {}
+
+        for item in result.get("files", []):
+            category = item.get("category")
+            if category:
+                category_counts[category] = (
+                    category_counts.get(category, 0) + 1
+                )
+
+        ui_categories = {}
+
+        for category, info in result.get("categories", {}).items():
+            ui_categories[category] = {
+                "score": info.get("support_score", 0.0),
+                "source": info.get("source", "behavior_mapping"),
+                "count": category_counts.get(category, 0),
+            }
+
+        result["categories"] = ui_categories
+
+        # Preserve the UI's existing field names.
+        result["at_risk_count"] = len(result.get("files", []))
+
+        # Step 4: Update the UI.
+        with dpg.mutex():
+            set_likely_targets_data(result, file_path)
+
+    except Exception as exc:
+        print(f"[Likely Targets] Analysis failed: {exc}")
+
+        data = {
+            "sample": os.path.basename(file_path),
+            "state": "error",
+            "message": "Unable to complete the target discovery analysis.",
+            "scan_complete": False,
+            "files_scanned": 0,
+            "files_skipped_permission": 0,
+            "at_risk_count": 0,
+            "categories": {},
+            "flagged": [],
+            "by_folder": {},
+            "files": [],
+        }
+
+        with dpg.mutex():
+            set_likely_targets_data(data, file_path)
 
 def get_scan_worker_config():
     # Get physical CPU cores, ignoring hyperthreading.
@@ -360,11 +708,11 @@ def _open_xai_panel(sender, app_data, user_data):
 
                 if status == "PENDING":
                     report = {
+                        "_xai_pending": True,
                         "explanation": (
                             "Background AI explanation is "
                             "still being generated. "
-                            "Close this panel and click "
-                            "Explain again shortly."
+                            "The report will appear here when ready."
                         ),
                         "scan_steps": [],
                         "suspicious_characteristics": [],
@@ -671,6 +1019,55 @@ def _progress_ticker_loop():
     finally:
         _PROGRESS_TICKER_RUNNING = False
 
+
+def _format_memory_usage(memory):
+    used_gb = memory.used / (1024 ** 3)
+    total_gb = memory.total / (1024 ** 3)
+    return f"{used_gb:.1f} / {total_gb:.1f} GB ({memory.percent:.0f}%)"
+
+
+def _publish_resource_usage(cpu_percent, memory):
+    if not dpg.does_item_exist("system_cpu_usage"):
+        return
+    dpg.set_value(
+        "system_cpu_usage",
+        min(100.0, max(0.0, cpu_percent)) / 100.0,
+    )
+    dpg.set_value(
+        "system_ram_usage",
+        min(100.0, max(0.0, memory.percent)) / 100.0,
+    )
+    dpg.set_value("system_cpu_usage_text", f"{cpu_percent:.0f}%")
+    dpg.set_value("system_ram_usage_text", _format_memory_usage(memory))
+
+
+def _resource_monitor_loop():
+    psutil.cpu_percent(interval=None)
+    while True:
+        time.sleep(1.0)
+        try:
+            cpu_percent = psutil.cpu_percent(interval=None)
+            memory = psutil.virtual_memory()
+            with dpg.mutex():
+                if not dpg.does_item_exist("system_cpu_usage"):
+                    return
+                _publish_resource_usage(cpu_percent, memory)
+        except Exception as exc:
+            print(f"[Resource Monitor] Could not update usage: {exc}")
+            return
+
+
+def _start_resource_monitor():
+    global _RESOURCE_MONITOR_STARTED
+    if _RESOURCE_MONITOR_STARTED:
+        return
+    _RESOURCE_MONITOR_STARTED = True
+    threading.Thread(
+        target=_resource_monitor_loop,
+        daemon=True,
+        name="AYAWrusResourceMonitor",
+    ).start()
+
 def _iter_scan_paths(scan_type, custom_path=""):
 # """
 # Enumerates paths using the same rules
@@ -869,6 +1266,12 @@ def _update_scan_progress():
                     "original_name =", result.get("original_name"),
                 )
                 DETECTED_THREATS.append(result)
+                target_path = result.get("file_path") or path
+
+                with LIKELY_TARGETS_LOCK:
+                    LIKELY_TARGETS_CONTEXT[
+                        _normalize_target_path(target_path)
+                    ] = dict(result)
 
                 # Desktop/mobile notification
                 try:
@@ -1267,6 +1670,42 @@ def build_scan(parent, fonts, icons):
             dpg.add_text("Run a scan to check for malicious files on your system", color=COLORS["text_secondary"])
             dpg.add_spacer(height=15)
 
+            with dpg.child_window(
+                tag="system_resource_monitor",
+                width=900,
+                height=94,
+                border=True,
+                no_scrollbar=True,
+            ):
+                with dpg.table(
+                    header_row=False,
+                    policy=dpg.mvTable_SizingStretchSame,
+                    width=-1,
+                ):
+                    dpg.add_table_column()
+                    dpg.add_table_column()
+                    with dpg.table_row():
+                        with dpg.group():
+                            with dpg.group(horizontal=True):
+                                dpg.add_text("CPU usage", color=COLORS["text_secondary"])
+                                dpg.add_text("Sampling...", tag="system_cpu_usage_text")
+                            dpg.add_progress_bar(
+                                tag="system_cpu_usage",
+                                default_value=0,
+                                width=-1,
+                            )
+                        with dpg.group():
+                            with dpg.group(horizontal=True):
+                                dpg.add_text("RAM usage", color=COLORS["text_secondary"])
+                                dpg.add_text("Sampling...", tag="system_ram_usage_text")
+                            dpg.add_progress_bar(
+                                tag="system_ram_usage",
+                                default_value=0,
+                                width=-1,
+                            )
+
+            dpg.add_spacer(height=12)
+
             with dpg.group(horizontal=True):
                 for i, scan in enumerate(SCAN_TYPES):
                     scan_card(scan["key"], icons[scan["icon"]], scan["label"], scan["subtitle"],
@@ -1291,8 +1730,16 @@ def build_scan(parent, fonts, icons):
     # quarantine_btn is themed in ui/scan_threats.py (blue, dimmed when disabled)
 
     register_scan_layout()
+    _start_resource_monitor()
     init_explain(fonts, icons)
-    apply_slim_scrollbar(parent)   # parent is "page_scan", the window that actually scrolls
+
+    # Register Likely Targets backend callbacks.
+    register_backend_handlers(
+        on_open=_run_likely_targets,
+        on_rescan=_run_likely_targets_rescan,
+    )
+
+    apply_slim_scrollbar(parent)
     _ensure_api_server_started()
 
 

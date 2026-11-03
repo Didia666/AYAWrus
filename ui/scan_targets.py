@@ -38,10 +38,15 @@ JSON the UI reads (every widget below has a  # JSON: <field>  comment):
   },
   "flagged": ["documents", "images"],   # chips in this list are red, the rest are grey
   "by_folder": {"C:\\\\Users\\\\Kay\\\\Documents": 98},   # folder -> total at-risk files (shown inside the folder node)
-  "files": [                            # the UI sorts these (risk, then score) and groups them (category, then folder)
-    {"path": "...", "category": "documents", "risk": "high",   # high | medium | low
-     "score": 0.93, "reason": "..."}
-  ]
+  "files": [
+        {
+            "path": "...",
+            "category": "documents",
+            "support_score": 0.82,
+            "associated_behaviors": ["ransom", "wiper"],
+            "reason": "Matched file extension .pdf",
+        }
+    ]
 }
 =====================================================================================
 """
@@ -105,11 +110,17 @@ RISK_ORDER = {"high": 0, "medium": 1, "low": 2}   # sort order, highest risk fir
 # ---- Default texts per state (data["message"] overrides these) ----
 STATE_MESSAGES = {
     "partial": "Partial results: scan limit reached",
+    "candidate": "Only an unconfirmed behavior candidate was predicted.",
     "cancelled": "Scan cancelled: showing what was found so far",
     "error": "Something went wrong, showing saved results only",
     "unsupported": "Detailed analysis only works for .exe/.dll right now",
 }
-BANNER_STATES = {"partial": "orange", "cancelled": "orange", "error": "red"}   # state -> banner color name
+BANNER_STATES = {
+    "partial": "orange",
+    "cancelled": "orange",
+    "error": "red",
+    "candidate": "orange",
+}# state -> banner color name
 
 # ---- Tags ----
 PAGE = "tgt_page"
@@ -386,7 +397,18 @@ def _render_list_area(state, data, message):
         # JSON: state == "loading" -> chips stay, only this area shows the spinner
         with dpg.group(horizontal=True, parent=LIST):
             dpg.add_loading_indicator(circle_count=8, radius=3.0, color=COLORS["accent_blue"])
-            dpg.add_text("Checking this PC for at-risk files...", color=MUTED)
+            dpg.add_text(
+                message or "Checking this PC for at-risk files...",
+                color=MUTED,
+                wrap=0,
+            )
+    elif state == "no_behavior":
+        _empty_state(
+            "circle_info",
+            MUTED,
+            message or "No behavior passed its prediction threshold.",
+            "Target discovery needs at least one confirmed behavior prediction.",
+        )
     elif state == "unsupported":
         _empty_state("file_x", MUTED, message or STATE_MESSAGES["unsupported"],
                      "Try an .exe or .dll file.")
@@ -477,25 +499,62 @@ def _show_more(sender, app_data, state):
 
 
 def _add_file_row(table, f):
-    risk = str(f.get("risk", "low")).lower()                 # JSON: files[].risk
-    path = str(f.get("path", ""))                             # JSON: files[].path
+    path = str(f.get("path", ""))
     name = ntpath.basename(path) or path
-    reason = str(f.get("reason") or "No reason provided")     # JSON: files[].reason
-    score = f.get("score")                                    # JSON: files[].score
-    reason_text = reason if score is None else f"{reason}   (score {_to_float(score):.2f})"
+
+    reason = str(
+        f.get("reason") or "Matched a supported file category."
+    )
+
+    support_score = f.get("support_score")
+    behaviors = f.get("associated_behaviors") or []
+
+    reason_text = reason
+
+    if support_score is not None:
+        reason_text += (
+            f"   (category mapping support: "
+            f"{_to_float(support_score):.0%})"
+        )
+
+    if behaviors:
+        reason_text += (
+            "   |   Associated behaviors: "
+            + ", ".join(behaviors)
+        )
+
     reason_id = dpg.generate_uuid()
 
     with dpg.table_row(parent=table):
-        pill = dpg.add_button(label=risk, width=-1, height=ROW_BUTTON_H)
-        dpg.bind_item_theme(pill, _T.get("risk_" + risk, _T["risk_low"]))
+        # A match indicator, not a risk rating.
+        pill = dpg.add_button(
+            label="MATCH",
+            width=-1,
+            height=ROW_BUTTON_H,
+            enabled=False,
+        )
+        dpg.bind_item_theme(pill, _T["risk_low"])
+
         with dpg.group():
-            btn = dpg.add_button(label=name, width=-1, height=ROW_BUTTON_H,
-                                 callback=_toggle_reason, user_data=reason_id)
+            btn = dpg.add_button(
+                label=name,
+                width=-1,
+                height=ROW_BUTTON_H,
+                callback=_toggle_reason,
+                user_data=reason_id,
+            )
             dpg.bind_item_theme(btn, _T["row"])
+
             with dpg.tooltip(btn):
                 dpg.add_text(path)
-            dpg.add_text(reason_text, tag=reason_id, wrap=0, show=False, color=MUTED)
 
+            dpg.add_text(
+                reason_text,
+                tag=reason_id,
+                wrap=0,
+                show=False,
+                color=MUTED,
+            )
 
 def _toggle_reason(sender, app_data, reason_id):
     if dpg.does_item_exist(reason_id):
@@ -510,8 +569,7 @@ def _render_footer(state, data):
     if data.get("files_skipped_permission"):                  # JSON: files_skipped_permission
         parts.append(f"{int(_to_float(data['files_skipped_permission']))} skipped (no permission)")
     if data.get("at_risk_count") is not None:                 # JSON: at_risk_count
-        parts.append(f"{int(_to_float(data['at_risk_count']))} at risk")
-
+        parts.append(f"{int(_to_float(data['at_risk_count']))} matching files")
     with dpg.table(parent=FOOTER, header_row=False, policy=dpg.mvTable_SizingStretchProp):
         dpg.add_table_column()
         dpg.add_table_column(width_fixed=True, init_width_or_weight=RESCAN_W + 8)
@@ -522,8 +580,7 @@ def _render_footer(state, data):
                 if parts:
                     t = dpg.add_text("  |  ".join(parts), wrap=0, color=MUTED)
                     _font(t, FOOTER_STATS_FONT)
-            btn = dpg.add_button(label="Rescan", width=RESCAN_W, height=RESCAN_H, callback=_on_rescan,
-                                 enabled=state not in ("loading", "unsupported"))
+            btn = dpg.add_button(label="Rescan", width=RESCAN_W, height=RESCAN_H, callback=_on_rescan, enabled=state not in ("loading", "unsupported"))
             dpg.bind_item_theme(btn, _T["rescan"])
 
 
@@ -541,4 +598,4 @@ def _to_float(v):
 
 
 def _sort_key(f):
-    return (RISK_ORDER.get(str(f.get("risk", "")).lower(), 3), -_to_float(f.get("score")))
+    return -_to_float(f.get("support_score"))

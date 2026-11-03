@@ -4,6 +4,7 @@ import threading
 from contextlib import contextmanager
 import dearpygui.dearpygui as dpg
 from concurrent.futures import ThreadPoolExecutor
+from system.scanner.xai_scheduler import get_xai_report, get_xai_status
 from system.xai.shap_explainer import generate_shap_explanation
 from ui.theme import COLORS
 from ui.layout import register_resize
@@ -91,6 +92,8 @@ _s = {
     "sel": 0, "opened_at": 0.0, "slide_t0": 0.0, "slide_from": 0.0, "cur_y": 0.0,
     "tab_cur": [], "tab_tgt": [], "animating": False, "labels": [],
     "veil_t0": None, "geo": None,
+    "threat": None, "report": None, "report_job_id": None,
+    "report_pending": False, "report_poll_at": 0.0,
 }
 _shap_executor = ThreadPoolExecutor(
     max_workers=1,
@@ -478,7 +481,10 @@ def _page_overview(threat, report):
 def _page_steps(report):
     steps = (report or {}).get("scan_steps") or []
     if not steps:
-        return _empty_page("No scan steps were recorded for this file.")
+        return _empty_page(_report_empty_message(
+            report,
+            "No scan steps were recorded for this file.",
+        ))
     side = STEP_BADGE + 8
     for i, step in enumerate(steps, 1):
         title = _clean(step.get("title"))
@@ -630,7 +636,10 @@ def _page_suspicious(report):
 
     else:
         dpg.add_text(
-            "No structured PE analysis available.",
+            _report_empty_message(
+                report,
+                "No structured PE analysis available.",
+            ),
             color=COLORS["text_secondary"]
         )
 
@@ -1004,7 +1013,10 @@ def _page_explanation(report):
 def _page_actions(report):
     recs = (report or {}).get("recommendations") or []
     if not recs:
-        return _empty_page("No recommended actions are available for this file.")
+        return _empty_page(_report_empty_message(
+            report,
+            "No recommended actions are available for this file.",
+        ))
     side = ICON_BULLET + 8
     for rec in recs:
         text = _clean(rec)
@@ -1019,12 +1031,72 @@ def _page_actions(report):
 def _page_learn(report):
     topics = (report or {}).get("educational_topics") or {}
     if not topics:
-        return _empty_page("No learning topics are available for this file.")
+        return _empty_page(_report_empty_message(
+            report,
+            "No learning topics are available for this file.",
+        ))
     for topic in topics.values():
         content = _clean(topic.get("content"))
         with _card(_card_h(TITLE_H, _text_h(content))):
             dpg.add_text(_clean(topic.get("title")), color=COLORS["accent_green"])
             dpg.add_text(content, wrap=0, color=COLORS["text_secondary"])
+
+
+def _report_empty_message(report, default):
+    if (report or {}).get("_xai_pending"):
+        return "Generating the explanation for this file..."
+    error = _clean((report or {}).get("_xai_error"))
+    return error or default
+
+
+def _refresh_report_pages(report):
+    """Rebuild report-backed pages after asynchronous XAI generation completes."""
+    _s["report"] = report
+    builders = {
+        0: lambda: _page_overview(_s["threat"], report),
+        1: lambda: _page_steps(report),
+        2: lambda: _page_suspicious(report),
+        4: lambda: _page_actions(report),
+        5: lambda: _page_learn(report),
+    }
+
+    for index, build in builders.items():
+        tag = f"xai_page_{index}"
+        if dpg.does_item_exist(tag):
+            dpg.delete_item(tag)
+        with dpg.group(
+            tag=tag,
+            parent=CONTENT,
+            show=(index == _s["sel"]),
+        ):
+            build()
+
+
+def _poll_xai_report(now):
+    if not _s["report_pending"] or now < _s["report_poll_at"]:
+        return
+    _s["report_poll_at"] = now + 0.5
+
+    job_id = _s["report_job_id"]
+    if not job_id:
+        return
+
+    report = get_xai_report(job_id)
+    if report is not None:
+        _s["report_pending"] = False
+        _refresh_report_pages(report)
+        return
+
+    status = get_xai_status(job_id)
+    job_status = status.get("status")
+    if job_status in ("ERROR", "TOO_LARGE", "EVICTED", "NOT_FOUND"):
+        _s["report_pending"] = False
+        error = status.get("error") or (
+            f"Background explanation ended with status {job_status}."
+        )
+        _refresh_report_pages({
+            "_xai_error": f"Explanation unavailable: {error}",
+        })
 
 
 def _build_pages(threat, report):
@@ -1053,6 +1125,10 @@ def _destroy():
         _shap_request_id += 1
 
     _s["shap_file_path"] = None
+    _s["threat"] = None
+    _s["report"] = None
+    _s["report_job_id"] = None
+    _s["report_pending"] = False
 
     
     for i in range(len(TABS)):
@@ -1131,6 +1207,13 @@ def open_explain(threat, report):
         _shap_request_id += 1
 
     _s["shap_file_path"] = threat.get("file_path")
+    _s["threat"] = dict(threat)
+    _s["report"] = report or {}
+    _s["report_job_id"] = threat.get("xai_job_id")
+    _s["report_pending"] = bool(
+        _s["report_job_id"] and (report or {}).get("_xai_pending")
+    )
+    _s["report_poll_at"] = 0.0
     t = _themes()
     g = _geometry()
     _s["geo"] = g
@@ -1217,6 +1300,7 @@ def open_explain(threat, report):
 # ---------------------------------------------------------------------------
 
 def _tick(now, dt):
+    _poll_xai_report(now)
     mode = _s["mode"]
     g = _geometry()
     _s["geo"] = g
@@ -1290,6 +1374,7 @@ def _ticker_loop():
             mode == "open"
             and not _s["animating"]
             and _s["veil_t0"] is None
+            and not _s["report_pending"]
             and not (
                 _shap_future is not None
                 and _shap_future.done()

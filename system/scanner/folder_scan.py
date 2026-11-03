@@ -242,6 +242,8 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
 
             if result_str != "CLEAN":
                 behavior_probability = 0.0
+                behavior_confidence = 0.0
+                behavior_scores = {}
                 behavior_result = "NOT_EVALUATED"
                 behavior_types = []
                 behavior_type = None
@@ -258,16 +260,26 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                         raw_features
                     )
 
+                    behavior_scores = (
+                        behavior_summary.get("label_scores", {})
+                        if behavior_summary else {}
+                    )
+
                     behavior_probability = float(
                         behavior_summary.get("mean_probability", 0.0)
                     )
 
-                    behavior_types = behavior_summary.get(
-                        "predicted_labels", []
+                    behavior_types = (
+                        behavior_summary.get("predicted_labels", [])
+                        if behavior_summary else []
                     )
 
                     behavior_type = behavior_summary.get("top_label")
 
+                    behavior_confidence = (
+                        behavior_summary.get("max_score", 0.0)
+                        if behavior_summary else 0.0
+                    )
                     behavior_result = (
                         "BEHAVIORAL_ANOMALY"
                         if behavior_types
@@ -280,6 +292,8 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                     )
 
                     behavior_probability = 0.0
+                    behavior_confidence = 0.0
+                    behavior_scores = {}
                     behavior_result = "BEHAVIOR_ERROR"
                     behavior_types = []
                     behavior_type = None
@@ -297,8 +311,10 @@ def scan_folder_parallel(folder_path, batch_size=64, pool=None, extract_chunk_si
                         f"Category: {category}; behavior_probability={behavior_probability:.3f}; "
                         f"behavior_result={behavior_result}; behavior_types={','.join(behavior_types) if behavior_types else 'unknown'}"
                     ),
-                    behavior_confidence=behavior_probability,
+                    behavior_confidence_prob=behavior_probability,
                     behavior_type=behavior_type,
+                    behavior_confidence=behavior_confidence,
+                    behavior_scores=behavior_scores,
                     behavior_types=behavior_types,
                     behavior_result=behavior_result,
                 )

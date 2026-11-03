@@ -15,7 +15,7 @@ from ui.scan_targets import (STATE_MESSAGES, RISK_COL_W, ROW_BUTTON_H, CHIP_HEIG
 # ---- Switches (flip these when the matching work is done) ----
 # True once the backend calls set_likely_targets_data() (see the big comment at the top of ui/scan_targets.py).
 # False = the Likely Targets section shows a short "Coming soon" note.
-LIKELY_TARGETS_BACKEND_READY = False
+LIKELY_TARGETS_BACKEND_READY = True
 # True while some detections come without a background explanation (so Explain tabs can be empty).
 # Set False once the backend schedules explanations for every detection.
 SHOW_EXPLANATION_AVAILABILITY_NOTE = True
@@ -527,61 +527,61 @@ def _build_targets(fonts, icons):
     hw.paragraph("This tab estimates which kinds of personal files a suspicious program could go after, such as "
                  "documents or pictures, based on what it is built to do. These are predictions, not confirmed damage.")
     if not LIKELY_TARGETS_BACKEND_READY:
-        hw.tip_box("note", "Coming soon",
-                   "Likely Targets is still being built. If the tab says 'Waiting for analysis...', that is "
-                   "expected for now.", icons)
+        hw.tip_box(
+            "note",
+            "Validation in progress",
+            "Likely Targets is being connected to the actual scan results. "
+            "Its results will appear here after the backend has been validated.",
+            icons,
+        )
         return
 
     T = _targets_themes()
-    hw.paragraph("The chips at the top show each kind of file with a percentage. Red chips are the kinds this file "
-                 "looks most likely to go after. Below, open a kind to see the folders and files at risk, "
-                 "highest risk first, and click a file to read why it was flagged. The examples are made up.")
-    with dpg.group(horizontal=True):
-        tri = icons.get("triangle_alert")
-        if tri:
-            dpg.add_image(tri, width=NOTE_ICON_SIZE, height=NOTE_ICON_SIZE, tint_color=COLORS["accent_orange"])
-        note = dpg.add_text("Predictions, not confirmed damage", color=COLORS["text_secondary"])
-        if fonts.get("mono_small") is not None:
-            dpg.bind_item_font(note, fonts["mono_small"])
-    dpg.add_spacer(height=4)
-    with dpg.group(horizontal=True):
-        for name, percent, flagged in TARGET_CHIPS:
-            chip = dpg.add_button(label=f"{name} {percent}%", height=CHIP_HEIGHT)
-            dpg.bind_item_theme(chip, T["chip_flagged" if flagged else "chip_quiet"])
-    dpg.add_spacer(height=4)
-    with dpg.collapsing_header(label=f"{TARGET_CATEGORY} ({TARGET_CATEGORY_COUNT} files)",
-                               default_open=True) as header:
-        dpg.add_text(TARGET_FOLDER, wrap=0, color=COLORS["text_secondary"])
-        with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp):
-            dpg.add_table_column(width_fixed=True, init_width_or_weight=RISK_COL_W)
-            dpg.add_table_column()
-            for risk, name in TARGET_FILES:
-                with dpg.table_row():
-                    pill = dpg.add_button(label=risk, width=-1, height=ROW_BUTTON_H)
-                    dpg.bind_item_theme(pill, T["risk_" + risk])
-                    dpg.add_text(name, color=COLORS["text_primary"])
-    dpg.bind_item_theme(header, T["header_flagged"])
-    if fonts.get(HEADER_FONT) is not None:
-        dpg.bind_item_font(header, fonts[HEADER_FONT])
-    dpg.add_spacer(height=6)
-    with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp):
-        dpg.add_table_column()
-        dpg.add_table_column(width_fixed=True, init_width_or_weight=RESCAN_W + 8)
-        with dpg.table_row():
-            with dpg.group():
-                dpg.add_text(TARGET_LAST_SCANNED, color=COLORS["text_primary"])
-                dpg.add_text(TARGET_STATS, wrap=0, color=COLORS["text_secondary"])
-            hw.fake_button("Rescan", (*COLORS["accent_blue"], 40), COLORS["accent_blue"], width=RESCAN_W,
-                           height=RESCAN_H)
-    hw.gap()
-    hw.paragraph("Rescan runs the analysis again. The tab can also show these messages:")
-    _term_table([
-        ("Checking this PC...", "text_secondary", "A spinner shows while the analysis runs. The chips appear first."),
-        (STATE_MESSAGES["partial"], "accent_orange", "The analysis stopped at its limit, so the list may be incomplete."),
-        (STATE_MESSAGES["cancelled"], "accent_orange", "The analysis was cancelled. You see what was found so far."),
-        (STATE_MESSAGES["error"], "accent_red", "Something went wrong, so only saved results are shown."),
-        (STATE_MESSAGES["unsupported"], "text_secondary", "Detailed analysis only works for .exe and .dll files for now."),
-    ])
+
+    hw.paragraph(
+        "Likely Targets examines the behavior labels predicted for a "
+        "suspicious executable and uses AYAWrus's behavior mapping to "
+        "identify potentially relevant file categories."
+    )
+
+    with _card():
+        dpg.add_text("1. Behavior predictions", color=COLORS["accent_green"])
+        hw.paragraph(
+            "The system uses behavior predictions and their scores from "
+            "the malware behavior classification model. Only labels that "
+            "pass the configured prediction thresholds are used."
+        )
+
+    with _card():
+        dpg.add_text("2. Category mapping", color=COLORS["accent_green"])
+        hw.paragraph(
+            "Predicted behaviors are matched against predefined rules "
+            "for supported file categories, such as documents, images, "
+            "archives, and databases."
+        )
+
+    with _card():
+        dpg.add_text("3. File discovery", color=COLORS["accent_green"])
+        hw.paragraph(
+            "AYAWrus searches configured directories and checks file "
+            "extensions and metadata. Matching files are grouped by "
+            "category and folder."
+        )
+
+    with _card():
+        dpg.add_text("4. Understanding the results", color=COLORS["accent_green"])
+        hw.paragraph(
+            "A matching file is potentially relevant based on the "
+            "behavior mapping. It does not mean the file is infected, "
+            "damaged, or confirmed to be targeted."
+        )
+
+    with _card():
+        dpg.add_text("Important limitation", color=COLORS["accent_orange"])
+        hw.paragraph(
+            "Likely Targets provides a rule-based estimate. It does not "
+            "observe live malware activity or prove that an attack occurred."
+        )
 
 
 # ---------- the topic ----------

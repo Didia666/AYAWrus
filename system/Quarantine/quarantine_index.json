@@ -1,0 +1,15 @@
+[
+    {
+        "id": "070f8a204d4c30916a68b50a37397b3a",
+        "dest_path": "C:\\Users\\Karl\\Downloads\\BSIT 3E\\SE\\AYAWrus Deploymentv2\\system\\Quarantine\\070f8a204d4c30916a68b50a37397b3a.quarantine",
+        "original_path": "C:\\Users\\Karl\\Downloads\\Installer.exe",
+        "original_name": "Installer.exe",
+        "timestamp": "2026-11-03T10:09:44.128104",
+        "size": 1101312,
+        "sha256": "4b78e2f01354c29370600ff4845a2308003a9f218cc63721ec8a1fe331883b1e",
+        "original_mode": 511,
+        "result": "MALICIOUS",
+        "probability": 0.9083091020584106,
+        "status": "QUARANTINED"
+    }
+]
